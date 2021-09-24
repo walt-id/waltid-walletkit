@@ -1,0 +1,21 @@
+# Intellij
+.idea/
+*.iml
+*.iws
+out
+
+# Mac
+.DS_Store
+
+# Maven
+log/
+target/
+*.log
+
+# Gradle
+.gradle
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+**/build/
