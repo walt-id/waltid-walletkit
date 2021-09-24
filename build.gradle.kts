@@ -12,9 +12,11 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    implementation("io.javalin:javalin-bundle:4.0.0")
+}
 
-
-tasks.withType<KotlinCompile>() {
+tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "16"
 }
 
