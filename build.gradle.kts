@@ -10,10 +10,12 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
 dependencies {
     implementation("io.javalin:javalin-bundle:4.0.0")
+    implementation("com.github.kmehrunes:javalin-jwt:0.3")
 }
 
 tasks.withType<KotlinCompile> {
