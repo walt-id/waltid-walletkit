@@ -1,7 +1,5 @@
 package id.walt.webwallet.backend.oidc
 
-import io.letstrust.api.db.DatabaseManager
-import io.letstrust.api.web.endpoints.oidc.requests.*
 import id.walt.webwallet.backend.oidc.responses.OidcConsentResponse
 import id.walt.webwallet.backend.oidc.responses.OidcTokenResponse
 import id.walt.webwallet.backend.oidc.responses.OidcUserInfoResponse
@@ -13,14 +11,14 @@ object OidcService {
 
     private val log = LoggerFactory.getLogger(OidcService::class.java)
 
-    fun insertClient(client: OidcClient) = DatabaseManager.oidc.insertDocument(client)
+    //fun insertClient(client: OidcClient) = DatabaseManager.oidc.insertDocument(client)
 
-    fun getById(id: String) = DatabaseManager.oidc.getDocument(id, OidcClient::class.java)
+    //fun getById(id: String) = DatabaseManager.oidc.getDocument(id, OidcClient::class.java)
 
     // TODO replace with session cache
     var authReq: OidcAuthenticationRequest? = null
 
-    fun register(req: OidcRegisterRequest) = OidcClient.newClient(req).also { insertClient(it) }
+    //fun register(req: OidcRegisterRequest) = OidcClient.newClient(req).also { insertClient(it) }
 
     /**
      * Returns the Authentication Endpoint or an Error Response URL
@@ -50,12 +48,12 @@ object OidcService {
         return authenticationErrorResponse ?: authenticationResponse
     }
 
-    private fun loadCheckedClient(req: OidcAuthenticationRequest): OidcClient {
-        if (req.clientId.isNullOrEmpty())
-            error("invalid client ID: ${req.clientId}")
-
-        return getById(req.clientId!!) ?: error("Could not load OIDC client by ID ${req.clientId}")
-    }
+//    private fun loadCheckedClient(req: OidcAuthenticationRequest): OidcClient {
+//        if (req.clientId.isNullOrEmpty())
+//            error("invalid client ID: ${req.clientId}")
+//
+//        return getById(req.clientId!!) ?: error("Could not load OIDC client by ID ${req.clientId}")
+//    }
 
     fun consent(req: OidcConsentRequest): OidcConsentResponse {
         // TODO generate code and store it within the user session

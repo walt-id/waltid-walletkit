@@ -6,9 +6,6 @@ import id.walt.webwallet.backend.oidc.responses.OidcUserInfoResponse
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.annotations.*
 import io.javalin.plugin.openapi.dsl.document
-import io.letstrust.api.web.endpoints.ErrorResponse
-import io.letstrust.api.web.endpoints.oidc.requests.*
-import io.letstrust.api.web.endpoints.users.registration.CreateUserResponse
 
 object OidcController {
 
@@ -39,10 +36,10 @@ object OidcController {
         ctx.json(OidcService.consent(OidcConsentRequest("todo")))
     }
 
-    fun consentDocs() = document().operation {
-        it.summary("Consent Endpoint").operationId("consent").addTagsItem("OIDC")
-    }.body<OidcConsentRequest> { it.description("Stores the consent and returns the code for fetching the ID token. Note that the redirect URL must point to the backend of the RP in order to conduct a call to the token endpoint.") }
-        .json<CreateUserResponse>("200")
+//    fun consentDocs() = document().operation {
+//        it.summary("Consent Endpoint").operationId("consent").addTagsItem("OIDC")
+//    }.body<OidcConsentRequest> { it.description("Stores the consent and returns the code for fetching the ID token. Note that the redirect URL must point to the backend of the RP in order to conduct a call to the token endpoint.") }
+//        .json<CreateUserResponse>("200")
 
     fun token(ctx: Context) {
         ctx.json(
@@ -84,7 +81,7 @@ object OidcController {
         security = [OpenApiSecurity("http")],
         responses = [
             OpenApiResponse("200"),
-            OpenApiResponse("400", [OpenApiContent(ErrorResponse::class)], "invalid request")
+//            OpenApiResponse("400", [OpenApiContent(ErrorResponse::class)], "invalid request")
         ]
     )
     fun revoke(ctx: Context) {
@@ -92,24 +89,24 @@ object OidcController {
         ctx.status(httpStatus)
     }
 
-    @OpenApi(
-        summary = "Client Registration Endpoint",
-        operationId = "register",
-        tags = ["OIDC"],
-        requestBody = OpenApiRequestBody(
-            [OpenApiContent(OidcRegisterRequest::class)],
-            true,
-            "Endpoint for dynamic client registration"
-        ),
-        security = [OpenApiSecurity("http")],
-        responses = [
-            OpenApiResponse("200", [OpenApiContent(OidcClient::class)], "successful"),
-            OpenApiResponse("400", [OpenApiContent(ErrorResponse::class)], "invalid request")
-        ]
-    )
-    fun register(ctx: Context) {
-        ctx.json(OidcService.register(ctx.bodyAsClass(OidcRegisterRequest::class.java)))
-    }
+//    @OpenApi(
+//        summary = "Client Registration Endpoint",
+//        operationId = "register",
+//        tags = ["OIDC"],
+//        requestBody = OpenApiRequestBody(
+//            [OpenApiContent(OidcRegisterRequest::class)],
+//            true,
+//            "Endpoint for dynamic client registration"
+//        ),
+//        security = [OpenApiSecurity("http")],
+//        responses = [
+//            OpenApiResponse("200", [OpenApiContent(OidcClient::class)], "successful"),
+////            OpenApiResponse("400", [OpenApiContent(ErrorResponse::class)], "invalid request")
+//        ]
+//    )
+//    fun register(ctx: Context) {
+//        ctx.json(OidcService.register(ctx.bodyAsClass(OidcRegisterRequest::class.java)))
+//    }
 
     @OpenApi(
         summary = "UserInfo Endpoint",
@@ -118,7 +115,7 @@ object OidcController {
         security = [OpenApiSecurity("http")],
         responses = [
             OpenApiResponse("200", [OpenApiContent(OidcUserInfoResponse::class)], "successful"),
-            OpenApiResponse("400", [OpenApiContent(ErrorResponse::class)], "invalid request")
+//            OpenApiResponse("400", [OpenApiContent(ErrorResponse::class)], "invalid request")
         ]
     )
     fun userinfo(ctx: Context) {
