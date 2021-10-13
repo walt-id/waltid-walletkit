@@ -39,7 +39,10 @@ object JWTService : AccessManager {
     }
   }
 
-  fun getUserInfo(ctx: Context) = fromJwt(JavalinJWT.getDecodedFromContext(ctx))
+  fun getUserInfo(ctx: Context): UserInfo? = when(JavalinJWT.containsJWT(ctx)) {
+    true -> fromJwt(JavalinJWT.getDecodedFromContext(ctx))
+    else -> null
+  }
 
   override fun manage(handler: Handler, ctx: Context, routeRoles: MutableSet<RouteRole>) {
     // if context contains decoded JWT, it was already validated by jwtHandler
