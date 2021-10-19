@@ -1,0 +1,71 @@
+package id.walt.verifier.backend
+import id.walt.common.OidcUtil
+import id.walt.model.siopv2.*
+import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.http.Context
+import io.javalin.http.HttpCode
+import io.javalin.plugin.openapi.dsl.document
+import io.javalin.plugin.openapi.dsl.documented
+import java.time.Instant
+import java.util.*
+
+object VerifierController {
+  val routes
+    get() =
+      path("") {
+        path("wallets") {
+          get("list", documented(
+            document().operation {
+              it.summary("List wallet configurations")
+                .addTagsItem("verifier")
+                .operationId("listWallets")
+            }
+              .jsonArray<WalletConfiguration>("200"),
+            VerifierController::listWallets,
+          ))
+        }
+        path("present") {
+          get("vid", documented(
+            document().operation {
+              it.summary("Present Verifiable ID")
+                .addTagsItem("verifier")
+                .operationId("presentVID")
+            }
+              .queryParam<String>("walletId")
+              .result<String>("302"),
+            VerifierController::presentVid
+          ))
+        }
+        path("verify") {
+          post("{nonce}", documented(
+            document().operation {
+              it.summary("SIOPv2 request verification callback")
+                .addTagsItem("verifier")
+                .operationId("verifySIOPv2Request")
+            }
+              .formParamBody<String> { }
+              .result<String>("302"),
+            VerifierController::verifySIOPv2Request
+          ))
+        }
+      }
+
+  fun listWallets(ctx: Context) {
+    ctx.json(WalletConfiguration.getDefaultWalletConfigurations().values)
+  }
+
+  fun presentVid(ctx: Context) {
+    val walletId = ctx.queryParam("walletId")
+    if(walletId.isNullOrEmpty() || !WalletConfiguration.getDefaultWalletConfigurations().contains(walletId)) {
+      ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet ID given")
+    } else {
+      val wallet = WalletConfiguration.getDefaultWalletConfigurations().get(walletId)!!
+      ctx.status(HttpCode.FOUND).header("Location", "${wallet.url}/${wallet.presentPath}"+
+          "?${SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableID").toUriQueryString()}")
+    }
+  }
+
+  fun verifySIOPv2Request(ctx: Context) {
+
+  }
+}

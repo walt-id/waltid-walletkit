@@ -9,6 +9,7 @@ import id.walt.services.vcstore.HKVVcStoreService
 
 object UserContextLoader : CacheLoader<String, UserContext>() {
   override fun load(key: String): UserContext {
+    //TODO: get user context preferences from user database
     return UserContext(HKVKeyStoreService(), HKVVcStoreService(), FileSystemHKVStore(FilesystemStoreConfig("data/${key}")))
   }
 }
