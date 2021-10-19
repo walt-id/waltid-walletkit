@@ -1,6 +1,7 @@
 package id.walt.webwallet.backend.wallet
 
 import id.walt.model.DidMethod
+import id.walt.model.siopv2.SIOPv2Request
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
 import id.walt.webwallet.backend.auth.UserRole
@@ -40,6 +41,26 @@ object WalletController {
       path("credentials") {
         get("list", documented(CustodianController.listCredentialIdsDocs(), CustodianController::listCredentials), UserRole.AUTHORIZED)
       }
+      path("siopv2") {
+        get("parse", documented(
+          document().operation {
+            it.summary("Parse SIOPv2 request from URL query parameters")
+              .operationId("parseSiopv2Request")
+              .addTagsItem("SIOPv2")
+          }
+            .queryParam<String>("response_type")
+            .queryParam<String>("client_id")
+            .queryParam<String>("redirect_uri")
+            .queryParam<String>("scope")
+            .queryParam<String>("nonce")
+            .queryParam<String>("registration")
+            .queryParam<Long>("exp")
+            .queryParam<Long>("iat")
+            .queryParam<String>("claims")
+            .json<SIOPv2Request>("200"),
+          WalletController::parseSiopv2Request
+        ), UserRole.AUTHORIZED)
+      }
     }
 
   fun listDids(ctx: Context) {
@@ -49,5 +70,9 @@ object WalletController {
   fun createDid(ctx:Context) {
     val method = DidMethod.valueOf(ctx.queryParam("method")!!)
     ctx.result(DidService.create(method))
+  }
+
+  fun parseSiopv2Request(ctx: Context) {
+    ctx.json(SIOPv2Request.fromHttpContext(ctx))
   }
 }
