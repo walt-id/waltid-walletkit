@@ -23,20 +23,16 @@ object SIOPv2RequestManager {
       expiration = Instant.now().epochSecond + 24*60*60,
       issuedAt = Instant.now().epochSecond,
       claims = Claims(vp_token = VpTokenClaim(
-        verifiable_presentations = VerifiablePresentations(
           presentation_definition = PresentationDefinition(
             id = "1",
             input_descriptors = listOf(
               InputDescriptor(
                 id = "1",
-                schema = listOf(
-                  InputSchema(uri = schemaUri)
-                )
+                schema = schemaUri
               )
             )
           )
         )
-      )
       )
     )
     reqCache.put(nonce, req)

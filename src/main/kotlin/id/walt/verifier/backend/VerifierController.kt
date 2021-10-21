@@ -61,7 +61,7 @@ object VerifierController {
     } else {
       val wallet = WalletConfiguration.getDefaultWalletConfigurations().get(walletId)!!
       ctx.status(HttpCode.FOUND).header("Location", "${wallet.url}/${wallet.presentPath}"+
-          "?${SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableID").toUriQueryString()}")
+          "?${SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableId").toUriQueryString()}")
     }
   }
 
