@@ -1,12 +1,17 @@
 package id.walt.webwallet.backend.wallet
 
+import id.walt.custodian.CustodianService
 import id.walt.model.DidMethod
-import id.walt.model.siopv2.SIOPv2Request
+import id.walt.model.IdToken
+import id.walt.model.siopv2.*
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
+import id.walt.services.vc.VcUtils
+import id.walt.vclib.Helpers.encode
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
+import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 
@@ -42,10 +47,10 @@ object WalletController {
         get("list", documented(CustodianController.listCredentialIdsDocs(), CustodianController::listCredentials), UserRole.AUTHORIZED)
       }
       path("siopv2") {
-        get("parse", documented(
+        get("presentationExchange", documented(
           document().operation {
             it.summary("Parse SIOPv2 request from URL query parameters")
-              .operationId("parseSiopv2Request")
+              .operationId("getPresentationExchange")
               .addTagsItem("SIOPv2")
           }
             .queryParam<String>("response_type")
@@ -57,8 +62,19 @@ object WalletController {
             .queryParam<Long>("exp")
             .queryParam<Long>("iat")
             .queryParam<String>("claims")
-            .json<SIOPv2Request>("200"),
-          WalletController::parseSiopv2Request
+            .queryParam<String>("subject_did")
+            .json<PresentationExchange>("200"),
+          WalletController::getPresentationExchange
+        ), UserRole.AUTHORIZED)
+        post("presentationExchange", documented(
+          document().operation {
+            it.summary("Post presentation exchange with user selected credentials to be shared")
+              .operationId("postPresentationExchange")
+              .addTagsItem("SIOPv2")
+          }
+            .body<PresentationExchange>()
+            .json<PresentationExchangeResponse>("200"),
+          WalletController::postPresentationExchange
         ), UserRole.AUTHORIZED)
       }
     }
@@ -72,7 +88,46 @@ object WalletController {
     ctx.result(DidService.create(method))
   }
 
-  fun parseSiopv2Request(ctx: Context) {
-    ctx.json(SIOPv2Request.fromHttpContext(ctx))
+  fun getPresentationExchange(ctx: Context) {
+    val req = SIOPv2Request.fromHttpContext(ctx)
+    val did = ctx.queryParam("subject_did")!!
+    ctx.json(PresentationExchange(did, req, getClaimedCredentials(did, req)))
   }
+
+  fun postPresentationExchange(ctx: Context) {
+    val pe = ctx.bodyAsClass<PresentationExchange>()
+    val myCredentials = CustodianService.getService().listCredentials()
+    val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credential.id }.toSet()
+    val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
+    val vp = CustodianService.getService().createPresentation(selectedCredentials, pe.subject, null, pe.request.nonce)
+    val siopv2Response = SIOPv2Response(
+      pe.subject,
+      SIOPv2IDToken(
+        subject = pe.subject,
+        client_id = pe.request.client_id,
+        nonce = pe.request.nonce
+      ),
+      SIOPv2VPToken(
+        vp_token = listOf(
+          SIOPv2Presentation.createFromVPString(vp)
+        )
+      )
+    )
+    ctx.json(PresentationExchangeResponse(
+      id_token = siopv2Response.getIdToken(),
+      vp_token = siopv2Response.getVpToken()
+    ))
+  }
+
+  private fun getClaimedCredentials(subject: String, req: SIOPv2Request): List<ClaimedCredential> {
+    val myCredentials = CustodianService.getService().listCredentials()
+    return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
+      myCredentials.filter { it.type.contains(indesc.schema.substringAfterLast("/")) &&
+                              VcUtils.getHolder(it) == subject }.map { cred ->
+        ClaimedCredential(indesc.id, cred)
+      }
+      }?.toList() ?: listOf()
+  }
+
+
 }

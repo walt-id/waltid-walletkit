@@ -23,12 +23,22 @@ repositories {
 dependencies {
     implementation("io.javalin:javalin-bundle:4.0.0")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
+    implementation("com.beust:klaxon:5.5")
 
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.0-SNAPSHOT-LOCAL")
+    implementation("id.walt:waltid-ssikit-vclib:1.4.9")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.0.1")
+
+    // Testing
+    //testImplementation(kotlin("test-junit"))
+    testImplementation("io.mockk:mockk:1.12.0")
+
+    testImplementation("io.kotest:kotest-runner-junit5:4.6.1")
+    testImplementation("io.kotest:kotest-assertions-core:4.6.1")
+    testImplementation("io.kotest:kotest-assertions-json:4.6.1")
 }
 
 tasks.withType<KotlinCompile> {
