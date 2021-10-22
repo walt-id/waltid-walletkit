@@ -97,7 +97,7 @@ object WalletController {
   fun postPresentationExchange(ctx: Context) {
     val pe = ctx.bodyAsClass<PresentationExchange>()
     val myCredentials = CustodianService.getService().listCredentials()
-    val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credential.id }.toSet()
+    val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
     val vp = CustodianService.getService().createPresentation(selectedCredentials, pe.subject, null, pe.request.nonce)
     val siopv2Response = SIOPv2Response(
@@ -123,8 +123,8 @@ object WalletController {
     val myCredentials = CustodianService.getService().listCredentials()
     return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
       myCredentials.filter { it.type.contains(indesc.schema.substringAfterLast("/")) &&
-                              VcUtils.getHolder(it) == subject }.map { cred ->
-        ClaimedCredential(indesc.id, cred)
+                              VcUtils.getHolder(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
+        ClaimedCredential(indesc.id, cred.id!!)
       }
       }?.toList() ?: listOf()
   }
