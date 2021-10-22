@@ -85,8 +85,8 @@ class SIOPv2Test : AnnotationSpec() {
 
     pe.subject shouldBe subjectDid
     pe.claimedCredentials shouldHaveSize 2
-    vc1.id shouldBeIn pe.claimedCredentials.map { it.credential.id }
-    vc2.id shouldBeIn pe.claimedCredentials.map { it.credential.id }
+    vc1.id shouldBeIn pe.claimedCredentials.map { it.credentialId }
+    vc2.id shouldBeIn pe.claimedCredentials.map { it.credentialId }
 
     val selectedCC = pe.claimedCredentials[0]
     val peSel = PresentationExchange(
@@ -113,7 +113,7 @@ class SIOPv2Test : AnnotationSpec() {
     vp_token!!.vp_token!! shouldHaveSize 1
     vp_token!!.vp_token!!.first().presentation.toCredential() should beOfType<VerifiablePresentation>()
     (vp_token!!.vp_token!!.first().presentation.toCredential() as VerifiablePresentation).verifiableCredential shouldHaveSize 1
-    (vp_token!!.vp_token!!.first().presentation.toCredential() as VerifiablePresentation).verifiableCredential.first().id shouldBe selectedCC.credential.id
+    (vp_token!!.vp_token!!.first().presentation.toCredential() as VerifiablePresentation).verifiableCredential.first().id shouldBe selectedCC.credentialId
 
   }
 }
