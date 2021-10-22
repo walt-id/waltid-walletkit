@@ -5,7 +5,7 @@ import id.walt.vclib.model.VerifiableCredential
 
 data class ClaimedCredential (
   val claimId: String,
-  val credential: VerifiableCredential
+  val credentialId: String
     )
 
 data class PresentationExchange (
