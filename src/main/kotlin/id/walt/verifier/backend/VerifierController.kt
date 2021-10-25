@@ -66,6 +66,7 @@ object VerifierController {
   }
 
   fun verifySIOPv2Request(ctx: Context) {
-
+    // TODO: verify siop response
+    ctx.status(HttpCode.FOUND).header("Location", "http://localhost:4000/success")
   }
 }
