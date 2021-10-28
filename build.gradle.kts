@@ -26,7 +26,7 @@ dependencies {
     implementation("com.beust:klaxon:5.5")
 
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.0-SNAPSHOT-SIOPV2")
+    implementation("id.walt:waltid-ssi-kit:1.0-SNAPSHOT")
     implementation("id.walt:waltid-ssikit-vclib:1.4.9")
 
     // Service-Matrix
@@ -36,13 +36,17 @@ dependencies {
     //testImplementation(kotlin("test-junit"))
     testImplementation("io.mockk:mockk:1.12.0")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.6.1")
-    testImplementation("io.kotest:kotest-assertions-core:4.6.1")
-    testImplementation("io.kotest:kotest-assertions-json:4.6.1")
+    testImplementation("io.kotest:kotest-runner-junit5:4.6.3")
+    testImplementation("io.kotest:kotest-assertions-core:4.6.3")
+    testImplementation("io.kotest:kotest-assertions-json:4.6.3")
 }
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "16"
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
 
 application {

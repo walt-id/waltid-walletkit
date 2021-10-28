@@ -3,7 +3,7 @@ package id.walt.webwallet.backend.wallet
 import com.beust.klaxon.Klaxon
 import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTParser
-import id.walt.custodian.CustodianService
+import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.siopv2.SIOPv2IDToken
 import id.walt.model.siopv2.SIOPv2Request
@@ -68,11 +68,11 @@ class SIOPv2Test : AnnotationSpec() {
     siopv2RequestParams = siopv2Request.toUriQueryString().split("&").map { it.split("=") }.map { it[0] to URLDecoder.decode(it[1], StandardCharsets.UTF_8) }.toMap()
     vc1 = Signatory.getService().issue("VerifiableId", ProofConfig(subjectDid, subjectDid)).toCredential()
     vc2 = Signatory.getService().issue("VerifiableId", ProofConfig(subjectDid, subjectDid)).toCredential()
-    CustodianService.getService().storeCredential(vc1.id!!, vc1)
-    CustodianService.getService().storeCredential(vc2.id!!, vc2)
+    Custodian.getService().storeCredential(vc1.id!!, vc1)
+    Custodian.getService().storeCredential(vc2.id!!, vc2)
   }
 
-  @Test
+  @Test()
   fun testPresentationExchange() {
     lateinit var pe: PresentationExchange
     val ctx1 = mockk<Context>(relaxed = true)
