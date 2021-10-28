@@ -1,0 +1,12 @@
+{
+  "verifierUiUrl": "http://localhost:4000",
+  "verifierApiUrl": "http://localhost:8080/verifier-api",
+  "wallets": {
+    "walt.id": {
+      "id": "walt.id",
+      "url": "http://localhost:3000",
+      "presentPath": "verify",
+      "description": "walt.id web wallet"
+    }
+  }
+}

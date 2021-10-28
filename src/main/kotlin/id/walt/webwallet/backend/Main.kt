@@ -7,6 +7,7 @@ import cc.vileda.openapi.dsl.securityScheme
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.WaltContext
+import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -67,6 +68,9 @@ fun main(args: Array<String>) {
         path("api") {
             AuthController.routes
             WalletController.routes
+        }
+        path("verifier-api") {
+            VerifierController.routes
         }
     }
 }
