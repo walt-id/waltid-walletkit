@@ -1,0 +1,24 @@
+version: "3.3"
+services:
+  wallet-backend:
+    image: waltid-wallet-backend:latest
+    volumes:
+      - ./verifier-config.json:/Webwallet-Backend/verifier-config.json
+      - ../data:/Webwallet-Backend/data
+  wallet-ui:
+    image: waltid-wallet-ui:latest
+  verifier-ui:
+    image: waltid-verifier:latest
+  ingress:
+    image: nginx:1.15.10-alpine
+    ports:
+      - target: 80
+        published: 8080
+        protocol: tcp
+        mode: host
+      - target: 81
+        published: 8081
+        protocol: tcp
+        mode: host
+    volumes:
+      - ./ingress.conf:/etc/nginx/conf.d/default.conf
