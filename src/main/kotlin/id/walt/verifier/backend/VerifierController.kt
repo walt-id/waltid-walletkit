@@ -51,15 +51,15 @@ object VerifierController {
       }
 
   fun listWallets(ctx: Context) {
-    ctx.json(WalletConfiguration.getDefaultWalletConfigurations().values)
+    ctx.json(VerifierConfig.config.wallets.values)
   }
 
   fun presentVid(ctx: Context) {
     val walletId = ctx.queryParam("walletId")
-    if(walletId.isNullOrEmpty() || !WalletConfiguration.getDefaultWalletConfigurations().contains(walletId)) {
+    if(walletId.isNullOrEmpty() || !VerifierConfig.config.wallets.contains(walletId)) {
       ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet ID given")
     } else {
-      val wallet = WalletConfiguration.getDefaultWalletConfigurations().get(walletId)!!
+      val wallet = VerifierConfig.config.wallets.get(walletId)!!
       ctx.status(HttpCode.FOUND).header("Location", "${wallet.url}/${wallet.presentPath}"+
           "?${SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableId").toUriQueryString()}")
     }
@@ -67,6 +67,6 @@ object VerifierController {
 
   fun verifySIOPv2Request(ctx: Context) {
     // TODO: verify siop response
-    ctx.status(HttpCode.FOUND).header("Location", "http://localhost:4000/success")
+    ctx.status(HttpCode.FOUND).header("Location", "${VerifierConfig.config.verifierUiUrl}/success/")
   }
 }
