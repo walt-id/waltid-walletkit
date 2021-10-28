@@ -1,6 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
-import id.walt.custodian.CustodianService
+import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.IdToken
 import id.walt.model.siopv2.*
@@ -96,10 +96,10 @@ object WalletController {
 
   fun postPresentationExchange(ctx: Context) {
     val pe = ctx.bodyAsClass<PresentationExchange>()
-    val myCredentials = CustodianService.getService().listCredentials()
+    val myCredentials = Custodian.getService().listCredentials()
     val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
-    val vp = CustodianService.getService().createPresentation(selectedCredentials, pe.subject, null, pe.request.nonce)
+    val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, pe.request.nonce)
     val siopv2Response = SIOPv2Response(
       pe.subject,
       SIOPv2IDToken(
@@ -120,7 +120,7 @@ object WalletController {
   }
 
   private fun getClaimedCredentials(subject: String, req: SIOPv2Request): List<ClaimedCredential> {
-    val myCredentials = CustodianService.getService().listCredentials()
+    val myCredentials = Custodian.getService().listCredentials()
     return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
       myCredentials.filter { it.type.contains(indesc.schema.substringAfterLast("/")) &&
                               VcUtils.getHolder(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
