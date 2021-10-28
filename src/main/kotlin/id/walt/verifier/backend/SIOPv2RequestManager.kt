@@ -16,8 +16,8 @@ object SIOPv2RequestManager {
   fun newRequest(schemaUri: String): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
     val req = SIOPv2Request(
-      client_id = "http://localhost:8080/verifier-api/verify/$nonce",
-      redirect_uri = "http://localhost:8080/verifier-api/verify/$nonce",
+      client_id = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
+      redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
       nonce = nonce,
       registration = Registration(client_name = "Walt.id Verifier Portal", client_purpose = "Verification of ${Path.of(URL(schemaUri).path).fileName}"),
       expiration = Instant.now().epochSecond + 24*60*60,

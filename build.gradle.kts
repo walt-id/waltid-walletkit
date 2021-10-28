@@ -26,7 +26,7 @@ dependencies {
     implementation("com.beust:klaxon:5.5")
 
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.0-SNAPSHOT-LOCAL")
+    implementation("id.walt:waltid-ssi-kit:1.0-SNAPSHOT-SIOPV2")
     implementation("id.walt:waltid-ssikit-vclib:1.4.9")
 
     // Service-Matrix
@@ -46,5 +46,5 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-    mainClass.set("MainKt")
+    mainClass.set("id.walt.webwallet.backend.MainKt")
 }
