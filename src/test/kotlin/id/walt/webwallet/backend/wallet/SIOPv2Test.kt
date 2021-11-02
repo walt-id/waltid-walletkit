@@ -7,7 +7,6 @@ import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.siopv2.SIOPv2IDToken
 import id.walt.model.siopv2.SIOPv2Request
-import id.walt.model.siopv2.SIOPv2VPToken
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.WaltContext
@@ -104,16 +103,13 @@ class SIOPv2Test : AnnotationSpec() {
     peResponse.id_token shouldNotBe null
     peResponse.vp_token shouldNotBe null
     JwtService.getService().verify(peResponse.id_token) shouldBe true
-    JwtService.getService().verify(peResponse.vp_token) shouldBe true
 
     val id_token = Klaxon().parse<SIOPv2IDToken>(JWTParser.parse(peResponse.id_token).jwtClaimsSet.toString())
-    val vp_token = Klaxon().parse<SIOPv2VPToken>(JWTParser.parse(peResponse.vp_token).jwtClaimsSet.toString())
 
     id_token!!.subject shouldBe subjectDid
-    vp_token!!.vp_token!! shouldHaveSize 1
-    vp_token!!.vp_token!!.first().presentation.toCredential() should beOfType<VerifiablePresentation>()
-    (vp_token!!.vp_token!!.first().presentation.toCredential() as VerifiablePresentation).verifiableCredential shouldHaveSize 1
-    (vp_token!!.vp_token!!.first().presentation.toCredential() as VerifiablePresentation).verifiableCredential.first().id shouldBe selectedCC.credentialId
+    peResponse.vp_token.toCredential() should beOfType<VerifiablePresentation>()
+    (peResponse.vp_token.toCredential() as VerifiablePresentation).verifiableCredential shouldHaveSize 1
+    (peResponse.vp_token.toCredential() as VerifiablePresentation).verifiableCredential.first().id shouldBe selectedCC.credentialId
 
   }
 }

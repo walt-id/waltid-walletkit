@@ -18,6 +18,7 @@ object SIOPv2RequestManager {
     val req = SIOPv2Request(
       client_id = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
       redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
+      response_mode = "form_post",
       nonce = nonce,
       registration = Registration(client_name = "Walt.id Verifier Portal", client_purpose = "Verification of ${Path.of(URL(schemaUri).path).fileName}"),
       expiration = Instant.now().epochSecond + 24*60*60,
@@ -28,7 +29,7 @@ object SIOPv2RequestManager {
             input_descriptors = listOf(
               InputDescriptor(
                 id = "1",
-                schema = schemaUri
+                schema = VpSchema(uri = schemaUri)
               )
             )
           )
