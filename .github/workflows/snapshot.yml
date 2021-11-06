@@ -36,7 +36,8 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
         with:
-          arguments: build publish --no-daemon
+        # arguments: build publish --no-daemon
+          arguments: build --no-daemon
       - name: Docker Build and Push SNAPSHOT
         uses: philpotisk/github-action-docker-build-push@master
         env:
