@@ -1,0 +1,24 @@
+package id.walt.verifier.backend
+
+import com.beust.klaxon.Klaxon
+import java.io.File
+
+data class VerifierConfig(
+    val verifierUiUrl: String = "http://localhost:4000",
+    val verifierApiUrl: String = "http://localhost:8080/verifier-api",
+    val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations()
+) {
+    companion object {
+        const val CONFIG_FILE = "verifier-config.json"
+        var config: VerifierConfig
+
+        init {
+            val cf = File(CONFIG_FILE)
+            config = if (cf.exists()) {
+                Klaxon().parse<VerifierConfig>(cf) ?: VerifierConfig()
+            } else {
+                VerifierConfig()
+            }
+        }
+    }
+}
