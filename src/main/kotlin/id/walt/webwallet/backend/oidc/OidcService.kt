@@ -1,9 +1,9 @@
 package id.walt.webwallet.backend.oidc
 
+import id.walt.webwallet.backend.oidc.requests.*
 import id.walt.webwallet.backend.oidc.responses.OidcConsentResponse
 import id.walt.webwallet.backend.oidc.responses.OidcTokenResponse
 import id.walt.webwallet.backend.oidc.responses.OidcUserInfoResponse
-import id.walt.webwallet.backend.oidc.requests.*
 import org.slf4j.LoggerFactory
 
 
