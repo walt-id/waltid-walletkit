@@ -100,30 +100,31 @@ object WalletController {
     val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
     val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, pe.request.nonce)
-    val siopv2Response = SIOPv2Response(
-      pe.subject,
-      SIOPv2IDToken(
+    val id_token = SIOPv2IDToken(
         subject = pe.subject,
         client_id = pe.request.client_id,
-        nonce = pe.request.nonce
-      ),
-      SIOPv2VPToken(
-        vp_token = listOf(
-          SIOPv2Presentation.createFromVPString(vp)
+        nonce = pe.request.nonce,
+        vpTokenRef = VpTokenRef(
+          presentation_submission = PresentationSubmission(
+            id = "1",
+            definition_id = "1",
+            descriptor_map = listOf(
+              PresentationDescriptor.fromVP("1", vp)
+            )
+          )
         )
-      )
     )
     ctx.json(PresentationExchangeResponse(
-      id_token = siopv2Response.getIdToken(),
-      vp_token = siopv2Response.getVpToken()
+      id_token = id_token.sign(),
+      vp_token = vp
     ))
   }
 
   private fun getClaimedCredentials(subject: String, req: SIOPv2Request): List<ClaimedCredential> {
     val myCredentials = Custodian.getService().listCredentials()
     return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
-      myCredentials.filter { it.type.contains(indesc.schema.substringAfterLast("/")) &&
-                              VcUtils.getHolder(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
+      myCredentials.filter { it.type.contains(indesc.schema.uri.substringAfterLast("/")) &&
+                              VcUtils.getSubject(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
         ClaimedCredential(indesc.id, cred.id!!)
       }
       }?.toList() ?: listOf()

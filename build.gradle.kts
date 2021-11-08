@@ -21,13 +21,13 @@ repositories {
 }
 
 dependencies {
-    implementation("io.javalin:javalin-bundle:4.0.0")
+    implementation("io.javalin:javalin-bundle:4.1.1")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.5")
 
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.0-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.4.9")
+    implementation("id.walt:waltid-ssi-kit:1.0.1")
+    implementation("id.walt:waltid-ssikit-vclib:1.5.1")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.0.1")
