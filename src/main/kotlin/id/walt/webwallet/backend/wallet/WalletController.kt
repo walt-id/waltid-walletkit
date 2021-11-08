@@ -124,7 +124,7 @@ object WalletController {
     val myCredentials = Custodian.getService().listCredentials()
     return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
       myCredentials.filter { it.type.contains(indesc.schema.uri.substringAfterLast("/")) &&
-                              VcUtils.getHolder(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
+                              VcUtils.getSubject(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
         ClaimedCredential(indesc.id, cred.id!!)
       }
       }?.toList() ?: listOf()
