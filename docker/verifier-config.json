@@ -5,7 +5,7 @@
     "walt.id": {
       "id": "walt.id",
       "url": "http://localhost:8080",
-      "presentPath": "verify/",
+      "presentPath": "CredentialRequest/",
       "description": "walt.id web wallet"
     }
   }
