@@ -3,7 +3,6 @@ package id.walt.webwallet.backend
 import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
-import cc.vileda.openapi.dsl.securityScheme
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.WaltContext
@@ -13,7 +12,7 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.context.WalletContextManager
 import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
-import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.core.util.RouteOverviewPlugin
 import io.javalin.plugin.openapi.InitialConfigurationCreator
 import io.javalin.plugin.openapi.OpenApiOptions
@@ -21,16 +20,14 @@ import io.javalin.plugin.openapi.OpenApiPlugin
 import io.javalin.plugin.openapi.ui.ReDocOptions
 import io.javalin.plugin.openapi.ui.SwaggerOptions
 import io.swagger.v3.oas.models.OpenAPI
-import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
-import javalinjwt.JWTAccessManager
 
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<WaltContext>(WalletContextManager)
 
-    val app = Javalin.create{ config ->
+    val app = Javalin.create { config ->
         config.apply {
             accessManager(JWTService)
             registerPlugin(RouteOverviewPlugin("/api-routes"))
