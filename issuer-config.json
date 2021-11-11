@@ -1,10 +1,10 @@
 {
-  "verifierUiUrl": "http://localhost:8081",
-  "verifierApiUrl": "http://localhost:8081/verifier-api",
+  "issuerUiUrl": "http://localhost:5000",
+  "issuerApiUrl": "http://localhost:8080/issuer-api",
   "wallets": {
     "walt.id": {
       "id": "walt.id",
-      "url": "http://localhost:8080",
+      "url": "http://localhost:3000",
       "presentPath": "CredentialRequest/",
       "receivePath" : "ReceiveCredential/",
       "description": "walt.id web wallet"

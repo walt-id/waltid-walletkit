@@ -26,7 +26,7 @@ dependencies {
     implementation("com.beust:klaxon:5.5")
 
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.0.1")
+    implementation("id.walt:waltid-ssi-kit:1.1-SNAPSHOT")
     implementation("id.walt:waltid-ssikit-vclib:1.5.1")
 
     // Service-Matrix

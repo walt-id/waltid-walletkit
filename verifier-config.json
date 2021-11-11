@@ -5,7 +5,8 @@
     "walt.id": {
       "id": "walt.id",
       "url": "http://localhost:3000",
-      "presentPath": "CredentialRequest",
+      "presentPath": "CredentialRequest/",
+      "receivePath" : "ReceiveCredential/",
       "description": "walt.id web wallet"
     }
   }
