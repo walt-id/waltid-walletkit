@@ -3,6 +3,7 @@ package id.walt.webwallet.backend
 import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
+import id.walt.issuer.backend.IssuerController
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.WaltContext
@@ -68,6 +69,9 @@ fun main(args: Array<String>) {
         }
         path("verifier-api") {
             VerifierController.routes
+        }
+        path("issuer-api") {
+            IssuerController.routes
         }
     }
 }

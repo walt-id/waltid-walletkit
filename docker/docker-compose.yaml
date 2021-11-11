@@ -1,14 +1,14 @@
 version: "3.3"
 services:
   wallet-backend:
-    image: waltid-wallet-backend:latest
+    image: waltid/ssikit-wallet-backend:latest
     volumes:
       - ./verifier-config.json:/Webwallet-Backend/verifier-config.json
       - ../data:/Webwallet-Backend/data
   wallet-ui:
-    image: waltid-wallet-ui:latest
+    image: waltid/ssikit-web-wallet:latest
   verifier-ui:
-    image: waltid-verifier:latest
+    image: waltid/ssikit-verifier-portal:latest
   ingress:
     image: nginx:1.15.10-alpine
     ports:

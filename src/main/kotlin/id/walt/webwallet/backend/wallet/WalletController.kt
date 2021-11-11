@@ -1,5 +1,8 @@
 package id.walt.webwallet.backend.wallet
 
+import com.beust.klaxon.Converter
+import com.beust.klaxon.JsonValue
+import com.beust.klaxon.Klaxon
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.IdToken
@@ -8,12 +11,21 @@ import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
 import id.walt.services.vc.VcUtils
 import id.walt.vclib.Helpers.encode
+import id.walt.vclib.Helpers.toCredential
+import id.walt.vclib.model.VerifiableCredential
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import okhttp3.internal.wait
+import java.net.URI
+import java.net.URLEncoder
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
+import java.nio.charset.StandardCharsets
 
 object WalletController {
   val routes
@@ -76,6 +88,36 @@ object WalletController {
             .json<PresentationExchangeResponse>("200"),
           WalletController::postPresentationExchange
         ), UserRole.AUTHORIZED)
+        // issuance
+        get("credentialIssuance", documented(
+          document().operation {
+            it.summary("Parse SIOPv2 request from URL query parameters")
+              .operationId("getCredentialIssuanceRequest")
+              .addTagsItem("SIOPv2")
+          }
+            .queryParam<String>("response_type")
+            .queryParam<String>("client_id")
+            .queryParam<String>("redirect_uri")
+            .queryParam<String>("scope")
+            .queryParam<String>("nonce")
+            .queryParam<String>("registration")
+            .queryParam<Long>("exp")
+            .queryParam<Long>("iat")
+            .queryParam<String>("claims")
+            .queryParam<String>("subject_did")
+            .json<PresentationExchange>("200"),
+          WalletController::getPresentationExchange // same as getPresentationExchange
+        ), UserRole.AUTHORIZED)
+        post("credentialIssuance", documented(
+          document().operation {
+            it.summary("Post presentation required by issuer, to issue credentials")
+              .operationId("postCredentialIssuanceResponse")
+              .addTagsItem("SIOPv2")
+          }
+            .body<PresentationExchange>()
+            .json<PresentationExchangeResponse>("200"),
+          WalletController::postCredentialIssuanceResponse
+        ), UserRole.AUTHORIZED)
       }
     }
 
@@ -94,30 +136,79 @@ object WalletController {
     ctx.json(PresentationExchange(did, req, getClaimedCredentials(did, req)))
   }
 
-  fun postPresentationExchange(ctx: Context) {
+  private fun handlePresentationResponse(ctx: Context): Any? {
     val pe = ctx.bodyAsClass<PresentationExchange>()
     val myCredentials = Custodian.getService().listCredentials()
     val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
-    val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, pe.request.nonce)
+    val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, challenge = pe.request.nonce)
     val id_token = SIOPv2IDToken(
-        subject = pe.subject,
-        client_id = pe.request.client_id,
-        nonce = pe.request.nonce,
-        vpTokenRef = VpTokenRef(
-          presentation_submission = PresentationSubmission(
-            id = "1",
-            definition_id = "1",
-            descriptor_map = listOf(
-              PresentationDescriptor.fromVP("1", vp)
-            )
+      subject = pe.subject,
+      client_id = pe.request.client_id,
+      nonce = pe.request.nonce,
+      vpTokenRef = VpTokenRef(
+        presentation_submission = PresentationSubmission(
+          id = "1",
+          definition_id = "1",
+          descriptor_map = listOf(
+            PresentationDescriptor.fromVP("1", vp)
           )
         )
+      )
     )
-    ctx.json(PresentationExchangeResponse(
+    val per = PresentationExchangeResponse(
       id_token = id_token.sign(),
       vp_token = vp
-    ))
+    )
+
+    if(pe.request.response_mode == "form_post" || pe.request.response_mode == "fragment") {
+      // trigger form post or call redirect uri with fragment from web UI in browser
+      ctx.json(per)
+      return per
+    } else if(pe.request.response_mode == "post") {
+      // post response to redirect uri and return result (avoiding CORS)
+      val client = HttpClient.newBuilder().build();
+      val request = HttpRequest.newBuilder()
+        .uri(URI.create(pe.request.redirect_uri))
+        .POST(formData(mapOf("id_token" to per.id_token, "vp_token" to per.vp_token)))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .build()
+      val response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      //response.headers().map().forEach({ ctx.header(it.key, it.value.first())})
+      val body = response.body()
+      ctx.status(response.statusCode()).result(body)
+      return body
+    } else {
+      ctx.status(HttpCode.BAD_REQUEST).result("Unknown response mode ${pe.request.response_mode}")
+      return null
+    }
+  }
+
+  fun postPresentationExchange(ctx: Context) {
+    handlePresentationResponse(ctx)
+  }
+
+  val credentialConverter = object: Converter {
+    override fun canConvert(cls: Class<*>)
+        = cls == VerifiableCredential::class.java
+
+    override fun toJson(value: Any): String
+        = (value as VerifiableCredential).encode()
+
+    override fun fromJson(jv: JsonValue)
+        = jv.toString().toCredential()
+
+  }
+
+  fun postCredentialIssuanceResponse(ctx: Context) {
+    val credentialsResponse = handlePresentationResponse(ctx)
+    if(credentialsResponse == null) {
+      return
+    }
+    val credentials = Klaxon().parseArray<VerifiableCredential>(credentialsResponse as String)
+    credentials?.forEach {
+      Custodian.getService().storeCredential(it.id!!, it)
+    }
   }
 
   private fun getClaimedCredentials(subject: String, req: SIOPv2Request): List<ClaimedCredential> {
@@ -129,6 +220,17 @@ object WalletController {
       }
       }?.toList() ?: listOf()
   }
+
+  private fun formData(data: Map<String, String>): HttpRequest.BodyPublisher? {
+
+    val res = data.map {(k, v) -> "${(URLEncoder.encode(k, StandardCharsets.UTF_8))}=${URLEncoder.encode(v, StandardCharsets.UTF_8)}"}
+      .joinToString("&")
+
+    return HttpRequest.BodyPublishers.ofString(res)
+  }
+
+
+
 
 
 }

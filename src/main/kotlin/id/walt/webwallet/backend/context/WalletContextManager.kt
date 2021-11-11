@@ -19,11 +19,24 @@ object WalletContextManager : WaltContext() {
         get() = threadContexts[Thread.currentThread().id]
 
     fun setCurrentUserContext(info: UserInfo) {
-        threadContexts[Thread.currentThread().id] = userContexts.get(info.email)
+        setCurrentUserContext(userContexts.get(info.email))
+    }
+
+    fun setCurrentUserContext(context: UserContext) {
+        threadContexts[Thread.currentThread().id] = context
     }
 
     fun resetCurrentUserContext() {
         threadContexts.remove(Thread.currentThread().id)
+    }
+
+    fun <R> runWith(context: UserContext, action: () -> R): R {
+        try {
+            setCurrentUserContext(context)
+            return action.invoke()
+        } finally {
+            resetCurrentUserContext()
+        }
     }
 
     val preRequestHandler
