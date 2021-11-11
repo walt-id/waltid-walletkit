@@ -4,11 +4,16 @@ services:
     image: waltid/ssikit-wallet-backend:latest
     volumes:
       - ./verifier-config.json:/Webwallet-Backend/verifier-config.json
+      - ./issuer-config.json:/Webwallet-Backend/issuer-config.json
       - ../data:/Webwallet-Backend/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   wallet-ui:
     image: waltid/ssikit-web-wallet:latest
   verifier-ui:
     image: waltid/ssikit-verifier-portal:latest
+  issuer-ui:
+    image: waltid/ssikit-issuer-portal:latest
   ingress:
     image: nginx:1.15.10-alpine
     ports:
@@ -18,6 +23,10 @@ services:
         mode: host
       - target: 81
         published: 8081
+        protocol: tcp
+        mode: host
+      - target: 82
+        published: 8082
         protocol: tcp
         mode: host
     volumes:
