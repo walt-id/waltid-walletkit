@@ -6,7 +6,7 @@ import cc.vileda.openapi.dsl.security
 import id.walt.issuer.backend.IssuerController
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
-import id.walt.services.context.WaltContext
+import id.walt.services.context.ContextManager
 import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.JWTService
@@ -28,7 +28,7 @@ val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
 
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
-    ServiceRegistry.registerService<WaltContext>(WalletContextManager)
+    ServiceRegistry.registerService<ContextManager>(WalletContextManager)
 
     val app = Javalin.create { config ->
         config.apply {
