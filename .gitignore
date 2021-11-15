@@ -3,6 +3,7 @@
 *.iml
 *.iws
 out
+data
 
 # Mac
 .DS_Store

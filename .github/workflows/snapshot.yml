@@ -52,4 +52,4 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
           port: ${{ secrets.SSH_PORT }}
-          script: docker rm $(docker stop $(docker ps -a -q --filter ancestor=waltid/ssikit-wallet-backend:latest --format="{{.ID}}")); docker pull waltid/ssikit-wallet-backend:latest && docker run -itd waltid/ssikit-wallet-backend:latest
+          script: docker rm $(docker stop $(docker ps -a -q --filter ancestor=waltid/ssikit-wallet-backend:latest --format="{{.ID}}")); docker pull waltid/ssikit-wallet-backend:latest && docker run -itd -v /home/wallet-data:/wallet-data -e WALTID_DATA_ROOT=/wallet-data waltid/ssikit-wallet-backend:latest
