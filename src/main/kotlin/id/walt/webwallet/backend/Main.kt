@@ -24,6 +24,8 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 
+val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
+
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<WaltContext>(WalletContextManager)

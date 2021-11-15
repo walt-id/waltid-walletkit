@@ -2,10 +2,10 @@ version: "3.3"
 services:
   wallet-backend:
     image: waltid/ssikit-wallet-backend:latest
+    environment:
+      WALTID_DATA_ROOT: ./data-root
     volumes:
-      - ./verifier-config.json:/Webwallet-Backend/verifier-config.json
-      - ./issuer-config.json:/Webwallet-Backend/issuer-config.json
-      - ../data:/Webwallet-Backend/data
+      - .:/Webwallet-Backend/data-root
     extra_hosts:
       - "host.docker.internal:host-gateway"
   wallet-ui:
