@@ -2,54 +2,22 @@ package id.walt.webwallet.backend.context
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.LoadingCache
-import id.walt.services.context.WaltContext
-import id.walt.services.hkvstore.HKVStoreService
-import id.walt.services.keystore.KeyStoreService
-import id.walt.services.vcstore.VcStoreService
+import id.walt.services.context.Context
+import id.walt.services.context.WaltIdContextManager
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import io.javalin.http.Handler
 
-object WalletContextManager : WaltContext() {
+object WalletContextManager : WaltIdContextManager() {
 
-    val userContexts: LoadingCache<String, UserContext> = CacheBuilder.newBuilder().maximumSize(256).build(UserContextLoader)
-    val threadContexts: HashMap<Long, UserContext> = HashMap()
+    val userContexts: LoadingCache<String, Context> = CacheBuilder.newBuilder().maximumSize(256).build(UserContextLoader)
 
-    val currentContext
-        get() = threadContexts[Thread.currentThread().id]
-
-    fun setCurrentUserContext(info: UserInfo) {
-        setCurrentUserContext(userContexts.get(info.email))
-    }
-
-    fun setCurrentUserContext(context: UserContext) {
-        threadContexts[Thread.currentThread().id] = context
-    }
-
-    fun resetCurrentUserContext() {
-        threadContexts.remove(Thread.currentThread().id)
-    }
-
-    fun <R> runWith(context: UserContext, action: () -> R): R {
-        try {
-            setCurrentUserContext(context)
-            return action.invoke()
-        } finally {
-            resetCurrentUserContext()
-        }
-    }
+    fun getUserContext(userInfo: UserInfo) = userContexts.get(userInfo.email)
 
     val preRequestHandler
-        get() = Handler { ctx -> JWTService.getUserInfo(ctx)?.let { setCurrentUserContext(it) } }
+        get() = Handler { ctx -> JWTService.getUserInfo(ctx)?.let { setCurrentContext(getUserContext(it)) } }
 
     val postRequestHandler
-        get() = Handler { ctx -> resetCurrentUserContext() }
-
-    override fun getHKVStore(): HKVStoreService = currentContext!!.hkvStore
-
-    override fun getKeyStore(): KeyStoreService = currentContext!!.keyStore
-
-    override fun getVcStore(): VcStoreService = currentContext!!.vcStore
-
+        get() = Handler { ctx -> resetCurrentContext() }
 
 }

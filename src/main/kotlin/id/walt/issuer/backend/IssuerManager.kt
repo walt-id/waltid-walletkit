@@ -76,8 +76,12 @@ object IssuerManager {
     // TODO: verify id_token!!
     return WalletContextManager.runWith(issuerContext) {
       if(VcUtils.getChallenge(vp_token) == nonce &&
+        // TODO: verify id_token subject
         //id_token.subject == VcUtils.getSubject(vp_token) &&
-        Auditor.getService().verify(vp_token.encode(), listOf(SignaturePolicy())).overallStatus) {
+        // TODO: verify VP signature (import public key for did, currently not supported for did:key!)
+        //Auditor.getService().verify(vp_token.encode(), listOf(SignaturePolicy())).overallStatus
+        true
+      ) {
         val selectedCredentials = listIssuableCredentialsFor(issuanceReq.user).filter { issuanceReq.selectedCredentialIds.contains(it.id) }
         selectedCredentials.map {
           Signatory.getService().issue(it.type, ProofConfig(issuerDid = issuerDid, proofType = ProofType.LD_PROOF, subjectDid = VcUtils.getSubject(vp_token)))

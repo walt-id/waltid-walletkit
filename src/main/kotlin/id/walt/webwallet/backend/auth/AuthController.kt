@@ -1,5 +1,9 @@
 package id.walt.webwallet.backend.auth
 
+import id.walt.model.DidMethod
+import id.walt.services.context.ContextManager
+import id.walt.services.did.DidService
+import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
@@ -33,6 +37,11 @@ object AuthController {
     fun login(ctx: Context) {
         val userInfo = ctx.bodyAsClass(UserInfo::class.java)
         // TODO: verify login credentials!!
+        ContextManager.runWith(WalletContextManager.getUserContext(userInfo)) {
+            if(DidService.listDids().size == 0) {
+                DidService.create(DidMethod.key)
+            }
+        }
         ctx.json(UserInfo(userInfo.email).apply { token = JWTService.toJWT(userInfo) })
     }
 
