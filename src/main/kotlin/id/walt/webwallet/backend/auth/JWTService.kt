@@ -14,7 +14,7 @@ import java.util.*
 
 object JWTService : AccessManager {
 
-    val secret = UUID.randomUUID().toString()
+    val secret = System.getenv("WALTID_WALLET_AUTH_SECRET") ?: UUID.randomUUID().toString()
     val algorithm: Algorithm = Algorithm.HMAC256(secret)
 
     val provider = JWTProvider(
