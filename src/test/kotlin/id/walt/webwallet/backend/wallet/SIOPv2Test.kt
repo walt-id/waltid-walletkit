@@ -9,7 +9,7 @@ import id.walt.model.siopv2.SIOPv2IDToken
 import id.walt.model.siopv2.SIOPv2Request
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
-import id.walt.services.context.WaltContext
+import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
@@ -46,7 +46,7 @@ import java.nio.charset.StandardCharsets
 class SIOPv2Test : AnnotationSpec() {
 
   val testUserContext = UserContext(HKVKeyStoreService(), HKVVcStoreService(), FileSystemHKVStore(FilesystemStoreConfig("data/test@mail.com")))
-  val waltContext = mockk<WaltContext>(relaxed = true)
+  val waltContext = mockk<WalletContextManager>(relaxed = true)
   private lateinit var siopv2Request: SIOPv2Request
   private lateinit var subjectDid: String
   private lateinit var siopv2RequestParams: Map<String, String>
@@ -55,12 +55,12 @@ class SIOPv2Test : AnnotationSpec() {
 
   @BeforeAll
   fun init() {
-    every { waltContext.getHKVStore() } returns testUserContext.hkvStore
-    every { waltContext.getKeyStore() } returns testUserContext.keyStore
-    every { waltContext.getVcStore() } returns testUserContext.vcStore
+    every { waltContext.hkvStore } returns testUserContext.hkvStore
+    every { waltContext.keyStore } returns testUserContext.keyStore
+    every { waltContext.vcStore } returns testUserContext.vcStore
 
     ServiceMatrix("service-matrix.properties")
-    ServiceRegistry.registerService<WaltContext>(waltContext)
+    ServiceRegistry.registerService<ContextManager>(waltContext)
 
     siopv2Request = SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableId")
     subjectDid = DidService.create(DidMethod.ebsi)
