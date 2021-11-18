@@ -45,11 +45,11 @@ jobs:
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
           DOCKER_FILE: Dockerfile
           CONTAINER_TAG: waltid/ssikit-wallet-backend:latest
+      - name: Prepare CD
+        run: sed "s/_DEFAULT_DEPLOYMENT_/$GITHUB_SHA/g" k8s/deployment.yaml > k8s/deployment_mod.yaml
       - name: Continuous deployment
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT }}
-          script: docker rm $(docker stop $(docker ps -a -q --filter ancestor=waltid/ssikit-wallet-backend:latest --format="{{.ID}}")); docker pull waltid/ssikit-wallet-backend:latest && docker run -itd -v /home/wallet-data:/wallet-data -e WALTID_DATA_ROOT=/wallet-data -p 6060:8080 waltid/ssikit-wallet-backend:latest
+        uses: actions-hub/kubectl@master
+          env:
+            KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+          with:
+            args: apply -f k8s/deployment_mod.yaml
