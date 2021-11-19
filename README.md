@@ -23,10 +23,12 @@ The provided services include:
 * **Presentation exchange**
   * Support for presentation exchange based on OIDC-SIOPv2 spec
 
-###### Issuer portal backend
-* _To be announced_
+###### Related components
+* Web wallet frontend https://github.com/walt-id/waltid-web-wallet
+* Verifier portal https://github.com/walt-id/waltid-verifier-portal
+* Issuer portal https://github.com/walt-id/waltid-issuer-portal
 
-### Usage
+## Usage
 
 ###### Verifier portal and wallet configuration:
 
@@ -65,9 +67,29 @@ A **swagger documentation** is available under
 
 **Verifier portal API** is available under the context path `/verifier-api/`
 
-### Docker Compose
+## Build & run the Web Wallet Backend
 
-To spawn the backend together with the wallet frontend and verifier frontend, one can make use of the docker-compose configuration in
+_Gradle_ or _Docker_ can be used to build this project independently. Once running, one can access the Swagger API at http://localhost:8080/api/swagger
+
+### Gradle
+
+    gradle build
+
+unzip package under build/distributions and switch into the new folder. Copy config-files _service-matrix.properties_ and _signatory.conf_ from the root folder and run the bash-script:
+
+    ./bin/waltid-wallet-backend
+
+### Docker
+
+    docker build -t waltid/ssikit-wallet-backend .
+
+
+    docker run -it -p 8080:8080 waltid/ssikit-wallet-backend
+
+## Running all components with Docker Compose
+
+To spawn the backend together with the wallet frontend, the issuer- and the verifier-portal, one can make use of the docker-compose configuration located in folder:
+
 `./docker/`.
 
 See the following examples for more information: 
