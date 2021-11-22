@@ -3,10 +3,10 @@ COPY ./ /
 RUN ./gradlew installDist
 
 FROM openjdk:16-jdk-slim
-COPY service-matrix.properties /Webwallet-Backend/
-COPY signatory.conf /Webwallet-Backend/
+COPY service-matrix.properties /waltid-wallet-backend/
+COPY signatory.conf /waltid-wallet-backend/
 COPY --from=buildstage /build/install/ /
 
-WORKDIR /Webwallet-Backend
+WORKDIR /waltid-wallet-backend
 
-ENTRYPOINT ["/Webwallet-Backend/bin/Webwallet-Backend"]
+ENTRYPOINT ["/waltid-wallet-backend/bin/waltid-wallet-backend"]
