@@ -102,7 +102,7 @@ object IssuerController {
     ctx.result(
       "${wallet.url}/${wallet.receivePath}" +
           "?${
-            IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuableIds).toUriQueryString()
+            IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuableIds, ctx.queryParamMap()).toUriQueryString()
           }")
   }
 

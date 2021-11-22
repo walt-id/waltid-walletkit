@@ -51,7 +51,7 @@ object IssuerManager {
     )
   }
 
-  fun newIssuanceRequest(user: String, selectedCredentialIds: Set<String>): SIOPv2Request {
+  fun newIssuanceRequest(user: String, selectedCredentialIds: Set<String>, params: Map<String, List<String>>): SIOPv2Request {
     val selectedCredentials = listIssuableCredentialsFor(user).filter { selectedCredentialIds.contains(it.id) }
     val nonce = UUID.randomUUID().toString()
     val req = SIOPv2Request(
@@ -64,7 +64,7 @@ object IssuerManager {
       issuedAt = Instant.now().epochSecond,
       claims = Claims()
     )
-    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedCredentialIds))
+    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedCredentialIds, params))
     return req
   }
 
@@ -84,7 +84,11 @@ object IssuerManager {
       ) {
         val selectedCredentials = listIssuableCredentialsFor(issuanceReq.user).filter { issuanceReq.selectedCredentialIds.contains(it.id) }
         selectedCredentials.map {
-          Signatory.getService().issue(it.type, ProofConfig(issuerDid = issuerDid, proofType = ProofType.LD_PROOF, subjectDid = VcUtils.getSubject(vp_token)))
+          Signatory.getService().issue(it.type,
+            ProofConfig(issuerDid = issuerDid,
+              proofType = ProofType.LD_PROOF,
+              subjectDid = VcUtils.getSubject(vp_token)),
+            dataProvider = IssuanceRequestDataProvider(issuanceReq))
         }
       } else {
         listOf()
