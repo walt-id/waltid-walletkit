@@ -4,7 +4,7 @@ import id.walt.common.OidcUtil
 import id.walt.model.siopv2.*
 import id.walt.services.jwt.JwtService
 import id.walt.vclib.Helpers.toCredential
-import id.walt.vclib.vclist.VerifiablePresentation
+import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
 import id.walt.verifier.backend.VerifierController

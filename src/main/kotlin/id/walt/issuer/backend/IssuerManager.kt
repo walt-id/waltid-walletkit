@@ -9,16 +9,17 @@ import id.walt.services.did.DidService
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
-import id.walt.services.vc.VcUtils
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.vclib.Helpers.encode
+import id.walt.vclib.VcUtils
+import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.vclist.VerifiablePresentation
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
+import id.walt.webwallet.backend.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URL
@@ -30,7 +31,7 @@ import java.util.concurrent.TimeUnit
 object IssuerManager {
 
   val issuerContext = UserContext(
-    hkvStore = FileSystemHKVStore(FilesystemStoreConfig("data/issuer")),
+    hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/issuer")),
     keyStore = HKVKeyStoreService(),
     vcStore = HKVVcStoreService()
   )
