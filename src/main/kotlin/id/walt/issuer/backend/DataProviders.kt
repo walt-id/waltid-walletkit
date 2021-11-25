@@ -3,9 +3,9 @@ package id.walt.issuer.backend
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.SignatoryDataProvider
 import id.walt.signatory.dateFormat
+import id.walt.vclib.credentials.VerifiableDiploma
+import id.walt.vclib.credentials.VerifiableId
 import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.vclist.VerifiableDiploma
-import id.walt.vclib.vclist.VerifiableId
 import java.util.*
 
 class IssuanceRequestDataProvider(

@@ -9,9 +9,9 @@ import id.walt.model.IdToken
 import id.walt.model.siopv2.*
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
-import id.walt.services.vc.VcUtils
 import id.walt.vclib.Helpers.encode
 import id.walt.vclib.Helpers.toCredential
+import id.walt.vclib.VcUtils
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*

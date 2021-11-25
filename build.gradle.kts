@@ -27,7 +27,7 @@ dependencies {
 
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.1-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.5.1")
+    implementation("id.walt:waltid-ssikit-vclib:1.6.0")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.0.1")
