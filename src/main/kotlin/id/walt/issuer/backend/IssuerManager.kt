@@ -3,22 +3,29 @@ package id.walt.issuer.backend
 import com.google.common.cache.CacheBuilder
 import id.walt.auditor.Auditor
 import id.walt.auditor.SignaturePolicy
+import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.siopv2.*
+import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
+import id.walt.services.essif.EssifClient
+import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
+import id.walt.services.hkvstore.HKVKey
+import id.walt.services.key.KeyService
 import id.walt.services.keystore.HKVKeyStoreService
-import id.walt.services.vc.VcUtils
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.vclib.Helpers.encode
+import id.walt.vclib.VcUtils
+import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.vclist.VerifiablePresentation
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
+import id.walt.webwallet.backend.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URL
@@ -30,7 +37,7 @@ import java.util.concurrent.TimeUnit
 object IssuerManager {
 
   val issuerContext = UserContext(
-    hkvStore = FileSystemHKVStore(FilesystemStoreConfig("data/issuer")),
+    hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/issuer")),
     keyStore = HKVKeyStoreService(),
     vcStore = HKVVcStoreService()
   )
@@ -51,7 +58,7 @@ object IssuerManager {
     )
   }
 
-  fun newIssuanceRequest(user: String, selectedCredentialIds: Set<String>): SIOPv2Request {
+  fun newIssuanceRequest(user: String, selectedCredentialIds: Set<String>, params: Map<String, List<String>>): SIOPv2Request {
     val selectedCredentials = listIssuableCredentialsFor(user).filter { selectedCredentialIds.contains(it.id) }
     val nonce = UUID.randomUUID().toString()
     val req = SIOPv2Request(
@@ -64,7 +71,7 @@ object IssuerManager {
       issuedAt = Instant.now().epochSecond,
       claims = Claims()
     )
-    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedCredentialIds))
+    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedCredentialIds, params))
     return req
   }
 
@@ -84,10 +91,51 @@ object IssuerManager {
       ) {
         val selectedCredentials = listIssuableCredentialsFor(issuanceReq.user).filter { issuanceReq.selectedCredentialIds.contains(it.id) }
         selectedCredentials.map {
-          Signatory.getService().issue(it.type, ProofConfig(issuerDid = issuerDid, proofType = ProofType.LD_PROOF, subjectDid = VcUtils.getSubject(vp_token)))
+          Signatory.getService().issue(it.type,
+            ProofConfig(issuerDid = issuerDid,
+              proofType = ProofType.LD_PROOF,
+              subjectDid = VcUtils.getSubject(vp_token)),
+            dataProvider = IssuanceRequestDataProvider(issuanceReq))
         }
       } else {
         listOf()
+      }
+    }
+  }
+
+  private fun prompt(prompt: String, default: String?): String? {
+    print("$prompt [$default]: ")
+    val input = readLine()
+    return when(input.isNullOrBlank()) {
+      true -> default
+      else -> input
+    }
+  }
+
+  fun initializeInteractively() {
+    val method = prompt("DID method ('key' or 'ebsi') [key]", "key")
+    if(method == "ebsi") {
+      val token = prompt("EBSI bearer token: ", null)
+      if(token.isNullOrEmpty()) {
+        println("EBSI bearer token required, to register EBSI did")
+        return
+      }
+      WalletContextManager.runWith(issuerContext) {
+        DidService.listDids().forEach( { ContextManager.hkvStore.delete(HKVKey("did", "created", it)) })
+        val key =
+          KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
+            ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
+        val did = DidService.create(DidMethod.ebsi, key.id)
+        EssifClient.onboard(did, token)
+        EssifClient.authApi(did)
+        DidEbsiService.getService().registerDid(did, did)
+        println("Issuer DID created and registered: $did")
+      }
+    } else {
+      WalletContextManager.runWith(issuerContext) {
+        DidService.listDids().forEach( { ContextManager.hkvStore.delete(HKVKey("did", "created", it)) })
+        val did = DidService.create(DidMethod.key)
+        println("Issuer DID created: $did")
       }
     }
   }
