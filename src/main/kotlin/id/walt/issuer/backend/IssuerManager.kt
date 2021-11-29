@@ -3,11 +3,17 @@ package id.walt.issuer.backend
 import com.google.common.cache.CacheBuilder
 import id.walt.auditor.Auditor
 import id.walt.auditor.SignaturePolicy
+import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.siopv2.*
+import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
+import id.walt.services.essif.EssifClient
+import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
+import id.walt.services.hkvstore.HKVKey
+import id.walt.services.key.KeyService
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
@@ -93,6 +99,43 @@ object IssuerManager {
         }
       } else {
         listOf()
+      }
+    }
+  }
+
+  private fun prompt(prompt: String, default: String?): String? {
+    print("$prompt [$default]: ")
+    val input = readLine()
+    return when(input.isNullOrBlank()) {
+      true -> default
+      else -> input
+    }
+  }
+
+  fun initializeInteractively() {
+    val method = prompt("DID method ('key' or 'ebsi') [key]", "key")
+    if(method == "ebsi") {
+      val token = prompt("EBSI bearer token: ", null)
+      if(token.isNullOrEmpty()) {
+        println("EBSI bearer token required, to register EBSI did")
+        return
+      }
+      WalletContextManager.runWith(issuerContext) {
+        DidService.listDids().forEach( { ContextManager.hkvStore.delete(HKVKey("did", "created", it)) })
+        val key =
+          KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
+            ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
+        val did = DidService.create(DidMethod.ebsi, key.id)
+        EssifClient.onboard(did, token)
+        EssifClient.authApi(did)
+        DidEbsiService.getService().registerDid(did, did)
+        println("Issuer DID created and registered: $did")
+      }
+    } else {
+      WalletContextManager.runWith(issuerContext) {
+        DidService.listDids().forEach( { ContextManager.hkvStore.delete(HKVKey("did", "created", it)) })
+        val did = DidService.create(DidMethod.key)
+        println("Issuer DID created: $did")
       }
     }
   }
