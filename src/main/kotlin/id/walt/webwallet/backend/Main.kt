@@ -4,6 +4,7 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import id.walt.issuer.backend.IssuerController
+import id.walt.issuer.backend.IssuerManager
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -24,15 +25,20 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 
-internal const val WALLET_BACKEND_PORT = 8080
+internal val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
 
-internal const val WALLET_BACKEND_BIND_ADDRESS = "127.0.0.1"
+internal val WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_BACKEND_BIND_ADDRESS") ?: "127.0.0.1"
 
 internal val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
 
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)
+
+    if(args?.isNotEmpty() == true && args[0] == "--init-issuer") {
+        IssuerManager.initializeInteractively()
+        return
+    }
 
     val app = Javalin.create { config ->
         config.apply {
@@ -63,7 +69,7 @@ fun main(args: Array<String>) {
                 reDoc(ReDocOptions("/api/redoc").title("walt.id wallet backend API"))
             }))
         }
-    }.start(WALLET_BACKEND_BIND_ADDRESS, WALLET_BACKEND_PORT)
+    }.start(WALTID_WALLET_BACKEND_BIND_ADDRESS, WALTID_WALLET_BACKEND_PORT)
     app.before(JWTService.jwtHandler)
     app.before(WalletContextManager.preRequestHandler)
     app.after(WalletContextManager.postRequestHandler)
@@ -81,7 +87,7 @@ fun main(args: Array<String>) {
         }
     }
 
-    println("web wallet backend started at: http://$WALLET_BACKEND_BIND_ADDRESS:$WALLET_BACKEND_PORT")
+    println("web wallet backend started at: http://$WALTID_WALLET_BACKEND_BIND_ADDRESS:$WALTID_WALLET_BACKEND_PORT")
 
-    println("swagger docs are hosted at: http://$WALLET_BACKEND_BIND_ADDRESS:$WALLET_BACKEND_PORT/api/swagger")
+    println("swagger docs are hosted at: http://$WALTID_WALLET_BACKEND_BIND_ADDRESS:$WALTID_WALLET_BACKEND_PORT/api/swagger")
 }

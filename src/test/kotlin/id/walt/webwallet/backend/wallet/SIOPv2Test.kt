@@ -19,8 +19,8 @@ import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
 import id.walt.vclib.Helpers.toCredential
+import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.vclist.VerifiablePresentation
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext

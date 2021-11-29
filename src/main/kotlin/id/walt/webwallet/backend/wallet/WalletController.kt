@@ -3,15 +3,20 @@ package id.walt.webwallet.backend.wallet
 import com.beust.klaxon.Converter
 import com.beust.klaxon.JsonValue
 import com.beust.klaxon.Klaxon
+import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
+import id.walt.model.DidUrl
 import id.walt.model.IdToken
 import id.walt.model.siopv2.*
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
-import id.walt.services.vc.VcUtils
+import id.walt.services.essif.EssifClient
+import id.walt.services.essif.didebsi.DidEbsiService
+import id.walt.services.key.KeyService
 import id.walt.vclib.Helpers.encode
 import id.walt.vclib.Helpers.toCredential
+import id.walt.vclib.VcUtils
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
@@ -44,11 +49,12 @@ object WalletController {
         }
         // create new DID
         path("create") {
-          get(
+          post(
             documented(document().operation{
-              it.summary("Create new DID").operationId("createDid").addTagsItem("wallet")
+              it.summary("Create new DID").description("Creates and registers DID. For EBSI: needs bearer token to be given as form parameter 'ebsiBearerToken', for DID registration.").operationId("createDid").addTagsItem("wallet")
             }
               .queryParam<DidMethod>("method")
+              .formParam<String>("ebsiBearerToken", required = false)
               .result<String>("200"),
               WalletController::createDid
             ), UserRole.AUTHORIZED
@@ -127,7 +133,28 @@ object WalletController {
 
   fun createDid(ctx:Context) {
     val method = DidMethod.valueOf(ctx.queryParam("method")!!)
-    ctx.result(DidService.create(method))
+
+    if(DidService.listDids().firstOrNull { d -> DidUrl.from(d).method == method.name } != null) {
+      ctx.status(HttpCode.BAD_REQUEST).result("A DID with the given method already exists")
+      return
+    }
+
+    if(method == DidMethod.ebsi) {
+      val token = ctx.formParam("ebsiBearerToken")
+      if(token.isNullOrEmpty()) {
+        ctx.status(HttpCode.BAD_REQUEST).result("ebsiBearerToken form parameter is required for EBSI DID registration.")
+        return
+      }
+      val key = KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
+                ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
+      val did = DidService.create(method, key.id)
+      EssifClient.onboard(did, token)
+      EssifClient.authApi(did)
+      DidEbsiService.getService().registerDid(did, did)
+      ctx.result(did)
+    } else {
+      ctx.result(DidService.create(method, KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.EdDSA_Ed25519 }?.keyId?.id))
+    }
   }
 
   fun getPresentationExchange(ctx: Context) {
