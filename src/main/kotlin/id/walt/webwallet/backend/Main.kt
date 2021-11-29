@@ -4,6 +4,7 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import id.walt.issuer.backend.IssuerController
+import id.walt.issuer.backend.IssuerManager
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -33,6 +34,11 @@ internal val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)
+
+    if(args?.isNotEmpty() == true && args[0] == "--init-issuer") {
+        IssuerManager.initializeInteractively()
+        return
+    }
 
     val app = Javalin.create { config ->
         config.apply {
