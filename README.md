@@ -23,6 +23,13 @@ The provided services include:
 * **Presentation exchange**
   * Support for presentation exchange based on OIDC-SIOPv2 spec
 
+###### Issuer portal backend
+* **Wallet configuration**
+  * Possibility to configure list of supported wallets (defaults to walt.id web wallet)
+* **Verifiable credential issuance**
+  * Support for issuing verifiable credentials to the web wallet, based on OIDC-SIOPv2 spec
+
+
 ###### Related components
 * Web wallet frontend https://github.com/walt-id/waltid-web-wallet
 * Verifier portal https://github.com/walt-id/waltid-verifier-portal
@@ -38,7 +45,19 @@ The snap-shot version of this repository is automatically deployed for testing p
 
 ## Usage
 
-###### Verifier portal and wallet configuration:
+Configuration and data are kept in sub folders of the data root:
+* `config/`
+* `data/`
+
+Data root is by default the current **working directory**.
+
+It can be overridden by specifying the **environment variable**: 
+
+`WALTID_DATA_ROOT`
+
+### Verifier portal and wallet configuration:
+
+**config/verifier-config.json**
 
 ```
 {
@@ -55,11 +74,30 @@ The snap-shot version of this repository is automatically deployed for testing p
 }
 ```
 
-###### Wallet backend configuration
+### Issuer portal and wallet configuration:
+
+**config/issuer-config.json**
+
+```
+{
+  "issuerUiUrl": "http://localhost:5000",                   # URL of issuer portal UI
+  "issuerApiUrl": "http://localhost:8080/issuer-api",       # URL of issuer portal API (needs to be accessible from the wallet backend)
+  "wallets": {                                              # wallet configuration
+    "walt.id": {                                            # wallet configuration key
+      "id": "walt.id",                                      # wallet ID
+      "url": "http://localhost:3000",                       # URL of wallet UI
+      "presentPath": "CredentialRequest",                   # URL subpath for a credential presentation request
+      "description": "walt.id web wallet"                   # Wallet description
+    }
+  }
+}
+```
+
+### Wallet backend configuration
 
 User data (dids, keys, credentials) are currently stored under
 
-`./data/<user@email.com>`
+`data/<user@email.com>`
 
 It is planned to allow users to define their own storage preferences, in the future.
 
@@ -74,6 +112,8 @@ A **swagger documentation** is available under
 **Wallet API** is available under the context path `/api/`
 
 **Verifier portal API** is available under the context path `/verifier-api/`
+
+**Issuer portal API** is available under the context path `/issuer-api/`
 
 ## Build & run the Web Wallet Backend
 
@@ -91,12 +131,11 @@ unzip package under build/distributions and switch into the new folder. Copy con
 
     docker build -t waltid/ssikit-wallet-backend .
 
-
     docker run -it -p 8080:8080 waltid/ssikit-wallet-backend
 
 ## Running all components with Docker Compose
 
-To spawn the backend together with the wallet frontend, the issuer- and the verifier-portal, one can make use of the docker-compose configuration located in folder:
+To spawn the **backend** together with the **wallet frontend**, the **issuer-** and the **verifier-portal**, one can make use of the docker-compose configuration located in folder:
 
 `./docker/`.
 
@@ -104,25 +143,35 @@ In order to simply run everything, enter:
 
     docker-compose up
 
-See the following examples for more information: 
-
-This configuration will publish the wallet on **localhost:8080** and the verifier portal on **localhost:8081**
-
-The wallet and verifier UIs will be available on the root context path `/`
-
-The wallet and verifier backend APIs will be available on the context paths`/api/` and `/verifier-api/`
-
-Visit the `./docker/config`. folder fo adjusting the system config in the following files
+This configuration will publish the following endpoints by default:
+* **web wallet** on _**localhost:8080**_
+  * wallet frontend: http://localhost:8080/
+  * wallet API: http://localhost:8080/api/
+* **verifier portal** on _**localhost:8081**_
+  * verifier frontend: http://localhost:8081/
+  * verifier API: http://localhost:8081/verifier-api/
+* **issuer portal** on _**localhost:8082**_
+  * issuer frontend: http://localhost:8082/
+  * issuer API: http://localhost:8082/issuer-api/
+  
+Visit the `./docker`. folder for adjusting the system config in the following files
 * **docker-compose.yaml** - Docker config for launching containers, volumes & networking
 * **ingress.conf** - Routing config
-* **verifier-config.json** - Endpoints for verifier portal
+* **config/verifier-config.json** - verifier portal configuration
+* **config/issuer-config.json** - issuer portal configuration
 
 # Initializing Wallet Backend as EBSI/ESSIF Issuer
 
-By specifying the optional startup parameter **--init-issuer** the wallet backend can be initialized as issuer-application in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
+By specifying the optional startup parameter **--init-issuer** the wallet backend can be initialized as issuer-backend in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
 
-* cd docker
-* docker pull waltid/ssikit-wallet-backend
-* docker run -it -v $PWD:/waltid-wallet-backend/data-root -e WALTID_DATA_ROOT=./data-root waltid/ssikit-wallet-backend --init-issuer
-* For the DID-method enter: "ebsi"
-* For the bearer token copy/paste the value from: https://app.preprod.ebsi.eu/users-onboarding
+```
+cd docker
+docker pull waltid/ssikit-wallet-backend
+docker run -it -v $PWD:/waltid-wallet-backend/data-root -e WALTID_DATA_ROOT=./data-root waltid/ssikit-wallet-backend --init-issuer
+
+# For the DID-method enter: "ebsi"
+# For the bearer token copy/paste the value from: https://app.preprod.ebsi.eu/users-onboarding
+```
+
+The initialization routine will output the DID, which it registered on the EBSI/ESSIF ecosystem.
+
