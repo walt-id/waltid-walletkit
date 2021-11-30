@@ -7,7 +7,7 @@ Additionally, it includes a reference implementation of a Verifier and Issuer Po
 
 The provided services include:
 
-###### Web wallet backend
+### Web wallet backend
 * **User management**
     * Authorization is currently mocked and not production ready
     * User-context switching and user-specific encapsulated data storage
@@ -17,25 +17,25 @@ The provided services include:
 * **Verifiable Credential and Presentation exchange**
   * Support for credential presentation exchange based on OIDC-SIOPv2 spec
 
-###### Verifier portal backend
+### Verifier portal backend
 * **Wallet configuration**
   * Possibility to configure list of supported wallets (defaults to walt.id web wallet) 
 * **Presentation exchange**
   * Support for presentation exchange based on OIDC-SIOPv2 spec
 
-###### Issuer portal backend
+### Issuer portal backend
 * **Wallet configuration**
   * Possibility to configure list of supported wallets (defaults to walt.id web wallet)
 * **Verifiable credential issuance**
   * Support for issuing verifiable credentials to the web wallet, based on OIDC-SIOPv2 spec
 
 
-###### Related components
+## Related components
 * Web wallet frontend https://github.com/walt-id/waltid-web-wallet
 * Verifier portal https://github.com/walt-id/waltid-verifier-portal
 * Issuer portal https://github.com/walt-id/waltid-issuer-portal
 
-###### Test deployment
+## Test deployment
 
 The snap-shot version of this repository is automatically deployed for testing purpose. Feel free to access the test system at the following endpoints:
 
@@ -68,6 +68,7 @@ It can be overridden by specifying the **environment variable**:
       "id": "walt.id",                                      # wallet ID
       "url": "http://localhost:3000",                       # URL of wallet UI
       "presentPath": "CredentialRequest",                   # URL subpath for a credential presentation request
+      "receivePath" : "ReceiveCredential/",                 # URL subpath for a credential issuance request
       "description": "walt.id web wallet"                   # Wallet description
     }
   }
@@ -87,6 +88,7 @@ It can be overridden by specifying the **environment variable**:
       "id": "walt.id",                                      # wallet ID
       "url": "http://localhost:3000",                       # URL of wallet UI
       "presentPath": "CredentialRequest",                   # URL subpath for a credential presentation request
+      "receivePath" : "ReceiveCredential/",                 # URL subpath for a credential issuance request
       "description": "walt.id web wallet"                   # Wallet description
     }
   }
@@ -101,7 +103,7 @@ User data (dids, keys, credentials) are currently stored under
 
 It is planned to allow users to define their own storage preferences, in the future.
 
-###### APIs
+### APIs
 
 The APIs are launched on port 8080.
 
@@ -160,7 +162,7 @@ Visit the `./docker`. folder for adjusting the system config in the following fi
 * **config/verifier-config.json** - verifier portal configuration
 * **config/issuer-config.json** - issuer portal configuration
 
-# Initializing Wallet Backend as EBSI/ESSIF Issuer
+## Initializing Wallet Backend as EBSI/ESSIF Issuer
 
 By specifying the optional startup parameter **--init-issuer** the wallet backend can be initialized as issuer-backend in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
 
