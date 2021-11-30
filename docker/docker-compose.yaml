@@ -1,29 +1,29 @@
 version: "3.3"
 services:
   wallet-backend:
-    image: waltid/ssikit-wallet-backend:latest
+    image: waltid/ssikit-wallet-backend:latest  # backend docker image
     environment:
       WALTID_DATA_ROOT: ./data-root
       WALTID_WALLET_BACKEND_BIND_ADDRESS: 0.0.0.0
     volumes:
-      - .:/waltid-wallet-backend/data-root
+      - .:/waltid-wallet-backend/data-root # data store volume incl. config files.
     extra_hosts:
       - "host.docker.internal:host-gateway"
   wallet-ui:
-    image: waltid/ssikit-web-wallet:latest
+    image: waltid/ssikit-web-wallet:latest # wallet web ui docker image
   verifier-ui:
-    image: waltid/ssikit-verifier-portal:latest
+    image: waltid/ssikit-verifier-portal:latest # verifier web ui docker image
   issuer-ui:
-    image: waltid/ssikit-issuer-portal:latest
+    image: waltid/ssikit-issuer-portal:latest # issuer web ui docker image
   ingress:
     image: nginx:1.15.10-alpine
     ports:
       - target: 80
-        published: 8080
+        published: 8080 # wallet ui publish port
         protocol: tcp
         mode: host
       - target: 81
-        published: 8081
+        published: 8081 # verifier ui publish port
         protocol: tcp
         mode: host
       - target: 82
@@ -31,4 +31,4 @@ services:
         protocol: tcp
         mode: host
     volumes:
-      - ./ingress.conf:/etc/nginx/conf.d/default.conf
+      - ./ingress.conf:/etc/nginx/conf.d/default.conf # API gateway configuration
