@@ -1,13 +1,9 @@
 package id.walt.verifier.backend
-import id.walt.common.OidcUtil
-import id.walt.model.siopv2.*
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
-import java.time.Instant
-import java.util.*
 
 object VerifierController {
   val routes
@@ -25,7 +21,7 @@ object VerifierController {
           ))
         }
         path("present") {
-          get("vid", documented(
+          get("{credentialType}", documented(
             document().operation {
               it.summary("Present Verifiable ID")
                 .addTagsItem("verifier")
@@ -33,7 +29,7 @@ object VerifierController {
             }
               .queryParam<String>("walletId")
               .result<String>("302"),
-            VerifierController::presentVid
+            VerifierController::presentCredential
           ))
         }
         path("verify") {
@@ -54,14 +50,14 @@ object VerifierController {
     ctx.json(VerifierConfig.config.wallets.values)
   }
 
-  fun presentVid(ctx: Context) {
+  fun presentCredential(ctx: Context) {
     val walletId = ctx.queryParam("walletId")
     if(walletId.isNullOrEmpty() || !VerifierConfig.config.wallets.contains(walletId)) {
       ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet ID given")
     } else {
       val wallet = VerifierConfig.config.wallets.get(walletId)!!
       ctx.status(HttpCode.FOUND).header("Location", "${wallet.url}/${wallet.presentPath}"+
-          "?${SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableId").toUriQueryString()}")
+          "?${SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/${ctx.pathParam("credentialType")}").toUriQueryString()}")
     }
   }
 
