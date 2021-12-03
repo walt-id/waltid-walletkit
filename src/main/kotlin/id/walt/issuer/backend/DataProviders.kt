@@ -5,6 +5,7 @@ import id.walt.signatory.SignatoryDataProvider
 import id.walt.signatory.dateFormat
 import id.walt.vclib.credentials.VerifiableDiploma
 import id.walt.vclib.credentials.VerifiableId
+import id.walt.vclib.credentials.VerifiableVaccinationCertificate
 import id.walt.vclib.model.VerifiableCredential
 import java.util.*
 
@@ -16,6 +17,7 @@ class IssuanceRequestDataProvider(
     when(template) {
     is VerifiableId -> populateVerifiableId(template, proofConfig)
     is VerifiableDiploma -> populateVerifiableDiploma(template, proofConfig)
+      is VerifiableVaccinationCertificate -> populateVerifiableVaccinationCert(template, proofConfig)
     else -> template
   }
 
@@ -62,5 +64,41 @@ class IssuanceRequestDataProvider(
     }
 
     return vc
+  }
+
+  fun populateVerifiableVaccinationCert(vc: VerifiableVaccinationCertificate, proofConfig: ProofConfig): VerifiableVaccinationCertificate {
+    vc.id = proofConfig.credentialId ?: "education#higherEducation#${UUID.randomUUID()}"
+    vc.issuer = proofConfig.issuerDid
+    if (proofConfig.issueDate != null) vc.issuanceDate = dateFormat.format(proofConfig.issueDate)
+    if (proofConfig.validDate != null) vc.validFrom = dateFormat.format(proofConfig.validDate)
+    if (proofConfig.expirationDate != null) vc.expirationDate = dateFormat.format(proofConfig.expirationDate)
+    vc.credentialSubject!!.id = proofConfig.subjectDid
+
+    vc.credentialSubject!!.apply {
+      familyName = issuanceRequest.params["familyName"]?.firstOrNull()
+      givenNames = issuanceRequest.params["firstName"]?.firstOrNull()
+      dateOfBirth = issuanceRequest.params["dateOfBirth"]?.firstOrNull()
+      personSex = issuanceRequest.params["gender"]?.firstOrNull()
+
+      vaccinationProphylaxisInformation = listOf(
+        VerifiableVaccinationCertificate.CredentialSubject.VaccinationProphylaxisInformation(
+          diseaseOrAgentTargeted = VerifiableVaccinationCertificate.CredentialSubject.VaccinationProphylaxisInformation.DiseaseOrAgentTargeted(
+            code = "",
+            system = "",
+            version = ""
+          ),
+          vaccineOrProphylaxis = issuanceRequest.params["vaccineOrProphylaxis"]?.firstOrNull(),
+          vaccineMedicinalProduct = issuanceRequest.params["vaccineMedicinalProduct"]?.firstOrNull(),
+          doseNumber = issuanceRequest.params["doseNumber"]?.firstOrNull(),
+          totalSeriesOfDoses = issuanceRequest.params["totalSeriesOfDoses"]?.firstOrNull(),
+          dateOfVaccination = issuanceRequest.params["dateOfVaccination"]?.firstOrNull(),
+          administeringCentre = issuanceRequest.params["administeringCentre"]?.firstOrNull(),
+          countryOfVaccination = issuanceRequest.params["countryOfVaccination"]?.firstOrNull()
+        )
+      )
+    }
+
+    return vc
+
   }
 }

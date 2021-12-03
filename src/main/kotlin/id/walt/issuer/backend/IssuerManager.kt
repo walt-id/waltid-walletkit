@@ -53,8 +53,9 @@ object IssuerManager {
 
   fun listIssuableCredentialsFor(user: String): List<IssuableCredential> {
     return listOf(
-      IssuableCredential("1", "VerifiableId", "Verifiable ID document"),
-      IssuableCredential("2", "VerifiableDiploma", "Verifiable diploma"),
+//      IssuableCredential("1", "VerifiableId", "Verifiable ID document"),
+//      IssuableCredential("2", "VerifiableDiploma", "Verifiable diploma"),
+      IssuableCredential("1", "VerifiableVaccinationCertificate", "Verifiable vaccination certificate"),
     )
   }
 
