@@ -20,3 +20,5 @@ gradle-app.setting
 !gradle-wrapper.jar
 .gradletasknamecache
 **/build/
+docker/data
+docker/data_
