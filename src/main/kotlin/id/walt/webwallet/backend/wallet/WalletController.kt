@@ -7,7 +7,6 @@ import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
-import id.walt.model.IdToken
 import id.walt.model.siopv2.*
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
@@ -24,7 +23,6 @@ import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
-import okhttp3.internal.wait
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -54,7 +52,7 @@ object WalletController {
               it.summary("Create new DID").description("Creates and registers DID. For EBSI: needs bearer token to be given as form parameter 'ebsiBearerToken', for DID registration.").operationId("createDid").addTagsItem("wallet")
             }
               .queryParam<DidMethod>("method")
-              .formParam<String>("ebsiBearerToken", required = false)
+              .body<DidCreationRequest>()
               .result<String>("200"),
               WalletController::createDid
             ), UserRole.AUTHORIZED
@@ -140,15 +138,15 @@ object WalletController {
     }
 
     if(method == DidMethod.ebsi) {
-      val token = ctx.formParam("ebsiBearerToken")
-      if(token.isNullOrEmpty()) {
+      val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
+      if(didCreationReq?.bearerToken.isNullOrEmpty()) {
         ctx.status(HttpCode.BAD_REQUEST).result("ebsiBearerToken form parameter is required for EBSI DID registration.")
         return
       }
       val key = KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
                 ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
       val did = DidService.create(method, key.id)
-      EssifClient.onboard(did, token)
+      EssifClient.onboard(did, didCreationReq.bearerToken)
       EssifClient.authApi(did)
       DidEbsiService.getService().registerDid(did, did)
       ctx.result(did)
