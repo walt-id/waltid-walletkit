@@ -16,13 +16,19 @@ import id.walt.services.hkvstore.HKVKey
 import id.walt.services.key.KeyService
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
+import id.walt.signatory.MergingDataProvider
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.vclib.Helpers.encode
+import id.walt.vclib.VcLibManager
 import id.walt.vclib.VcUtils
+import id.walt.vclib.credentials.VerifiableDiploma
+import id.walt.vclib.credentials.VerifiableId
 import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.vclib.credentials.VerifiableVaccinationCertificate
 import id.walt.vclib.model.VerifiableCredential
+import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
 import id.walt.webwallet.backend.WALTID_DATA_ROOT
@@ -51,28 +57,29 @@ object IssuerManager {
     }
   }
 
-  fun listIssuableCredentialsFor(user: String): List<IssuableCredential> {
-    return listOf(
-      IssuableCredential("1", "VerifiableId", "Verifiable ID document"),
-      IssuableCredential("2", "VerifiableDiploma", "Verifiable diploma"),
-      IssuableCredential("3", "VerifiableVaccinationCertificate", "Verifiable vaccination certificate"),
+  fun listIssuableCredentialsFor(user: String): Issuables {
+    return Issuables(
+      credentials = mapOf(
+      Pair("VerifiableId", IssuableCredential("VerifiableId", "Verifiable ID document", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableId") as VerifiableId).credentialSubject!!)))),
+      Pair("VerifiableDiploma", IssuableCredential("VerifiableDiploma", "Verifiable diploma", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableDiploma") as VerifiableDiploma).credentialSubject!!)))),
+      Pair("VerifiableVaccinationCertificate", IssuableCredential("VerifiableVaccinationCertificate", "Verifiable vaccination certificate", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableVaccinationCertificate") as VerifiableVaccinationCertificate).credentialSubject!!))))
+    )
     )
   }
 
-  fun newIssuanceRequest(user: String, selectedCredentialIds: Set<String>, params: Map<String, List<String>>): SIOPv2Request {
-    val selectedCredentials = listIssuableCredentialsFor(user).filter { selectedCredentialIds.contains(it.id) }
+  fun newIssuanceRequest(user: String, selectedIssuables: Issuables): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
     val req = SIOPv2Request(
       client_id = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
       redirect_uri = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
       response_mode = "post",
       nonce = nonce,
-      registration = Registration(client_name = "Walt.id Issuer Portal", client_purpose = "Verify DID ownership, for issuance of ${selectedCredentials.map { it.description }.joinToString(", ") }"),
+      registration = Registration(client_name = "Walt.id Issuer Portal", client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.values.map { it.description }.joinToString(", ") }"),
       expiration = Instant.now().epochSecond + 24*60*60,
       issuedAt = Instant.now().epochSecond,
       claims = Claims()
     )
-    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedCredentialIds, params))
+    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedIssuables))
     return req
   }
 
@@ -90,13 +97,12 @@ object IssuerManager {
         //Auditor.getService().verify(vp_token.encode(), listOf(SignaturePolicy())).overallStatus
         true
       ) {
-        val selectedCredentials = listIssuableCredentialsFor(issuanceReq.user).filter { issuanceReq.selectedCredentialIds.contains(it.id) }
-        selectedCredentials.map {
+        issuanceReq.selectedIssuables.credentials.values.map {
           Signatory.getService().issue(it.type,
             ProofConfig(issuerDid = issuerDid,
               proofType = ProofType.LD_PROOF,
               subjectDid = VcUtils.getSubject(vp_token)),
-            dataProvider = IssuanceRequestDataProvider(issuanceReq))
+            dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
         }
       } else {
         listOf()
