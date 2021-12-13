@@ -41,17 +41,17 @@ object IssuerController {
                 .addTagsItem("issuer")
                 .operationId("listIssuableCredentials")
             }
-              .jsonArray<IssuableCredential>("200"),
+              .json<Issuables>("200"),
             IssuerController::listIssuableCredentials), UserRole.AUTHORIZED)
           path("issuance") {
-            get("request", documented(
+            post("request", documented(
               document().operation {
                 it.summary("Request issuance of selected credentials to wallet")
                   .addTagsItem("issuer")
                   .operationId("requestIssuance")
               }
                 .queryParam<String>("walletId")
-                .queryParam<String>("issuableId", isRepeatable = true)
+                .body<Issuables>()
                 .result<String>("200"),
               IssuerController::requestIssuance
             ), UserRole.AUTHORIZED)
@@ -92,8 +92,8 @@ object IssuerController {
       return
     }
 
-    val selectedIssuableIds = ctx.queryParams("issuableId").toSet()
-    if(selectedIssuableIds.isEmpty()) {
+    val selectedIssuables = ctx.bodyAsClass<Issuables>()
+    if(selectedIssuables.credentials.isEmpty()) {
       ctx.status(HttpCode.BAD_REQUEST).result("No issuable credential selected")
       return;
     }
@@ -102,7 +102,7 @@ object IssuerController {
     ctx.result(
       "${wallet.url}/${wallet.receivePath}" +
           "?${
-            IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuableIds, ctx.queryParamMap()).toUriQueryString()
+            IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuables).toUriQueryString()
           }")
   }
 
