@@ -23,10 +23,7 @@ import id.walt.signatory.Signatory
 import id.walt.vclib.Helpers.encode
 import id.walt.vclib.VcLibManager
 import id.walt.vclib.VcUtils
-import id.walt.vclib.credentials.VerifiableDiploma
-import id.walt.vclib.credentials.VerifiableId
-import id.walt.vclib.credentials.VerifiablePresentation
-import id.walt.vclib.credentials.VerifiableVaccinationCertificate
+import id.walt.vclib.credentials.*
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
@@ -62,7 +59,8 @@ object IssuerManager {
       credentials = mapOf(
       Pair("VerifiableId", IssuableCredential("VerifiableId", "Verifiable ID document", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableId") as VerifiableId).credentialSubject!!)))),
       Pair("VerifiableDiploma", IssuableCredential("VerifiableDiploma", "Verifiable diploma", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableDiploma") as VerifiableDiploma).credentialSubject!!)))),
-      Pair("VerifiableVaccinationCertificate", IssuableCredential("VerifiableVaccinationCertificate", "Verifiable vaccination certificate", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableVaccinationCertificate") as VerifiableVaccinationCertificate).credentialSubject!!))))
+      Pair("VerifiableVaccinationCertificate", IssuableCredential("VerifiableVaccinationCertificate", "Verifiable vaccination certificate", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableVaccinationCertificate") as VerifiableVaccinationCertificate).credentialSubject!!)))),
+      Pair("ProofOfResidence", IssuableCredential("ProofOfResidence", "Proof of residence", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("ProofOfResidence") as ProofOfResidence).credentialSubject!!))))
     )
     )
   }
