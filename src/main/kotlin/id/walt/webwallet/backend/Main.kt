@@ -27,7 +27,7 @@ import io.swagger.v3.oas.models.servers.Server
 
 internal val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
 
-internal val WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_BACKEND_BIND_ADDRESS") ?: "127.0.0.1"
+internal var WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_BACKEND_BIND_ADDRESS") ?: "127.0.0.1"
 
 internal val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
 
@@ -35,9 +35,12 @@ fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)
 
-    if(args?.isNotEmpty() == true && args[0] == "--init-issuer") {
-        IssuerManager.initializeInteractively()
-        return
+    if (args.isNotEmpty()) when {
+        args.contains("--init-issuer") -> {
+            IssuerManager.initializeInteractively()
+            return
+        }
+        args.contains("--bind-all") -> WALTID_WALLET_BACKEND_BIND_ADDRESS = "0.0.0.0"
     }
 
     val app = Javalin.create { config ->
