@@ -1,6 +1,7 @@
 {
   "issuerUiUrl": "http://localhost:5000",
   "issuerApiUrl": "http://localhost:8080/issuer-api",
+  "issuerClientName": "Government of Luxembourg",
   "wallets": {
     "walt.id": {
       "id": "walt.id",

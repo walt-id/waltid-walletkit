@@ -7,6 +7,7 @@ data:
     {
       "issuerUiUrl": "https://issuer.waltid.org",
       "issuerApiUrl": "https://issuer.waltid.org/issuer-api",
+      "issuerClientName": "Government of Luxembourg",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
@@ -62,7 +63,7 @@ spec:
     spec:
       containers:
         - name: ssikit-wallet-backend
-          image: waltid/ssikit-wallet-backend:latest
+          image: waltid/ssikit-wallet-backend:lux
           volumeMounts:
             - name: wallet-config
               mountPath: "/waltid/wallet/config/"
@@ -118,7 +119,7 @@ spec:
     spec:
       containers:
         - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:latest
+          image: waltid/ssikit-web-wallet:lux
           ports:
             - containerPort: 80
               name: http-api
@@ -154,7 +155,7 @@ spec:
     spec:
       containers:
         - name: ssikit-verifier-portal
-          image: waltid/ssikit-verifier-portal:latest
+          image: waltid/ssikit-verifier-portal:lux
           ports:
             - containerPort: 80
               name: http-api
@@ -190,7 +191,7 @@ spec:
     spec:
       containers:
         - name: ssikit-issuer-portal
-          image: waltid/ssikit-issuer-portal:latest
+          image: waltid/ssikit-issuer-portal:lux
           ports:
             - containerPort: 80
               name: http-api
