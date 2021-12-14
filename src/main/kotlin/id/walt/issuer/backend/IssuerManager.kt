@@ -72,7 +72,7 @@ object IssuerManager {
       redirect_uri = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
       response_mode = "post",
       nonce = nonce,
-      registration = Registration(client_name = "Walt.id Issuer Portal", client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.values.map { it.description }.joinToString(", ") }"),
+      registration = Registration(client_name = IssuerConfig.config.issuerClientName, client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.values.map { it.description }.joinToString(", ") }"),
       expiration = Instant.now().epochSecond + 24*60*60,
       issuedAt = Instant.now().epochSecond,
       claims = Claims()
