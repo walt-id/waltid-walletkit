@@ -155,7 +155,7 @@ spec:
     spec:
       containers:
         - name: ssikit-verifier-portal
-          image: waltid/ssikit-verifier-portal:lux
+          image: waltid/ssikit-verifier-portal:latest
           ports:
             - containerPort: 80
               name: http-api
