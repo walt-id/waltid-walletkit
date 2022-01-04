@@ -18,7 +18,7 @@ import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
-import id.walt.vclib.Helpers.toCredential
+import id.walt.vclib.model.toCredential
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.verifier.backend.SIOPv2RequestManager

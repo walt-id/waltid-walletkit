@@ -13,9 +13,7 @@ import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.key.KeyService
-import id.walt.vclib.Helpers.encode
-import id.walt.vclib.Helpers.toCredential
-import id.walt.vclib.VcUtils
+import id.walt.vclib.model.toCredential
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
@@ -240,7 +238,7 @@ object WalletController {
     val myCredentials = Custodian.getService().listCredentials()
     return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
       myCredentials.filter { it.type.contains(indesc.schema.uri.substringAfterLast("/")) &&
-                              VcUtils.getSubject(it) == subject && !it.id.isNullOrEmpty() }.map { cred ->
+                              it.subject == subject && !it.id.isNullOrEmpty() }.map { cred ->
         ClaimedCredential(indesc.id, cred.id!!)
       }
       }?.toList() ?: listOf()
