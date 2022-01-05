@@ -237,7 +237,7 @@ object WalletController {
   private fun getClaimedCredentials(subject: String, req: SIOPv2Request): List<ClaimedCredential> {
     val myCredentials = Custodian.getService().listCredentials()
     return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
-      myCredentials.filter { it.type.contains(indesc.schema.uri.substringAfterLast("/")) &&
+      myCredentials.filter { indesc.schema.uri == it.credentialSchema?.id &&
                               it.subject == subject && !it.id.isNullOrEmpty() }.map { cred ->
         ClaimedCredential(indesc.id, cred.id!!)
       }
