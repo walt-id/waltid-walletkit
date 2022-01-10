@@ -18,13 +18,16 @@ import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
+import id.walt.vclib.credentials.VerifiableId
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
+import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
+import io.javalin.core.util.RouteOverviewUtil.metaInfo
 import io.javalin.http.Context
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.collections.beEmpty
@@ -62,7 +65,7 @@ class SIOPv2Test : AnnotationSpec() {
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(waltContext)
 
-    siopv2Request = SIOPv2RequestManager.newRequest("https://www.w3.org/2018/credentials/v1/VerifiableId")
+    siopv2Request = SIOPv2RequestManager.newRequest(VcTemplateManager.loadTemplate("VerifiableId").credentialSchema!!.id)
     subjectDid = DidService.create(DidMethod.ebsi)
     siopv2RequestParams = siopv2Request.toUriQueryString().split("&").map { it.split("=") }.map { it[0] to URLDecoder.decode(it[1], StandardCharsets.UTF_8) }.toMap()
     vc1 = Signatory.getService().issue("VerifiableId", ProofConfig(subjectDid, subjectDid)).toCredential()
