@@ -7,6 +7,7 @@ data:
     {
       "issuerUiUrl": "https://issuer.waltid.org",
       "issuerApiUrl": "https://issuer.waltid.org/issuer-api",
+      "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
@@ -36,7 +37,6 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: wallet-data-volume-claim
-  namespace: default
 spec:
   accessModes:
     - ReadWriteMany
@@ -213,6 +213,7 @@ kind: Ingress
 metadata:
   name: wallet-backend
   annotations:
+    kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
