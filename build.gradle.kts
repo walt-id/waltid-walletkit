@@ -24,6 +24,7 @@ dependencies {
     implementation("io.javalin:javalin-bundle:4.1.1")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.5")
+    implementation("com.nimbusds:oauth2-oidc-sdk:9.21")
 
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.4-SNAPSHOT")
