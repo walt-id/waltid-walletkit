@@ -1,6 +1,9 @@
 package id.walt.issuer.backend
 
 import com.google.common.cache.CacheBuilder
+import com.nimbusds.oauth2.sdk.PushedAuthorizationRequest
+import com.nimbusds.oauth2.sdk.PushedAuthorizationResponse
+import com.nimbusds.oauth2.sdk.PushedAuthorizationSuccessResponse
 import id.walt.auditor.Auditor
 import id.walt.auditor.SignaturePolicy
 import id.walt.crypto.KeyAlgorithm
@@ -28,8 +31,10 @@ import id.walt.verifier.backend.VerifierConfig
 import id.walt.webwallet.backend.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
+import java.net.URI
 import java.net.URL
 import java.nio.file.Path
+import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -41,8 +46,10 @@ object IssuerManager {
     keyStore = HKVKeyStoreService(),
     vcStore = HKVVcStoreService()
   )
-
-  val reqCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build<String, IssuanceRequest>()
+  val EXPIRATION_TIME: Duration = Duration.ofMinutes(5)
+  val reqCache = CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, IssuanceRequest>()
+  val nonceCache = CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, Boolean>()
+  val parCache = CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, PushedAuthorizationRequest>()
   lateinit var issuerDid: String;
 
   init {
@@ -140,5 +147,18 @@ object IssuerManager {
         println("Issuer DID created: $did")
       }
     }
+  }
+
+  fun newNonce(): NonceResponse {
+    val nonce = UUID.randomUUID().toString()
+    nonceCache.put(nonce, true)
+    return NonceResponse(nonce, expires_in = EXPIRATION_TIME.seconds.toString())
+  }
+
+  fun pushAuthorizationRequest(par: PushedAuthorizationRequest): PushedAuthorizationResponse {
+    val id = UUID.randomUUID().toString()
+    //TODO: validata/verify PAR request, VP tokens, claims, etc
+    parCache.put(id, par)
+    return PushedAuthorizationSuccessResponse(URI("urn:ietf:params:oauth:request_uri:$id"), EXPIRATION_TIME.seconds)
   }
 }
