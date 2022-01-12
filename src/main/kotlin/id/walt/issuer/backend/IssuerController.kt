@@ -149,7 +149,7 @@ object IssuerController {
             outputDescriptors = listOf(
                OutputDescriptor("VerifiableID", VcTemplateManager.loadTemplate("VerifiableId").credentialSchema!!.id, "Verifiable ID document")
             )
-          )).map { com.nimbusds.jose.shaded.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
+          )).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
         )
     }.toJSONObject())
   }
