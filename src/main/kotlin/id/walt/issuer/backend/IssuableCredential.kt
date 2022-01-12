@@ -11,3 +11,8 @@ data class IssuableCredential (
 data class Issuables (
   val credentials: Map<String, IssuableCredential>
     )
+
+data class NonceResponse(
+  val p_nonce: String,
+  val expires_in: String? = null
+)

@@ -1,6 +1,10 @@
 package id.walt.issuer.backend
 import com.beust.klaxon.Klaxon
+import com.nimbusds.oauth2.sdk.*
+import com.nimbusds.oauth2.sdk.http.HTTPRequest
+import com.nimbusds.oauth2.sdk.http.ServletUtils
 import com.nimbusds.oauth2.sdk.id.Issuer
+import com.nimbusds.openid.connect.sdk.Nonce
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.common.OidcUtil
@@ -74,15 +78,33 @@ object IssuerController {
             ))
           }
         }
-        path("meta") {
-          get(documented(
+        path("oidc") {
+          get("meta", documented(
+              document().operation {
+                it.summary("get OIDC provider meta data")
+                  .addTagsItem("issuer")
+                  .operationId("oidcProviderMeta")
+              }
+                .json<OIDCProviderMetadata>("200"),
+              IssuerController::oidcProviderMeta
+            ))
+          post("nonce", documented(
             document().operation {
-              it.summary("get OIDC provider meta data")
+              it.summary("get presentation nonce")
                 .addTagsItem("issuer")
-                .operationId("oidcProviderMeta")
+                .operationId("nonce")
             }
-              .json<OIDCProviderMetadata>("200"),
-            IssuerController::oidcProviderMeta
+              .json<NonceResponse>("200"),
+            IssuerController::nonce
+          ))
+          post("par", documented(
+            document().operation {
+              it.summary("pushed authorization request")
+                .addTagsItem("issuer")
+                .operationId("par")
+            }
+              .json<PushedAuthorizationSuccessResponse>("200"),
+            IssuerController::par
           ))
         }
       }
@@ -139,10 +161,11 @@ object IssuerController {
       Issuer(IssuerConfig.config.issuerApiUrl),
       listOf(SubjectType.PAIRWISE, SubjectType.PUBLIC),
       URI("http://blank")).apply {
-        authorizationEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/authorization")
-        pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/par")
-        tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/token")
-        setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/credential")
+        authorizationEndpointURI = URI("${IssuerConfig.config.issuerUiUrl}/login")
+        pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par")
+        tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token")
+        setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/credential")
+        setCustomParameter("nonce_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/nonce")
         setCustomParameter("credential_manifests", listOf(
           CredentialManifest(
             issuer = id.walt.model.dif.Issuer(IssuerManager.issuerDid, IssuerConfig.config.issuerClientName),
@@ -152,5 +175,23 @@ object IssuerController {
           )).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
         )
     }.toJSONObject())
+  }
+
+  fun nonce(ctx: Context) {
+    ctx.json(IssuerManager.newNonce())
+  }
+
+  fun par(ctx: Context) {
+    try {
+      val response = IssuerManager.pushAuthorizationRequest(
+        PushedAuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
+      )
+      if(response.indicatesSuccess())
+        ctx.json(response.toSuccessResponse().toJSONObject())
+
+      ctx.status(response.toErrorResponse().errorObject.httpStatusCode).json(response.toErrorResponse())
+    } catch (exc: ParseException) {
+      ctx.status(HttpCode.BAD_REQUEST).json(PushedAuthorizationErrorResponse(ErrorObject("400", "Error parsing PAR")))
+    }
   }
 }
