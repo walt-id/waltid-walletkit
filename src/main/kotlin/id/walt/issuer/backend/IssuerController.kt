@@ -103,7 +103,13 @@ object IssuerController {
                 .addTagsItem("issuer")
                 .operationId("par")
             }
-              .json<PushedAuthorizationSuccessResponse>("200"),
+              .formParam<String>("response_type")
+              .formParam<String>("client_id")
+              .formParam<String>("redirect_uri")
+              .formParam<String>("scope")
+              .formParam<String>("claims")
+              .formParam<String>("state")
+              .json<PushedAuthorizationSuccessResponse>("201"),
             IssuerController::par
           ))
         }
@@ -187,9 +193,9 @@ object IssuerController {
         PushedAuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
       )
       if(response.indicatesSuccess())
-        ctx.json(response.toSuccessResponse().toJSONObject())
-
-      ctx.status(response.toErrorResponse().errorObject.httpStatusCode).json(response.toErrorResponse())
+        ctx.status(HttpCode.CREATED).json(response.toSuccessResponse().toJSONObject())
+      else
+        ctx.status(response.toErrorResponse().errorObject.httpStatusCode).json(response.toErrorResponse())
     } catch (exc: ParseException) {
       ctx.status(HttpCode.BAD_REQUEST).json(PushedAuthorizationErrorResponse(ErrorObject("400", "Error parsing PAR")))
     }
