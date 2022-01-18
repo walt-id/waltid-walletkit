@@ -1,6 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
-import id.walt.model.siopv2.SIOPv2Request
+import id.walt.model.oidc.SIOPv2Request
 
 data class ClaimedCredential(
     val claimId: String,

@@ -5,8 +5,8 @@ import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTParser
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
-import id.walt.model.siopv2.SIOPv2IDToken
-import id.walt.model.siopv2.SIOPv2Request
+import id.walt.model.oidc.IDToken
+import id.walt.model.oidc.SIOPv2Request
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -107,7 +107,7 @@ class SIOPv2Test : AnnotationSpec() {
     peResponse.vp_token shouldNotBe null
     JwtService.getService().verify(peResponse.id_token) shouldBe true
 
-    val id_token = Klaxon().parse<SIOPv2IDToken>(JWTParser.parse(peResponse.id_token).jwtClaimsSet.toString())
+    val id_token = Klaxon().parse<IDToken>(JWTParser.parse(peResponse.id_token).jwtClaimsSet.toString())
 
     id_token!!.subject shouldBe subjectDid
     peResponse.vp_token.toCredential() should beOfType<VerifiablePresentation>()

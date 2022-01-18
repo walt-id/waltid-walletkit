@@ -1,14 +1,20 @@
 package id.walt.issuer.backend
 
 import com.google.common.cache.CacheBuilder
-import com.nimbusds.oauth2.sdk.PushedAuthorizationRequest
-import com.nimbusds.oauth2.sdk.PushedAuthorizationResponse
-import com.nimbusds.oauth2.sdk.PushedAuthorizationSuccessResponse
+import com.nimbusds.oauth2.sdk.*
+import com.nimbusds.oauth2.sdk.id.State
+import com.nimbusds.oauth2.sdk.token.AccessToken
+import com.nimbusds.oauth2.sdk.token.AccessTokenType
+import com.nimbusds.oauth2.sdk.token.BearerAccessToken
+import com.nimbusds.oauth2.sdk.token.RefreshToken
+import com.nimbusds.openid.connect.sdk.OIDCError
+import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
+import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.auditor.Auditor
 import id.walt.auditor.SignaturePolicy
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
-import id.walt.model.siopv2.*
+import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
@@ -29,6 +35,8 @@ import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
 import id.walt.webwallet.backend.WALTID_DATA_ROOT
+import id.walt.webwallet.backend.auth.JWTService
+import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URI
@@ -49,7 +57,7 @@ object IssuerManager {
   val EXPIRATION_TIME: Duration = Duration.ofMinutes(5)
   val reqCache = CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, IssuanceRequest>()
   val nonceCache = CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, Boolean>()
-  val parCache = CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, PushedAuthorizationRequest>()
+  val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, IssuanceSession>()
   lateinit var issuerDid: String;
 
   init {
@@ -85,7 +93,7 @@ object IssuerManager {
     return req
   }
 
-  fun fulfillIssuanceRequest(nonce: String, id_token: SIOPv2IDToken?, vp_token: VerifiablePresentation): List<String> {
+  fun fulfillIssuanceRequest(nonce: String, id_token: IDToken?, vp_token: VerifiablePresentation): List<String> {
     val issuanceReq = reqCache.getIfPresent(nonce);
     if(issuanceReq == null) {
       return listOf()
@@ -155,10 +163,25 @@ object IssuerManager {
     return NonceResponse(nonce, expires_in = EXPIRATION_TIME.seconds.toString())
   }
 
-  fun pushAuthorizationRequest(par: PushedAuthorizationRequest): PushedAuthorizationResponse {
+  fun initializeIssuanceSession(credentialClaims: List<CredentialClaim>, authRequest: AuthorizationRequest): IssuanceSession {
     val id = UUID.randomUUID().toString()
     //TODO: validata/verify PAR request, VP tokens, claims, etc
-    parCache.put(id, par)
-    return PushedAuthorizationSuccessResponse(URI("urn:ietf:params:oauth:request_uri:$id"), EXPIRATION_TIME.seconds)
+    val session = IssuanceSession(id, credentialClaims, authRequest, Issuables.fromCredentialClaims(credentialClaims))
+    sessionCache.put(id, session)
+    return session
+  }
+
+  fun getIssuanceSession(id: String): IssuanceSession? {
+    return sessionCache.getIfPresent(id)
+  }
+
+  fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables): String {
+    session.issuables = issuables
+    return session.id
+  }
+
+  fun fulfillIssuanceSession(session: IssuanceSession, type: String, did: String, format: String = "ldp_vc"): String? {
+    // TODO: implement
+    return null
   }
 }
