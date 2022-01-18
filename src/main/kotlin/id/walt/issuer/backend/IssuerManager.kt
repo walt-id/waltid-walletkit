@@ -30,6 +30,8 @@ import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.vclib.credentials.*
+import id.walt.vclib.model.AbstractVerifiableCredential
+import id.walt.vclib.model.CredentialSubject
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
@@ -68,12 +70,9 @@ object IssuerManager {
 
   fun listIssuableCredentialsFor(user: String): Issuables {
     return Issuables(
-      credentials = mapOf(
-      Pair("VerifiableId", IssuableCredential("VerifiableId", "Verifiable ID document", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableId") as VerifiableId).credentialSubject!!)))),
-      Pair("VerifiableDiploma", IssuableCredential("VerifiableDiploma", "Verifiable diploma", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableDiploma") as VerifiableDiploma).credentialSubject!!)))),
-      Pair("VerifiableVaccinationCertificate", IssuableCredential("VerifiableVaccinationCertificate", "Verifiable vaccination certificate", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("VerifiableVaccinationCertificate") as VerifiableVaccinationCertificate).credentialSubject!!)))),
-      Pair("ProofOfResidence", IssuableCredential("ProofOfResidence", "Proof of residence", mapOf(Pair("credentialSubject", (VcTemplateManager.loadTemplate("ProofOfResidence") as ProofOfResidence).credentialSubject!!))))
-    )
+      credentials = listOf("VerifiableId", "VerifiableDiploma", "VerifiableVaccinationCertificate", "ProofOfResidence")
+        .map { IssuableCredential.fromTemplateId(it) }
+        .associateBy { it.schemaId }
     )
   }
 
@@ -84,7 +83,7 @@ object IssuerManager {
       redirect_uri = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
       response_mode = "post",
       nonce = nonce,
-      registration = Registration(client_name = IssuerConfig.config.issuerClientName, client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.values.map { it.description }.joinToString(", ") }"),
+      registration = Registration(client_name = IssuerConfig.config.issuerClientName, client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.values.map { it.type }.joinToString(", ") }"),
       expiration = Instant.now().epochSecond + 24*60*60,
       issuedAt = Instant.now().epochSecond,
       claims = Claims()
@@ -181,7 +180,16 @@ object IssuerManager {
   }
 
   fun fulfillIssuanceSession(session: IssuanceSession, type: String, did: String, format: String = "ldp_vc"): String? {
-    // TODO: implement
-    return null
+    return session.issuables!!.credentials.values.filter { it.type == type }
+      .map {
+        Signatory.getService().issue(it.type,
+          ProofConfig(issuerDid = issuerDid,
+            proofType = when(format) {
+              "jwt" -> ProofType.JWT
+              else -> ProofType.LD_PROOF
+            },
+            subjectDid = did),
+          dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
+      }.firstOrNull()
   }
 }
