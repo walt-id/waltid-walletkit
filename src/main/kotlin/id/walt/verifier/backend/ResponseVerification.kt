@@ -1,7 +1,7 @@
 package id.walt.verifier.backend
 
 import id.walt.auditor.VerificationResult
-import id.walt.model.siopv2.SIOPv2Request
+import id.walt.model.oidc.SIOPv2Request
 
 data class ResponseVerification(
   val id: String,

@@ -4,13 +4,16 @@ import com.nimbusds.oauth2.sdk.*
 import com.nimbusds.oauth2.sdk.http.HTTPRequest
 import com.nimbusds.oauth2.sdk.http.ServletUtils
 import com.nimbusds.oauth2.sdk.id.Issuer
+import com.nimbusds.oauth2.sdk.token.*
 import com.nimbusds.openid.connect.sdk.Nonce
+import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
+import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.common.OidcUtil
 import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
-import id.walt.model.siopv2.*
+import id.walt.model.oidc.Claims
 import id.walt.services.jwt.JwtService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
@@ -20,13 +23,17 @@ import id.walt.verifier.backend.VerifierConfig
 import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
+import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
+import io.javalin.http.Handler
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import org.bouncycastle.asn1.cms.IssuerAndSerialNumber
 import java.net.URI
+import java.net.http.HttpHeaders
 import java.time.Instant
 import java.util.*
 
@@ -52,6 +59,7 @@ object IssuerController {
                 .addTagsItem("issuer")
                 .operationId("listIssuableCredentials")
             }
+              .queryParam<String>("session_id")
               .json<Issuables>("200"),
             IssuerController::listIssuableCredentials), UserRole.AUTHORIZED)
           path("issuance") {
@@ -62,6 +70,7 @@ object IssuerController {
                   .operationId("requestIssuance")
               }
                 .queryParam<String>("walletId")
+                .queryParam<String>("session_id")
                 .body<Issuables>()
                 .result<String>("200"),
               IssuerController::requestIssuance
@@ -112,6 +121,31 @@ object IssuerController {
               .json<PushedAuthorizationSuccessResponse>("201"),
             IssuerController::par
           ))
+          get("fulfillPAR", documented(
+            document().operation { it.summary("fulfill PAR").addTagsItem("issuer").operationId("fulfillPAR") }
+              .queryParam<String>("request_uri"),
+            IssuerController::fulfillPAR
+          ))
+          post("token", documented(
+            document().operation {
+              it.summary("token endpoint")
+                .addTagsItem("issuer")
+                .operationId("token")
+            }
+              .formParam<String>("grant_type")
+              .formParam<String>("code")
+              .formParam<String>("redirect_uri")
+              .formParam<String>("code_verifier")
+              .json<OIDCTokenResponse>("200"),
+            IssuerController::token
+          ))
+          post("credential", documented(
+            document().operation {
+              it.summary("Credential endpoint").operationId("credential").addTagsItem("issuer")
+            }
+              .header<String>("Authorization"),
+            IssuerController::credential
+          ))
         }
       }
 
@@ -121,8 +155,11 @@ object IssuerController {
       ctx.status(HttpCode.UNAUTHORIZED)
       return
     }
-
-    ctx.json(IssuerManager.listIssuableCredentialsFor(userInfo!!.email))
+    val sessionId = ctx.queryParam("session_id")
+    if(sessionId == null)
+      ctx.json(IssuerManager.listIssuableCredentialsFor(userInfo!!.email))
+    else
+      ctx.json(IssuerManager.getIssuanceSession(sessionId)?.issuables ?: Issuables(credentials = mapOf()))
   }
 
   fun requestIssuance(ctx: Context) {
@@ -132,9 +169,10 @@ object IssuerController {
       return
     }
 
-    val walletId = ctx.queryParam("walletId")
-    if (walletId.isNullOrEmpty() || !VerifierConfig.config.wallets.contains(walletId)) {
-      ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet ID given")
+    val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets.getOrDefault(it, null) }
+    val session = ctx.queryParam("session_id")?.let { IssuerManager.getIssuanceSession(it) }
+    if (wallet == null && session == null) {
+      ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet or session ID given")
       return
     }
 
@@ -144,12 +182,16 @@ object IssuerController {
       return;
     }
 
-    val wallet = VerifierConfig.config.wallets.get(walletId)!!
-    ctx.result(
-      "${wallet.url}/${wallet.receivePath}" +
-          "?${
-            IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuables).toUriQueryString()
-          }")
+    if(wallet != null) {
+      ctx.result(
+        "${wallet.url}/${wallet.receivePath}" +
+            "?${
+              IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuables).toUriQueryString()
+            }"
+      )
+    } else {
+      ctx.result("${session!!.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
+    }
   }
 
   fun fulfillIssuance(ctx: Context) {
@@ -167,7 +209,7 @@ object IssuerController {
       Issuer(IssuerConfig.config.issuerApiUrl),
       listOf(SubjectType.PAIRWISE, SubjectType.PUBLIC),
       URI("http://blank")).apply {
-        authorizationEndpointURI = URI("${IssuerConfig.config.issuerUiUrl}/login")
+        authorizationEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/fulfillPAR")
         pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par")
         tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token")
         setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/credential")
@@ -188,16 +230,44 @@ object IssuerController {
   }
 
   fun par(ctx: Context) {
-    try {
-      val response = IssuerManager.pushAuthorizationRequest(
-        PushedAuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
-      )
-      if(response.indicatesSuccess())
-        ctx.status(HttpCode.CREATED).json(response.toSuccessResponse().toJSONObject())
-      else
-        ctx.status(response.toErrorResponse().errorObject.httpStatusCode).json(response.toErrorResponse())
-    } catch (exc: ParseException) {
-      ctx.status(HttpCode.BAD_REQUEST).json(PushedAuthorizationErrorResponse(ErrorObject("400", "Error parsing PAR")))
+    val req = PushedAuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
+    val claims = req.authorizationRequest.customParameters.get("claims")?.firstOrNull()?.let {
+      id.walt.model.oidc.klaxon.parse<Claims>(it)
     }
+    if(claims == null || claims.credentials == null) {
+      ctx.status(HttpCode.BAD_REQUEST).json(PushedAuthorizationErrorResponse(ErrorObject("400", "No credential claims given", 400)))
+      return
+    }
+    val session = IssuerManager.initializeIssuanceSession(claims.credentials!!, req.authorizationRequest)
+    ctx.status(HttpCode.CREATED).json(PushedAuthorizationSuccessResponse(URI("urn:ietf:params:oauth:request_uri:${session.id}"), IssuerManager.EXPIRATION_TIME.seconds).toJSONObject())
+  }
+
+  fun fulfillPAR(ctx: Context) {
+    val parURI = ctx.queryParam("request_uri")!!
+    val sessionID = parURI.substringAfterLast("urn:ietf:params:oauth:request_uri:")
+    val session = IssuerManager.getIssuanceSession(sessionID)
+    if(session != null) {
+      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/issue/?sessionId=${session.id}")
+    } else {
+      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/error")
+    }
+  }
+
+  fun token(ctx: Context) {
+    val code = ctx.formParam("code")
+    if(code == null) {
+      ctx.status(HttpCode.BAD_REQUEST).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
+      return
+    }
+    val session = IssuerManager.getIssuanceSession(code)
+    if(session == null) {
+      ctx.status(HttpCode.NOT_FOUND).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
+      return
+    }
+    ctx.json(OIDCTokenResponse(OIDCTokens(JWTService.toJWT(UserInfo(session.id)), BearerAccessToken(session.id), RefreshToken())).toJSONObject())
+  }
+
+  fun credential(ctx: Context) {
+
   }
 }

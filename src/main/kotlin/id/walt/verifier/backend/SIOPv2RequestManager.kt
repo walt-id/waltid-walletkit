@@ -5,7 +5,10 @@ import id.walt.auditor.Auditor
 import id.walt.auditor.ChallengePolicy
 import id.walt.auditor.SignaturePolicy
 import id.walt.auditor.VpTokenClaimPolicy
-import id.walt.model.siopv2.*
+import id.walt.model.dif.InputDescriptor
+import id.walt.model.dif.PresentationDefinition
+import id.walt.model.dif.VpSchema
+import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.hkvstore.FileSystemHKVStore

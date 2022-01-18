@@ -7,7 +7,11 @@ import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
-import id.walt.model.siopv2.*
+import id.walt.model.dif.DescriptorMapping
+import id.walt.model.dif.PresentationSubmission
+import id.walt.model.oidc.IDToken
+import id.walt.model.oidc.SIOPv2Request
+import id.walt.model.oidc.VpTokenRef
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
@@ -165,7 +169,7 @@ object WalletController {
     val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
     val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, challenge = pe.request.nonce)
-    val id_token = SIOPv2IDToken(
+    val id_token = IDToken(
       subject = pe.subject,
       client_id = pe.request.client_id,
       nonce = pe.request.nonce,
@@ -174,7 +178,7 @@ object WalletController {
           id = "1",
           definition_id = "1",
           descriptor_map = listOf(
-            PresentationDescriptor.fromVP("1", vp)
+            DescriptorMapping.fromVP("1", vp)
           )
         )
       )
