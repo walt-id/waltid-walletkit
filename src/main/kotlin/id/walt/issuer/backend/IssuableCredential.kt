@@ -5,13 +5,24 @@ import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.model.CredentialSubject
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.registry.VcTypeRegistry
+import id.walt.vclib.templates.VcTemplateManager
 import io.javalin.core.util.RouteOverviewUtil.metaInfo
 
 data class IssuableCredential (
+  val schemaId: String,
   val type: String,
-  val description: String,
   val credentialData: Map<String, Any>? = null
-)
+) {
+  companion object {
+    fun fromTemplateId(templateId: String): IssuableCredential {
+      val tmpl = VcTemplateManager.loadTemplate(templateId)
+      return IssuableCredential(
+        tmpl!!.credentialSchema!!.id,
+        tmpl.type.last(),
+        mapOf(Pair("credentialSubject", (tmpl as AbstractVerifiableCredential<out CredentialSubject>).credentialSubject!!)))
+    }
+  }
+}
 
 data class Issuables (
   val credentials: Map<String, IssuableCredential>
@@ -19,15 +30,14 @@ data class Issuables (
 {
   companion object {
     fun fromCredentialClaims(credentialClaims: List<CredentialClaim>): Issuables {
-      val pairs = credentialClaims.map { claim ->
-        val credTmp = VcTypeRegistry.getTypesWithTemplate().values.firstOrNull { claim.type == it.metadata.template?.invoke()?.credentialSchema?.id }
-        val credName = credTmp?.metadata?.type?.lastOrNull() ?: claim.type!!
-        Pair(credName, IssuableCredential(credName, "", mapOf(
-          Pair("credentialSubject", (credTmp?.metadata?.template?.invoke() as AbstractVerifiableCredential<out CredentialSubject>).credentialSubject!!)
-        )))
-      }
       return Issuables(
-        credentials = pairs.toMap()
+        credentials = credentialClaims.flatMap { claim -> VcTypeRegistry.getTypesWithTemplate().values
+          .map { it.metadata.template!!() }
+          .filter { it.credentialSchema != null }
+          .filter { it.credentialSchema!!.id == claim.type }
+          .map { it.type.last() }
+        } .map { IssuableCredential.fromTemplateId(it) }
+          .associateBy { it.type }
       )
     }
   }

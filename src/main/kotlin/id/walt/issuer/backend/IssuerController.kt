@@ -14,6 +14,7 @@ import id.walt.common.OidcUtil
 import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
 import id.walt.model.oidc.Claims
+import id.walt.model.oidc.CredentialResponse
 import id.walt.services.jwt.JwtService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
@@ -34,6 +35,7 @@ import io.javalin.plugin.openapi.dsl.documented
 import org.bouncycastle.asn1.cms.IssuerAndSerialNumber
 import java.net.URI
 import java.net.http.HttpHeaders
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.*
 
@@ -143,7 +145,10 @@ object IssuerController {
             document().operation {
               it.summary("Credential endpoint").operationId("credential").addTagsItem("issuer")
             }
-              .header<String>("Authorization"),
+              .header<String>("Authorization")
+              .queryParam<String>("format")
+              .queryParam<String>("type")
+              .queryParam<String>("did"),
             IssuerController::credential
           ))
         }
@@ -268,6 +273,23 @@ object IssuerController {
   }
 
   fun credential(ctx: Context) {
-
+    val format = ctx.queryParam("format") ?: "ldp_vc"
+    val type = ctx.queryParam("type")
+    val did = ctx.queryParam("did")
+    val session = ctx.header("Authorization")?.substringAfterLast("Bearer ")?.let { IssuerManager.getIssuanceSession(it) }
+    if(session == null) {
+      ctx.status(HttpCode.FORBIDDEN).result("Invalid or unknown access token")
+      return
+    }
+    if(did.isNullOrEmpty() || type.isNullOrEmpty()) {
+      ctx.status(HttpCode.BAD_REQUEST).result("No type or did given")
+      return
+    }
+    val credential = IssuerManager.fulfillIssuanceSession(session, type, did, format)
+    if(credential.isNullOrEmpty()) {
+      ctx.status(HttpCode.NOT_FOUND).result("No issuable credential with the given type found")
+      return
+    }
+    ctx.json(CredentialResponse(format, Base64.getUrlEncoder().encodeToString(credential.toByteArray(StandardCharsets.UTF_8))))
   }
 }
