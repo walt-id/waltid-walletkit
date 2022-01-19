@@ -15,8 +15,10 @@ import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
 import id.walt.model.oidc.Claims
 import id.walt.model.oidc.CredentialResponse
+import id.walt.model.oidc.klaxon
 import id.walt.services.jwt.JwtService
 import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.vclib.model.Proof
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
@@ -61,7 +63,7 @@ object IssuerController {
                 .addTagsItem("issuer")
                 .operationId("listIssuableCredentials")
             }
-              .queryParam<String>("session_id")
+              .queryParam<String>("sessionId")
               .json<Issuables>("200"),
             IssuerController::listIssuableCredentials), UserRole.AUTHORIZED)
           path("issuance") {
@@ -72,7 +74,7 @@ object IssuerController {
                   .operationId("requestIssuance")
               }
                 .queryParam<String>("walletId")
-                .queryParam<String>("session_id")
+                .queryParam<String>("sessionId")
                 .body<Issuables>()
                 .result<String>("200"),
               IssuerController::requestIssuance
@@ -90,7 +92,7 @@ object IssuerController {
           }
         }
         path("oidc") {
-          get("meta", documented(
+          get(".well-known/openid-configuration", documented(
               document().operation {
                 it.summary("get OIDC provider meta data")
                   .addTagsItem("issuer")
@@ -146,9 +148,10 @@ object IssuerController {
               it.summary("Credential endpoint").operationId("credential").addTagsItem("issuer")
             }
               .header<String>("Authorization")
-              .queryParam<String>("format")
-              .queryParam<String>("type")
-              .queryParam<String>("did"),
+              .formParam<String>("format")
+              .formParam<String>("type")
+              .formParam<String>("did")
+              .formParam<Proof>("proof"),
             IssuerController::credential
           ))
         }
@@ -160,11 +163,11 @@ object IssuerController {
       ctx.status(HttpCode.UNAUTHORIZED)
       return
     }
-    val sessionId = ctx.queryParam("session_id")
+    val sessionId = ctx.queryParam("sessionId")
     if(sessionId == null)
       ctx.json(IssuerManager.listIssuableCredentialsFor(userInfo!!.email))
     else
-      ctx.json(IssuerManager.getIssuanceSession(sessionId)?.issuables ?: Issuables(credentials = mapOf()))
+      ctx.json(IssuerManager.getIssuanceSession(sessionId)?.issuables ?: Issuables(credentials = listOf()))
   }
 
   fun requestIssuance(ctx: Context) {
@@ -175,7 +178,7 @@ object IssuerController {
     }
 
     val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets.getOrDefault(it, null) }
-    val session = ctx.queryParam("session_id")?.let { IssuerManager.getIssuanceSession(it) }
+    val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
     if (wallet == null && session == null) {
       ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet or session ID given")
       return
@@ -235,15 +238,15 @@ object IssuerController {
   }
 
   fun par(ctx: Context) {
-    val req = PushedAuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
-    val claims = req.authorizationRequest.customParameters.get("claims")?.firstOrNull()?.let {
+    val req = AuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
+    val claims = req.customParameters.get("claims")?.firstOrNull()?.let {
       id.walt.model.oidc.klaxon.parse<Claims>(it)
     }
     if(claims == null || claims.credentials == null) {
       ctx.status(HttpCode.BAD_REQUEST).json(PushedAuthorizationErrorResponse(ErrorObject("400", "No credential claims given", 400)))
       return
     }
-    val session = IssuerManager.initializeIssuanceSession(claims.credentials!!, req.authorizationRequest)
+    val session = IssuerManager.initializeIssuanceSession(claims.credentials!!, req)
     ctx.status(HttpCode.CREATED).json(PushedAuthorizationSuccessResponse(URI("urn:ietf:params:oauth:request_uri:${session.id}"), IssuerManager.EXPIRATION_TIME.seconds).toJSONObject())
   }
 
@@ -252,9 +255,9 @@ object IssuerController {
     val sessionID = parURI.substringAfterLast("urn:ietf:params:oauth:request_uri:")
     val session = IssuerManager.getIssuanceSession(sessionID)
     if(session != null) {
-      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/issue/?sessionId=${session.id}")
+      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/?sessionId=${session.id}")
     } else {
-      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/error")
+      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/issuanceError?message=Invalid issuance session")
     }
   }
 
@@ -269,13 +272,17 @@ object IssuerController {
       ctx.status(HttpCode.NOT_FOUND).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
       return
     }
-    ctx.json(OIDCTokenResponse(OIDCTokens(JWTService.toJWT(UserInfo(session.id)), BearerAccessToken(session.id), RefreshToken())).toJSONObject())
+    ctx.json(OIDCTokenResponse(OIDCTokens(JWTService.toJWT(UserInfo(session.id)), BearerAccessToken(session.id), RefreshToken()), mapOf(
+      Pair("expires_in", IssuerManager.EXPIRATION_TIME.seconds)
+    )).toJSONObject())
   }
 
   fun credential(ctx: Context) {
-    val format = ctx.queryParam("format") ?: "ldp_vc"
-    val type = ctx.queryParam("type")
-    val did = ctx.queryParam("did")
+    val format = ctx.formParam("format") ?: "ldp_vc"
+    val type = ctx.formParam("type")
+    val did = ctx.formParam("did")
+    val proof = ctx.formParam("proof")?.let { klaxon.parse<Proof>(it) }
+    // TODO: verify proof
     val session = ctx.header("Authorization")?.substringAfterLast("Bearer ")?.let { IssuerManager.getIssuanceSession(it) }
     if(session == null) {
       ctx.status(HttpCode.FORBIDDEN).result("Invalid or unknown access token")
