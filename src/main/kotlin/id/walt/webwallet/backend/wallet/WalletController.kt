@@ -20,6 +20,7 @@ import id.walt.services.key.KeyService
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.webwallet.backend.auth.UserRole
+import id.walt.webwallet.backend.config.WalletConfig
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
@@ -94,7 +95,7 @@ object WalletController {
             .json<PresentationExchangeResponse>("200"),
           WalletController::postPresentationExchange
         ), UserRole.AUTHORIZED)
-        // issuance
+        // issuance // LEGACY
         get("credentialIssuance", documented(
           document().operation {
             it.summary("Parse SIOPv2 request from URL query parameters")
@@ -124,6 +125,32 @@ object WalletController {
             .json<PresentationExchangeResponse>("200"),
           WalletController::postCredentialIssuanceResponse
         ), UserRole.AUTHORIZED)
+        // issuance // OIDC
+        path("issuer") {
+          get("list", documented(
+            document().operation { it.summary("List known credential issuers").addTagsItem("SIOPv2").operationId("listIssuers") },
+            WalletController::listIssuers),
+            UserRole.UNAUTHORIZED
+          )
+          get("metadata", documented(
+            document().operation { it.summary("get issuer meta data").addTagsItem("SIOPv2").operationId("issuerMeta") }
+              .queryParam<String>("issuerId"),
+            WalletController::issuerMeta),
+            UserRole.UNAUTHORIZED)
+        }
+        post("initIssuance", documented(
+          document().operation { it.summary("Initialize credential issuance from selected issuer").addTagsItem("SIOPv2").operationId("initIssuance") }
+            .body<CredentialIssuance>()
+            .result<String>("200"),
+          WalletController::initIssuance
+        ), UserRole.AUTHORIZED)
+        get("finalizeIssuance", documented(
+          document().operation { it.summary("Finalize credential issuance").addTagsItem("SIOPv2").operationId("finalizeIssuance") }
+            .queryParam<String>("code")
+            .queryParam<String>("state")
+            .result<String>("302"),
+          WalletController::finalizeIssuance
+        ), UserRole.UNAUTHORIZED)
       }
     }
 
@@ -172,7 +199,7 @@ object WalletController {
     val id_token = IDToken(
       subject = pe.subject,
       client_id = pe.request.client_id,
-      nonce = pe.request.nonce,
+      nonce = pe.request.nonce ?: "",
       vpTokenRef = VpTokenRef(
         presentation_submission = PresentationSubmission(
           id = "1",
@@ -256,8 +283,35 @@ object WalletController {
     return HttpRequest.BodyPublishers.ofString(res)
   }
 
+  fun listIssuers(ctx: Context) {
+    ctx.json(WalletConfig.config.issuers.values)
+  }
 
+  fun issuerMeta(ctx: Context) {
+    val metadata = WalletConfig.config.issuers.get(ctx.queryParam("issuerId"))?.metadata
+    if(metadata != null)
+      ctx.json(metadata.toJSONObject())
+    else
+      ctx.status(HttpCode.NOT_FOUND)
+  }
 
+  fun initIssuance(ctx: Context) {
+    val issuance = ctx.bodyAsClass<CredentialIssuance>()
+    val location = CredentialIssuanceManager.initIssuance(issuance)
+    if(!location.isNullOrEmpty()) {
+      ctx.result(location)
+    } else {
+      ctx.status(HttpCode.INTERNAL_SERVER_ERROR)
+    }
+  }
 
-
+  fun finalizeIssuance(ctx: Context) {
+    val state = ctx.queryParam("state")
+    val code = ctx.queryParam("code")
+    if(state.isNullOrEmpty() || code.isNullOrEmpty()) {
+      ctx.status(HttpCode.BAD_REQUEST).result("No state or authorization code given")
+      return
+    }
+    CredentialIssuanceManager.finalizeIssuance(state, code)
+  }
 }

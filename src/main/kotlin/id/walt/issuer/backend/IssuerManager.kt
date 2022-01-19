@@ -49,6 +49,11 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+const val URL_PATTERN = "^https?:\\/\\/(?!-.)[^\\s\\/\$.?#].[^\\s]*\$"
+fun isSchema(typeOrSchema: String): Boolean {
+  return Regex(URL_PATTERN).matches(typeOrSchema)
+}
+
 object IssuerManager {
 
   val issuerContext = UserContext(
@@ -72,7 +77,6 @@ object IssuerManager {
     return Issuables(
       credentials = listOf("VerifiableId", "VerifiableDiploma", "VerifiableVaccinationCertificate", "ProofOfResidence")
         .map { IssuableCredential.fromTemplateId(it) }
-        .associateBy { it.schemaId }
     )
   }
 
@@ -83,7 +87,7 @@ object IssuerManager {
       redirect_uri = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
       response_mode = "post",
       nonce = nonce,
-      registration = Registration(client_name = IssuerConfig.config.issuerClientName, client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.values.map { it.type }.joinToString(", ") }"),
+      registration = Registration(client_name = IssuerConfig.config.issuerClientName, client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.map { it.type }.joinToString(", ") }"),
       expiration = Instant.now().epochSecond + 24*60*60,
       issuedAt = Instant.now().epochSecond,
       claims = Claims()
@@ -106,7 +110,7 @@ object IssuerManager {
         //Auditor.getService().verify(vp_token.encode(), listOf(SignaturePolicy())).overallStatus
         true
       ) {
-        issuanceReq.selectedIssuables.credentials.values.map {
+        issuanceReq.selectedIssuables.credentials.map {
           Signatory.getService().issue(it.type,
             ProofConfig(issuerDid = issuerDid,
               proofType = ProofType.LD_PROOF,
@@ -179,17 +183,23 @@ object IssuerManager {
     return session.id
   }
 
-  fun fulfillIssuanceSession(session: IssuanceSession, type: String, did: String, format: String = "ldp_vc"): String? {
-    return session.issuables!!.credentials.values.filter { it.type == type }
-      .map {
-        Signatory.getService().issue(it.type,
-          ProofConfig(issuerDid = issuerDid,
-            proofType = when(format) {
-              "jwt" -> ProofType.JWT
-              else -> ProofType.LD_PROOF
-            },
-            subjectDid = did),
-          dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
-      }.firstOrNull()
+  fun fulfillIssuanceSession(session: IssuanceSession, typeOrSchema: String, did: String, format: String = "ldp_vc"): String? {
+    return WalletContextManager.runWith(issuerContext) {
+      when(isSchema(typeOrSchema)) {
+        true -> session.issuables!!.credentialsBySchemaId[typeOrSchema]
+        else -> session.issuables!!.credentialsByType[typeOrSchema]
+      }?.let {
+          Signatory.getService().issue(it.type,
+            ProofConfig(
+              issuerDid = issuerDid,
+              proofType = when (format) {
+                "jwt" -> ProofType.JWT
+                else -> ProofType.LD_PROOF
+              },
+              subjectDid = did
+            ),
+            dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
+        }
+    }
   }
 }

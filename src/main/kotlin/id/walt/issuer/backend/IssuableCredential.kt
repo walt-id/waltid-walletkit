@@ -25,19 +25,25 @@ data class IssuableCredential (
 }
 
 data class Issuables (
-  val credentials: Map<String, IssuableCredential>
+  val credentials: List<IssuableCredential>
     )
 {
+  val credentialsByType
+    get() = credentials.associateBy { it.type }
+  val credentialsBySchemaId
+    get() = credentials.associateBy { it.schemaId }
+
   companion object {
     fun fromCredentialClaims(credentialClaims: List<CredentialClaim>): Issuables {
       return Issuables(
         credentials = credentialClaims.flatMap { claim -> VcTypeRegistry.getTypesWithTemplate().values
           .map { it.metadata.template!!() }
           .filter { it.credentialSchema != null }
-          .filter { it.credentialSchema!!.id == claim.type }
+          .filter { (isSchema(claim.type!!) && it.credentialSchema!!.id == claim.type) ||
+                    (!isSchema(claim.type!!) && it.type.last() == claim.type)
+          }
           .map { it.type.last() }
         } .map { IssuableCredential.fromTemplateId(it) }
-          .associateBy { it.type }
       )
     }
   }

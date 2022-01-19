@@ -98,7 +98,7 @@ object SIOPv2RequestManager {
             Auditor.getService().verify(
               vp_token, listOf(
                 SignaturePolicy(),
-                ChallengePolicy(req.nonce).apply {
+                ChallengePolicy(req.nonce!!).apply {
                   applyToVC = false },
                 VpTokenClaimPolicy(req.claims.vp_token)
               )
