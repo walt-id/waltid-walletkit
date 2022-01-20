@@ -4,13 +4,19 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.PushedAuthorizationResponse
 import com.nimbusds.oauth2.sdk.http.HTTPRequest
+import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.model.oidc.Claims
-import id.walt.model.oidc.CredentialClaim
-import id.walt.model.oidc.CredentialResponse
-import id.walt.model.oidc.SIOPv2Request
+import id.walt.custodian.Custodian
+import id.walt.issuer.backend.IssuanceSession
+import id.walt.model.oidc.*
+import id.walt.services.context.ContextManager
+import id.walt.vclib.model.toCredential
+import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
+import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -18,6 +24,7 @@ import java.util.concurrent.TimeUnit
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 data class CredentialIssuanceRequest (
+  val did: String,
   val issuerId: String,
   val schemaIds: List<String>,
   val walletRedirectUri: String
@@ -27,6 +34,7 @@ data class CredentialIssuanceRequest (
 data class CredentialIssuanceSession (
   val id: String,
   val issuanceRequest: CredentialIssuanceRequest,
+  val user: UserInfo,
   var tokens: OIDCTokens? = null,
   var tokenExpires: Instant? = null,
   var response: List<CredentialResponse>? = null
@@ -36,7 +44,7 @@ object CredentialIssuanceManager {
   val EXPIRATION_TIME = Duration.ofMinutes(5)
   val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, CredentialIssuanceSession>()
 
-  fun initIssuance(issuanceRequest: CredentialIssuanceRequest): String? {
+  fun initIssuance(issuanceRequest: CredentialIssuanceRequest, user: UserInfo): String? {
     val issuer = WalletConfig.config.issuers[issuanceRequest.issuerId]!!
 
     if(issuer.metadata == null) {
@@ -45,7 +53,8 @@ object CredentialIssuanceManager {
 
     val session = CredentialIssuanceSession(
       id = UUID.randomUUID().toString(),
-      issuanceRequest = issuanceRequest)
+      issuanceRequest = issuanceRequest,
+      user = user)
 
     val siopRequest = SIOPv2Request(
       response_type = "code",
@@ -61,7 +70,7 @@ object CredentialIssuanceManager {
       registration = null
     )
 
-    val req = HTTPRequest(HTTPRequest.Method.POST, URI.create("${issuer.metadata!!.pushedAuthorizationRequestEndpointURI}"))
+    val req = HTTPRequest(HTTPRequest.Method.POST, issuer.metadata!!.pushedAuthorizationRequestEndpointURI)
     req.query = siopRequest.toUriQueryString()
     val response = req.send()
     val parResponse = PushedAuthorizationResponse.parse(response)
@@ -73,8 +82,53 @@ object CredentialIssuanceManager {
     }
   }
 
-  fun finalizeIssuance(id: String, code: String) {
+  private fun enc(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
+
+  fun finalizeIssuance(id: String, code: String): CredentialIssuanceSession? {
     val issuance = sessionCache.getIfPresent(id)
+    val issuer = issuance?.let { WalletConfig.config.issuers[it.issuanceRequest.issuerId] }
+    if(issuer?.metadata == null) {
+      return issuance
+    }
     // TODO: get access token, get credentials, etc
+    val req = HTTPRequest(HTTPRequest.Method.POST, issuer.metadata!!.tokenEndpointURI)
+    req.query = "code=${enc(code)}" +
+                "&grant_type=authorization_code"
+    val resp = req.send()
+    val tokenResponse = OIDCTokenResponse.parse(resp)
+    if(!tokenResponse.indicatesSuccess()) {
+      return issuance
+    }
+    issuance.tokens = tokenResponse.toSuccessResponse().oidcTokens
+    tokenResponse.customParameters["expires_in"]?.let { it.toString().toLong() }?.also {
+      issuance.tokenExpires = Instant.now().plusSeconds(it)
+    }
+
+    issuance.response = issuance.issuanceRequest.schemaIds.map { schemaId ->
+      val credReq = HTTPRequest(
+        HTTPRequest.Method.POST,
+        URI.create(issuer.metadata!!.customParameters["credential_endpoint"].toString())
+      )
+      credReq.query = "did=${issuance.issuanceRequest.did}&type=$schemaId"
+      credReq.setHeader("Authorization", "Bearer ${issuance.tokens!!.accessToken.value}")
+      val resp = credReq.send()
+      if(resp.indicatesSuccess())
+        klaxon.parse<CredentialResponse>(resp.content)
+      else
+        return null
+    }.filterNotNull().map { it!! }
+
+    ContextManager.runWith(WalletContextManager.getUserContext(issuance.user)) {
+      issuance.response!!.map { String(Base64.getUrlDecoder().decode(it.credential)).toCredential() }.forEach {
+        it.id = it.id ?: UUID.randomUUID().toString()
+        Custodian.getService().storeCredential(it.id!!, it)
+      }
+    }
+
+    return issuance
+  }
+
+  fun getSession(id: String): CredentialIssuanceSession? {
+    return sessionCache.getIfPresent(id)
   }
 }

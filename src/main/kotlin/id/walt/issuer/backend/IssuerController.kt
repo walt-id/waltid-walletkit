@@ -151,7 +151,8 @@ object IssuerController {
               .formParam<String>("format")
               .formParam<String>("type")
               .formParam<String>("did")
-              .formParam<Proof>("proof"),
+              .formParam<Proof>("proof")
+              .json<CredentialResponse>("200"),
             IssuerController::credential
           ))
         }
