@@ -3,8 +3,10 @@ package id.walt.webwallet.backend.wallet
 import com.beust.klaxon.Converter
 import com.beust.klaxon.JsonValue
 import com.beust.klaxon.Klaxon
+import com.nimbusds.jose.util.Base64URL
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
+import id.walt.issuer.backend.IssuanceSession
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
 import id.walt.model.dif.DescriptorMapping
@@ -20,6 +22,7 @@ import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.key.KeyService
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.model.VerifiableCredential
+import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
 import io.javalin.apibuilder.ApiBuilder.*
@@ -33,6 +36,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.util.*
 
 object WalletController {
   val routes
@@ -152,6 +156,12 @@ object WalletController {
             .result<String>("302"),
           WalletController::finalizeIssuance
         ), UserRole.UNAUTHORIZED)
+        get("issuedCredentials", documented(
+          document().operation { it.summary("Get credentials issued in current issuance session").addTagsItem("SIOPv2").operationId("getIssuedCredentials") }
+            .queryParam<String>("sessionId")
+            .jsonArray<VerifiableCredential>("200"),
+          WalletController::getIssuedCredentials
+        ), UserRole.AUTHORIZED)
       }
     }
 
@@ -298,7 +308,7 @@ object WalletController {
 
   fun initIssuance(ctx: Context) {
     val issuance = ctx.bodyAsClass<CredentialIssuanceRequest>()
-    val location = CredentialIssuanceManager.initIssuance(issuance)
+    val location = CredentialIssuanceManager.initIssuance(issuance, JWTService.getUserInfo(ctx)!!)
     if(!location.isNullOrEmpty()) {
       ctx.result(location)
     } else {
@@ -313,6 +323,21 @@ object WalletController {
       ctx.status(HttpCode.BAD_REQUEST).result("No state or authorization code given")
       return
     }
-    CredentialIssuanceManager.finalizeIssuance(state, code)
+    val issuance = CredentialIssuanceManager.finalizeIssuance(state, code)
+    if(issuance?.response != null) {
+      ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/ReceiveCredential?sessionId=${issuance.id}")
+    } else {
+      ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/IssuanceError")
+    }
+  }
+
+  fun getIssuedCredentials(ctx: Context) {
+    val sessionId = ctx.queryParam("sessionId")
+    val issuanceSession = sessionId?.let { CredentialIssuanceManager.getSession(it) }
+    if(issuanceSession == null) {
+      ctx.status(HttpCode.BAD_REQUEST).result("Invalid or expired session id given")
+      return
+    }
+    ctx.json(issuanceSession.response?.map { it.credential }?.filterNotNull()?.map { String(Base64.getUrlDecoder().decode(it)).toCredential() } ?: listOf<VerifiableCredential>())
   }
 }
