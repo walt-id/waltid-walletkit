@@ -12,6 +12,7 @@ import id.walt.model.dif.PresentationSubmission
 import id.walt.model.oidc.IDToken
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.VpTokenRef
+import id.walt.model.oidc.klaxon
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
@@ -140,7 +141,7 @@ object WalletController {
         }
         post("initIssuance", documented(
           document().operation { it.summary("Initialize credential issuance from selected issuer").addTagsItem("SIOPv2").operationId("initIssuance") }
-            .body<CredentialIssuance>()
+            .body<CredentialIssuanceRequest>()
             .result<String>("200"),
           WalletController::initIssuance
         ), UserRole.AUTHORIZED)
@@ -191,7 +192,7 @@ object WalletController {
   }
 
   private fun handlePresentationResponse(ctx: Context): Any? {
-    val pe = ctx.bodyAsClass<PresentationExchange>()
+    val pe = ctx.body().let { klaxon.parse<PresentationExchange>(it) }!!
     val myCredentials = Custodian.getService().listCredentials()
     val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
@@ -296,7 +297,7 @@ object WalletController {
   }
 
   fun initIssuance(ctx: Context) {
-    val issuance = ctx.bodyAsClass<CredentialIssuance>()
+    val issuance = ctx.bodyAsClass<CredentialIssuanceRequest>()
     val location = CredentialIssuanceManager.initIssuance(issuance)
     if(!location.isNullOrEmpty()) {
       ctx.result(location)
