@@ -42,7 +42,7 @@ object AuthController {
                 DidService.create(DidMethod.key)
             }
         }
-        ctx.json(UserInfo(userInfo.email).apply { token = JWTService.toJWT(userInfo) })
+        ctx.json(UserInfo(userInfo.id).apply { token = JWTService.toJWT(userInfo) })
     }
 
     fun userInfo(ctx: Context) {
