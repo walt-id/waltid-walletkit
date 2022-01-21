@@ -12,7 +12,7 @@ object WalletContextManager : WaltIdContextManager() {
 
     val userContexts: LoadingCache<String, Context> = CacheBuilder.newBuilder().maximumSize(256).build(UserContextLoader)
 
-    fun getUserContext(userInfo: UserInfo) = userContexts.get(userInfo.email)
+    fun getUserContext(userInfo: UserInfo) = userContexts.get(userInfo.id)
 
     val preRequestHandler
         get() = Handler { ctx -> JWTService.getUserInfo(ctx)?.let { setCurrentContext(getUserContext(it)) } }
