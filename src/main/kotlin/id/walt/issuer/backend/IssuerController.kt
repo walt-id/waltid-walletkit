@@ -166,7 +166,7 @@ object IssuerController {
     }
     val sessionId = ctx.queryParam("sessionId")
     if(sessionId == null)
-      ctx.json(IssuerManager.listIssuableCredentialsFor(userInfo!!.email))
+      ctx.json(IssuerManager.listIssuableCredentialsFor(userInfo!!.id))
     else
       ctx.json(IssuerManager.getIssuanceSession(sessionId)?.issuables ?: Issuables(credentials = listOf()))
   }
@@ -195,7 +195,7 @@ object IssuerController {
       ctx.result(
         "${wallet.url}/${wallet.receivePath}" +
             "?${
-              IssuerManager.newIssuanceRequest(userInfo.email, selectedIssuables).toUriQueryString()
+              IssuerManager.newIssuanceRequest(userInfo.id, selectedIssuables).toUriQueryString()
             }"
       )
     } else {
