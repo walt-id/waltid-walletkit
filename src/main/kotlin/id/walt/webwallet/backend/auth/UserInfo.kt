@@ -11,7 +11,7 @@ class UserInfo(
     init {
         when {
             id.contains("@") -> email = id
-            id.startsWith("0x") -> ethAccount = id
+            id.lowercase().contains("0x") -> ethAccount = id
         }
     }
 }
