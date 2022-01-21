@@ -7,6 +7,7 @@ import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.oidc.IDToken
 import id.walt.model.oidc.SIOPv2Request
+import id.walt.model.oidc.klaxon
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -97,7 +98,7 @@ class SIOPv2Test : AnnotationSpec() {
     lateinit var peResponse: PresentationExchangeResponse
 
     val ctx2 = mockk<Context>(relaxed = true)
-    every { ctx2.bodyAsClass<PresentationExchange>() } returns peSel
+    every { ctx2.body() } returns klaxon.toJsonString(peSel)
     every { ctx2.json(ofType(PresentationExchangeResponse::class)) } answers { peResponse = firstArg(); ctx2 }
 
     WalletController.postPresentationExchange(ctx2)
