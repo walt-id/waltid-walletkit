@@ -18,8 +18,11 @@ import id.walt.model.oidc.CredentialResponse
 import id.walt.model.oidc.klaxon
 import id.walt.services.jwt.JwtService
 import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.vclib.model.AbstractVerifiableCredential
+import id.walt.vclib.model.CredentialSubject
 import id.walt.vclib.model.Proof
 import id.walt.vclib.model.toCredential
+import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
@@ -226,9 +229,19 @@ object IssuerController {
         setCustomParameter("credential_manifests", listOf(
           CredentialManifest(
             issuer = id.walt.model.dif.Issuer(IssuerManager.issuerDid, IssuerConfig.config.issuerClientName),
-            outputDescriptors = listOf(
-               OutputDescriptor("VerifiableID", VcTemplateManager.loadTemplate("VerifiableId").credentialSchema!!.id, "Verifiable ID document")
-            )
+            outputDescriptors = VcTypeRegistry.getTypesWithTemplate().values
+              .filter {
+                it.isPrimary &&
+                AbstractVerifiableCredential::class.java.isAssignableFrom(it.vc.java) &&
+                !it.metadata.template?.invoke()?.credentialSchema?.id.isNullOrEmpty()
+              }
+              .map {
+              OutputDescriptor(
+                it.metadata.type.last(),
+                it.metadata.template!!.invoke()!!.credentialSchema!!.id,
+                it.metadata.type.last()
+              )
+            }
           )).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
         )
     }.toJSONObject())
