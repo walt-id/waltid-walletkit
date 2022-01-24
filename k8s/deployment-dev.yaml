@@ -32,6 +32,18 @@ data:
         }
       }
     }
+  wallet-config.json: |
+    {
+      "walletUiUrl": "https://wallet.waltid.org",
+      "walletApiUrl": "https://wallet.waltid.org/api",
+      "issuers": {
+        "walt.id": {
+          "id": "walt.id",
+          "url": "https://wallet.waltid.org/issuer-api/oidc",
+          "description": "walt.id Issuer Portal"
+        }
+      }
+    }
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
