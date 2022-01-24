@@ -20,7 +20,7 @@ object JWTService : AccessManager {
     val provider = JWTProvider(
         algorithm,
         { user: UserInfo, alg: Algorithm? ->
-            JWT.create().withSubject(user.email).sign(alg)
+            JWT.create().withSubject(user.id).sign(alg)
         },
         JWT.require(algorithm).build()
     )
