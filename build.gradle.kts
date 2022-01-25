@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.javalin:javalin-bundle:4.1.1")
+    implementation("io.javalin:javalin-bundle:4.3.0")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.5")
     implementation("com.nimbusds:oauth2-oidc-sdk:9.21")
@@ -31,7 +31,12 @@ dependencies {
     implementation("id.walt:waltid-ssikit-vclib:1.11.1")
 
     // Service-Matrix
-    implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.0.1")
+    implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
+
+    // Logging
+    implementation("org.slf4j:slf4j-api:2.0.0-alpha6")
+    implementation("org.slf4j:slf4j-simple:2.0.0-alpha6")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
