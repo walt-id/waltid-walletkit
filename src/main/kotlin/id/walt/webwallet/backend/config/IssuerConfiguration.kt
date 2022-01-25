@@ -12,7 +12,9 @@ import java.net.http.HttpResponse
 data class IssuerConfiguration (
   val id: String,
   val url: String,
-  val description: String
+  val description: String,
+  val client_id: String? = null,
+  val client_secret: String? = null
 ) {
 
   @JsonIgnore
