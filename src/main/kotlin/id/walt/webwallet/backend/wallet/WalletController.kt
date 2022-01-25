@@ -172,10 +172,11 @@ object WalletController {
   fun createDid(ctx:Context) {
     val method = DidMethod.valueOf(ctx.queryParam("method")!!)
 
-    if(DidService.listDids().firstOrNull { d -> DidUrl.from(d).method == method.name } != null) {
-      ctx.status(HttpCode.BAD_REQUEST).result("A DID with the given method already exists")
-      return
-    }
+    // TODO: why should we only accept one DID per method?
+//    if(DidService.listDids().firstOrNull { d -> DidUrl.from(d).method == method.name } != null) {
+//      ctx.status(HttpCode.BAD_REQUEST).result("A DID with the given method already exists")
+//      return
+//    }
 
     if(method == DidMethod.ebsi) {
       val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
