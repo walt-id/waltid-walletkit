@@ -24,12 +24,15 @@ import io.javalin.plugin.openapi.ui.SwaggerOptions
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
+import mu.KotlinLogging
 
 internal val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
 
 internal var WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_BACKEND_BIND_ADDRESS") ?: "127.0.0.1"
 
 internal val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
+
+private val log = KotlinLogging.logger {}
 
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
@@ -45,6 +48,10 @@ fun main(args: Array<String>) {
 
     val app = Javalin.create { config ->
         config.apply {
+            enableDevLogging()
+            requestLogger { ctx, ms ->
+                log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
+            }
             accessManager(JWTService)
             registerPlugin(RouteOverviewPlugin("/api-routes"))
             registerPlugin(OpenApiPlugin(OpenApiOptions(InitialConfigurationCreator {
