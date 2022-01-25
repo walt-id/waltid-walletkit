@@ -107,6 +107,7 @@ object SIOPv2RequestManager {
             null
         }
       },
+      vp_token = vp_token, // Return the VP to the frontend, so the data can be displayed
       null
     )
 
