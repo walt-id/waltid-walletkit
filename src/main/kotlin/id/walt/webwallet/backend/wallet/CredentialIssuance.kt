@@ -3,7 +3,10 @@ package id.walt.webwallet.backend.wallet
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.PushedAuthorizationResponse
+import com.nimbusds.oauth2.sdk.auth.ClientSecretBasic
+import com.nimbusds.oauth2.sdk.auth.Secret
 import com.nimbusds.oauth2.sdk.http.HTTPRequest
+import com.nimbusds.oauth2.sdk.id.ClientID
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.custodian.Custodian
@@ -71,6 +74,8 @@ object CredentialIssuanceManager {
     )
 
     val req = HTTPRequest(HTTPRequest.Method.POST, issuer.metadata!!.pushedAuthorizationRequestEndpointURI)
+    if(!issuer.client_id.isNullOrEmpty() && !issuer.client_secret.isNullOrEmpty())
+      req.authorization = ClientSecretBasic(ClientID(issuer.client_id), Secret(issuer.client_secret)).toHTTPAuthorizationHeader()
     req.query = siopRequest.toUriQueryString()
     val response = req.send()
     val parResponse = PushedAuthorizationResponse.parse(response)
@@ -92,6 +97,8 @@ object CredentialIssuanceManager {
     }
     // TODO: get access token, get credentials, etc
     val req = HTTPRequest(HTTPRequest.Method.POST, issuer.metadata!!.tokenEndpointURI)
+    if(!issuer.client_id.isNullOrEmpty() && !issuer.client_secret.isNullOrEmpty())
+      req.authorization = ClientSecretBasic(ClientID(issuer.client_id), Secret(issuer.client_secret)).toHTTPAuthorizationHeader()
     req.query = "code=${enc(code)}" +
                 "&grant_type=authorization_code"
     val resp = req.send()
@@ -109,8 +116,8 @@ object CredentialIssuanceManager {
         HTTPRequest.Method.POST,
         URI.create(issuer.metadata!!.customParameters["credential_endpoint"].toString())
       )
+      credReq.authorization = issuance.tokens!!.accessToken.toAuthorizationHeader()
       credReq.query = "did=${issuance.issuanceRequest.did}&type=$schemaId"
-      credReq.setHeader("Authorization", "Bearer ${issuance.tokens!!.accessToken.value}")
       val resp = credReq.send()
       if(resp.indicatesSuccess())
         klaxon.parse<CredentialResponse>(resp.content)
