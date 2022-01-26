@@ -6,7 +6,7 @@ data:
   issuer-config.json: |
     {
       "issuerUiUrl": "https://issuer.walt.id",
-      "issuerApiUrl": "http://wallet-backend/issuer-api",
+      "issuerApiUrl": "https://issuer.walt.id/issuer-api",
       "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
         "walt.id": {
