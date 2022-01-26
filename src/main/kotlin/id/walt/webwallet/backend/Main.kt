@@ -96,7 +96,7 @@ fun main(args: Array<String>) {
         path("issuer-api") {
             IssuerController.routes
         }
-        path(".well-known") {
+        path("did-registry") {
             DidWebRegistryController.routes
         }
     }
