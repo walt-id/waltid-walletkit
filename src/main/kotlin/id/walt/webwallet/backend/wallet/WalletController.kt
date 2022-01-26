@@ -193,7 +193,7 @@ object WalletController {
       ctx.result(DidService.create(method, KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.EdDSA_Ed25519 }?.keyId?.id))
     } else if (method == DidMethod.web) {
       val key = KeyService.getService().generate(KeyAlgorithm.RSA)
-      val didStr = DidService.create(method, key.id, DidService.DidWebOptions(URI.create(WalletConfig.config.walletApiUrl).authority, "did-registry/${key.id}"))
+      val didStr = DidService.create(method, key.id, DidService.DidWebOptions(URI.create(WalletConfig.config.walletApiUrl).authority, "api/did-registry/${key.id}"))
       val didDoc = DidService.load(didStr)
       // !! Implicit USER CONTEXT is LOST after this statement !!
       ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
