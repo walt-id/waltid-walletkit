@@ -214,7 +214,7 @@ object WalletController {
     val myCredentials = Custodian.getService().listCredentials()
     val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
     val selectedCredentials = myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }.toList()
-    val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, challenge = pe.request.nonce)
+    val vp = Custodian.getService().createPresentation(selectedCredentials, pe.subject, null, challenge = pe.request.nonce, expirationDate = null)
     val id_token = IDToken(
       subject = pe.subject,
       client_id = pe.request.client_id,
