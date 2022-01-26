@@ -8,12 +8,14 @@ import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.webwallet.backend.WALTID_DATA_ROOT
+import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.UserContext
 import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import java.net.URI
 
 object DidWebRegistryController {
     val routes
@@ -40,7 +42,7 @@ object DidWebRegistryController {
     private fun loadDidWeb(ctx: Context) {
         val id = ctx.pathParam("id")
         ContextManager.runWith(didRegistryContext) {
-            ctx.json(DidService.load("did:web:wallet.walt.id:$id"))
+            ctx.json(DidService.load("did:web:${URI.create(WalletConfig.config.walletApiUrl).authority}:api:did-registry:${id}"))
         }
     }
 
