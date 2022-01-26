@@ -17,6 +17,7 @@ import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.VpTokenRef
 import id.walt.model.oidc.klaxon
 import id.walt.rest.custodian.CustodianController
+import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
@@ -192,7 +193,13 @@ object WalletController {
       ctx.result(DidService.create(method, KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.EdDSA_Ed25519 }?.keyId?.id))
     } else if (method == DidMethod.web) {
       val key = KeyService.getService().generate(KeyAlgorithm.RSA)
-      ctx.result(DidService.create(method, key.id, DidService.DidWebOptions(URI.create(WalletConfig.config.walletApiUrl).authority, "did-registry/${key.id}")))
+      val didStr = DidService.create(method, key.id, DidService.DidWebOptions(URI.create(WalletConfig.config.walletApiUrl).authority, "did-registry/${key.id}"))
+      val didDoc = DidService.load(didStr)
+      // !! Implicit USER CONTEXT is LOST after this statement !!
+      ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
+        DidService.storeDid(didStr, didDoc.encodePretty())
+      }
+      ctx.result(didStr)
     }
   }
 
