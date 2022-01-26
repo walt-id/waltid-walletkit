@@ -89,15 +89,13 @@ fun main(args: Array<String>) {
         path("api") {
             AuthController.routes
             WalletController.routes
+            DidWebRegistryController.routes
         }
         path("verifier-api") {
             VerifierController.routes
         }
         path("issuer-api") {
             IssuerController.routes
-        }
-        path("did-registry") {
-            DidWebRegistryController.routes
         }
     }
 

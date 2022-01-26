@@ -283,6 +283,13 @@ spec:
                 name: wallet-backend
                 port:
                   number: 80
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: wallet-backend
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
