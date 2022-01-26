@@ -20,6 +20,7 @@ import id.walt.rest.custodian.CustodianController
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
+import id.walt.services.jwt.keyId
 import id.walt.services.key.KeyService
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.model.VerifiableCredential
@@ -32,6 +33,7 @@ import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
+import java.net.URL
 import java.net.URLEncoder
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -173,12 +175,6 @@ object WalletController {
   fun createDid(ctx:Context) {
     val method = DidMethod.valueOf(ctx.queryParam("method")!!)
 
-    // TODO: why should we only accept one DID per method?
-//    if(DidService.listDids().firstOrNull { d -> DidUrl.from(d).method == method.name } != null) {
-//      ctx.status(HttpCode.BAD_REQUEST).result("A DID with the given method already exists")
-//      return
-//    }
-
     if(method == DidMethod.ebsi) {
       val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
       if(didCreationReq?.bearerToken.isNullOrEmpty()) {
@@ -192,8 +188,11 @@ object WalletController {
       EssifClient.authApi(did)
       DidEbsiService.getService().registerDid(did, did)
       ctx.result(did)
-    } else {
+    } else if (method == DidMethod.key) {
       ctx.result(DidService.create(method, KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.EdDSA_Ed25519 }?.keyId?.id))
+    } else if (method == DidMethod.web) {
+      val key = KeyService.getService().generate(KeyAlgorithm.RSA)
+      ctx.result(DidService.create(method, key.id, DidService.DidWebOptions(URI.create(WalletConfig.config.walletApiUrl).authority, "did-registry/${key.id}")))
     }
   }
 
