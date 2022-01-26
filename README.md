@@ -2,7 +2,7 @@
 
 [![CI/CD Workflow for Walt.ID Wallet Backend](https://github.com/walt-id/waltid-wallet-backend/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/walt-id/waltid-wallet-backend/actions/workflows/ci.yml)
 
-The walt.id wallet backend provides the API and backend business logic for the walt.id web wallet.
+The **walt.id wallet backend** provides the API and backend business logic for the walt.id web wallet.
 Additionally, it includes a reference implementation of a Verifier and Issuer Portal backend. 
 
 The provided services include:
