@@ -12,6 +12,7 @@ import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.context.WalletContextManager
+import id.walt.webwallet.backend.wallet.DidWebRegistryController
 import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.path
@@ -94,6 +95,9 @@ fun main(args: Array<String>) {
         }
         path("issuer-api") {
             IssuerController.routes
+        }
+        path(".well-known") {
+            DidWebRegistryController.routes
         }
     }
 
