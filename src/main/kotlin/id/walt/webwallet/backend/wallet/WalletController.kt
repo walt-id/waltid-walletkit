@@ -4,6 +4,7 @@ import com.beust.klaxon.Converter
 import com.beust.klaxon.JsonValue
 import com.beust.klaxon.Klaxon
 import com.nimbusds.jose.util.Base64URL
+import com.nimbusds.oauth2.sdk.http.HTTPRequest
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.issuer.backend.IssuanceSession
@@ -233,17 +234,11 @@ object WalletController {
       return per
     } else if(pe.request.response_mode == "post") {
       // post response to redirect uri and return result (avoiding CORS)
-      val client = HttpClient.newBuilder().build();
-      val request = HttpRequest.newBuilder()
-        .uri(URI.create(pe.request.redirect_uri))
-        .POST(formData(mapOf("id_token" to per.id_token, "vp_token" to per.vp_token)))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .build()
-      val response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      //response.headers().map().forEach({ ctx.header(it.key, it.value.first())})
-      val body = response.body()
-      ctx.status(response.statusCode()).result(body)
-      return body
+      val req = HTTPRequest(HTTPRequest.Method.POST, URI.create(pe.request.redirect_uri))
+      req.query = formData(mapOf("id_token" to per.id_token, "vp_token" to per.vp_token))
+      val response = req.send();
+      ctx.status(response.statusCode).result(response.content)
+      return response.content
     } else {
       ctx.status(HttpCode.BAD_REQUEST).result("Unknown response mode ${pe.request.response_mode}")
       return null
@@ -287,12 +282,10 @@ object WalletController {
       }?.toList() ?: listOf()
   }
 
-  private fun formData(data: Map<String, String>): HttpRequest.BodyPublisher? {
+  private fun formData(data: Map<String, String>): String {
 
-    val res = data.map {(k, v) -> "${(URLEncoder.encode(k, StandardCharsets.UTF_8))}=${URLEncoder.encode(v, StandardCharsets.UTF_8)}"}
+    return data.map {(k, v) -> "${(URLEncoder.encode(k, StandardCharsets.UTF_8))}=${URLEncoder.encode(v, StandardCharsets.UTF_8)}"}
       .joinToString("&")
-
-    return HttpRequest.BodyPublishers.ofString(res)
   }
 
   fun listIssuers(ctx: Context) {
