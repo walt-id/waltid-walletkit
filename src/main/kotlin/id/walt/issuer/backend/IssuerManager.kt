@@ -75,7 +75,7 @@ object IssuerManager {
 
   fun listIssuableCredentialsFor(user: String): Issuables {
     return Issuables(
-      credentials = listOf("VerifiableId", "VerifiableDiploma", "VerifiableVaccinationCertificate", "ProofOfResidence")
+      credentials = listOf("VerifiableId", "VerifiableDiploma", "VerifiableVaccinationCertificate", "ProofOfResidence", "ParticipantCredential")
         .map { IssuableCredential.fromTemplateId(it) }
     )
   }
