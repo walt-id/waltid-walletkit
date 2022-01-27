@@ -27,8 +27,8 @@ dependencies {
     implementation("com.nimbusds:oauth2-oidc-sdk:9.21")
 
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.4-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.11.1")
+    implementation("id.walt:waltid-ssi-kit:1.5.0")
+    implementation("id.walt:waltid-ssikit-vclib:1.12.0")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
