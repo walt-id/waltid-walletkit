@@ -54,10 +54,9 @@ object WalletController {
                     post(
                         documented(document().operation {
                             it.summary("Create new DID")
-                                .description("Creates and registers DID. For EBSI: needs bearer token to be given as form parameter 'ebsiBearerToken', for DID registration.")
+                                .description("Creates and registers a DID. Currently the DID methos: key, web and ebsi are supported. For EBSI: a  bearer token is required.")
                                 .operationId("createDid").addTagsItem("wallet")
                         }
-                            .queryParam<DidMethod>("method")
                             .body<DidCreationRequest>()
                             .result<String>("200"),
                             WalletController::createDid
@@ -187,7 +186,6 @@ object WalletController {
     }
 
     fun createDid(ctx: Context) {
-        val method = DidMethod.valueOf(ctx.queryParam("method")!!)
         val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
 
         val key = didCreationReq.keyId?.let { KeyService.getService().load(it).keyId }
@@ -195,47 +193,50 @@ object WalletController {
                 .firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
             ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
 
-        if (method == DidMethod.ebsi) {
-            if (didCreationReq.bearerToken.isNullOrEmpty()) {
-                ctx.status(HttpCode.BAD_REQUEST)
-                    .result("ebsiBearerToken form parameter is required for EBSI DID registration.")
-                return
-            }
+        when (didCreationReq.method) {
+            DidMethod.ebsi -> {
+                if (didCreationReq.didEbsiBearerToken.isNullOrEmpty()) {
+                    ctx.status(HttpCode.BAD_REQUEST)
+                        .result("ebsiBearerToken form parameter is required for EBSI DID registration.")
+                    return
+                }
 
-            val did = DidService.create(method, key.id)
-            EssifClient.onboard(did, didCreationReq.bearerToken)
-            EssifClient.authApi(did)
-            DidEbsiService.getService().registerDid(did, did)
-            ctx.result(did)
-        } else if (method == DidMethod.key) {
-            ctx.result(
-                DidService.create(
-                    method,
-                    key.id
-                )
-            )
-        } else if (method == DidMethod.web) {
-
-            val didStr = DidService.create(
-                method,
-                key.id,
-                DidService.DidWebOptions(
-                    domain = URI.create(didCreationReq.didWebDomain?.run {
-                        when {
-                            startsWith("https://", true) -> this
-                            else -> "https://${this}"
-                        }
-                    } ?: WalletConfig.config.walletApiUrl).authority,
-                    path = didCreationReq.didWebDomain?.run { didCreationReq.didWebPath ?: "" }
-                        ?: "api/did-registry/${key.id}"
-                )
-            )
-            val didDoc = DidService.load(didStr)
-            // !! Implicit USER CONTEXT is LOST after this statement !!
-            ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
-                DidService.storeDid(didStr, didDoc.encodePretty())
+                val did = DidService.create(didCreationReq.method, key.id)
+                EssifClient.onboard(did, didCreationReq.didEbsiBearerToken)
+                EssifClient.authApi(did)
+                DidEbsiService.getService().registerDid(did, did)
+                ctx.result(did)
             }
-            ctx.result(didStr)
+            DidMethod.web -> {
+                val didStr = DidService.create(
+                    didCreationReq.method,
+                    key.id,
+                    DidService.DidWebOptions(
+                        domain = URI.create(didCreationReq.didWebDomain?.run {
+                            when {
+                                startsWith("https://", true) -> this
+                                else -> "https://${this}"
+                            }
+                        } ?: WalletConfig.config.walletApiUrl).authority,
+                        path = didCreationReq.didWebDomain?.run { didCreationReq.didWebPath ?: "" }
+                            ?: "api/did-registry/${key.id}"
+                    )
+                )
+                val didDoc = DidService.load(didStr)
+                // !! Implicit USER CONTEXT is LOST after this statement !!
+                ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
+                    DidService.storeDid(didStr, didDoc.encodePretty())
+                }
+                ctx.result(didStr)
+            }
+            DidMethod.key -> {
+                ctx.result(
+                    DidService.create(
+                        didCreationReq.method,
+                        key.id
+                    )
+                )
+            }
         }
     }
 
