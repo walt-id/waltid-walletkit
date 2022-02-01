@@ -196,17 +196,19 @@ object WalletController {
 
     fun createDid(ctx: Context) {
         val method = DidMethod.valueOf(ctx.queryParam("method")!!)
+        val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
+
+        val key = didCreationReq.keyId?.let { KeyService.getService().load(it).keyId }
+            ?: KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
+            ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
 
         if (method == DidMethod.ebsi) {
-            val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
             if (didCreationReq?.bearerToken.isNullOrEmpty()) {
                 ctx.status(HttpCode.BAD_REQUEST)
                     .result("ebsiBearerToken form parameter is required for EBSI DID registration.")
                 return
             }
-            val key = KeyService.getService().listKeys()
-                .firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
-                ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
+
             val did = DidService.create(method, key.id)
             EssifClient.onboard(did, didCreationReq.bearerToken)
             EssifClient.authApi(did)
@@ -216,12 +218,10 @@ object WalletController {
             ctx.result(
                 DidService.create(
                     method,
-                    KeyService.getService().listKeys()
-                        .firstOrNull { k -> k.algorithm == KeyAlgorithm.EdDSA_Ed25519 }?.keyId?.id
+                    key.id
                 )
             )
         } else if (method == DidMethod.web) {
-            val key = KeyService.getService().generate(KeyAlgorithm.RSA)
             val didStr = DidService.create(
                 method,
                 key.id,
