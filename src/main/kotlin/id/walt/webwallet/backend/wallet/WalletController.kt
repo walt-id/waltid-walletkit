@@ -3,13 +3,10 @@ package id.walt.webwallet.backend.wallet
 import com.beust.klaxon.Converter
 import com.beust.klaxon.JsonValue
 import com.beust.klaxon.Klaxon
-import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.oauth2.sdk.http.HTTPRequest
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
-import id.walt.issuer.backend.IssuanceSession
 import id.walt.model.DidMethod
-import id.walt.model.DidUrl
 import id.walt.model.dif.DescriptorMapping
 import id.walt.model.dif.PresentationSubmission
 import id.walt.model.oidc.IDToken
@@ -21,10 +18,9 @@ import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
-import id.walt.services.jwt.keyId
 import id.walt.services.key.KeyService
-import id.walt.vclib.model.toCredential
 import id.walt.vclib.model.VerifiableCredential
+import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -34,11 +30,7 @@ import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
-import java.net.URL
 import java.net.URLEncoder
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -199,11 +191,12 @@ object WalletController {
         val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
 
         val key = didCreationReq.keyId?.let { KeyService.getService().load(it).keyId }
-            ?: KeyService.getService().listKeys().firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
+            ?: KeyService.getService().listKeys()
+                .firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
             ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
 
         if (method == DidMethod.ebsi) {
-            if (didCreationReq?.bearerToken.isNullOrEmpty()) {
+            if (didCreationReq.bearerToken.isNullOrEmpty()) {
                 ctx.status(HttpCode.BAD_REQUEST)
                     .result("ebsiBearerToken form parameter is required for EBSI DID registration.")
                 return
@@ -222,12 +215,19 @@ object WalletController {
                 )
             )
         } else if (method == DidMethod.web) {
+
             val didStr = DidService.create(
                 method,
                 key.id,
                 DidService.DidWebOptions(
-                    URI.create(WalletConfig.config.walletApiUrl).authority,
-                    "api/did-registry/${key.id}"
+                    domain = URI.create(didCreationReq.didWebDomain?.run {
+                        when {
+                            startsWith("https://", true) -> this
+                            else -> "https://${this}"
+                        }
+                    } ?: WalletConfig.config.walletApiUrl).authority,
+                    path = didCreationReq.didWebDomain?.run { didCreationReq.didWebPath ?: "" }
+                        ?: "api/did-registry/${key.id}"
                 )
             )
             val didDoc = DidService.load(didStr)
