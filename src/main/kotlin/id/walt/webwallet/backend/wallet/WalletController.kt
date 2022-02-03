@@ -71,6 +71,13 @@ object WalletController {
                     UserRole.AUTHORIZED
                 )
             }
+            path("keys") {
+                get(
+                    "list",
+                    documented(CustodianController.listKeysDocs(), CustodianController::listKeys),
+                    UserRole.AUTHORIZED
+                )
+            }
             path("siopv2") {
                 get("presentationExchange", documented(
                     document().operation {
