@@ -63,5 +63,5 @@ tasks.withType<Test> {
 }
 
 application {
-    mainClass.set("id.walt.webwallet.backend.MainKt")
+    mainClass.set("id.walt.MainKt")
 }
