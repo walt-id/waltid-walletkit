@@ -10,7 +10,6 @@ import com.nimbusds.oauth2.sdk.id.ClientID
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.custodian.Custodian
-import id.walt.issuer.backend.IssuanceSession
 import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.vclib.model.toCredential

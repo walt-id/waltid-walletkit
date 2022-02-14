@@ -1,46 +1,26 @@
 package id.walt.webwallet.backend.wallet
 
-import cc.vileda.openapi.dsl.components
-import cc.vileda.openapi.dsl.info
-import cc.vileda.openapi.dsl.security
 import com.fasterxml.jackson.databind.json.JsonMapper
-import id.walt.crypto.Key
-import id.walt.issuer.backend.IssuerController
-import id.walt.onboarding.backend.OnboardingController
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
-import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.JWTService
+import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder
-import io.javalin.core.util.RouteOverviewPlugin
-import io.javalin.plugin.openapi.InitialConfigurationCreator
-import io.javalin.plugin.openapi.OpenApiOptions
-import io.javalin.plugin.openapi.OpenApiPlugin
-import io.javalin.plugin.openapi.ui.ReDocOptions
-import io.javalin.plugin.openapi.ui.SwaggerOptions
 import io.kotest.core.spec.style.AnnotationSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldHaveMinLength
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.features.json.*
-import io.ktor.client.features.json.serializer.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.mockk.mockk
-import io.swagger.v3.oas.models.OpenAPI
-import io.swagger.v3.oas.models.security.SecurityScheme
-import io.swagger.v3.oas.models.servers.Server
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import mu.KotlinLogging
-import  id.walt.webwallet.backend.auth.UserInfo
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.string.shouldHaveMinLength
 
 private val log = KotlinLogging.logger {}
 
