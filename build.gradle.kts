@@ -27,7 +27,7 @@ dependencies {
     implementation("com.nimbusds:oauth2-oidc-sdk:9.21")
 
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.6.1")
+    implementation("id.walt:waltid-ssi-kit:1.6-SNAPSHOT")
     implementation("id.walt:waltid-ssikit-vclib:1.13.0")
 
     // Service-Matrix
@@ -45,6 +45,13 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:4.6.3")
     testImplementation("io.kotest:kotest-assertions-core:4.6.3")
     testImplementation("io.kotest:kotest-assertions-json:4.6.3")
+
+    // HTTP
+    testImplementation("io.ktor:ktor-client-core:1.6.7")
+    testImplementation("io.ktor:ktor-client-cio:1.6.7")
+    testImplementation("io.ktor:ktor-client-serialization:1.6.7")
+    testImplementation("io.ktor:ktor-client-logging:1.6.7")
+    testImplementation("io.ktor:ktor-client-jackson:1.6.7")
 }
 
 tasks.withType<KotlinCompile> {

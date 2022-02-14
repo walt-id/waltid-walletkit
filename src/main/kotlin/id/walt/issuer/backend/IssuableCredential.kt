@@ -3,10 +3,8 @@ package id.walt.issuer.backend
 import id.walt.model.oidc.CredentialClaim
 import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.model.CredentialSubject
-import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.vclib.templates.VcTemplateManager
-import io.javalin.core.util.RouteOverviewUtil.metaInfo
 
 data class IssuableCredential (
   val schemaId: String,
