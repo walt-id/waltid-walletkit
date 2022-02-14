@@ -51,6 +51,7 @@ fun main(args: Array<String>) {
     val app = Javalin.create { config ->
         config.apply {
             enableDevLogging()
+            enableCorsForAllOrigins()
             requestLogger { ctx, ms ->
                 log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
             }
