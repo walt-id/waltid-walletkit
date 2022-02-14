@@ -42,7 +42,7 @@ object WalletController {
                 path("list") {
                     get(
                         documented(document().operation {
-                            it.summary("List my DIDs").operationId("listDids").addTagsItem("wallet")
+                            it.summary("List my DIDs").operationId("listDids").addTagsItem("Wallet")
                         }
                             .jsonArray<String>("200"),
                             WalletController::listDids
@@ -55,7 +55,7 @@ object WalletController {
                         documented(document().operation {
                             it.summary("Create new DID")
                                 .description("Creates and registers a DID. Currently the DID methos: key, web and ebsi are supported. For EBSI: a  bearer token is required.")
-                                .operationId("createDid").addTagsItem("wallet")
+                                .operationId("createDid").addTagsItem("Wallet")
                         }
                             .body<DidCreationRequest>()
                             .result<String>("200"),

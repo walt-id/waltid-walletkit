@@ -16,7 +16,7 @@ object VerifierController {
           get("list", documented(
             document().operation {
               it.summary("List wallet configurations")
-                .addTagsItem("verifier")
+                .addTagsItem("Verifier")
                 .operationId("listWallets")
             }
               .jsonArray<WalletConfiguration>("200"),
@@ -27,7 +27,7 @@ object VerifierController {
           get(documented(
             document().operation {
               it.summary("Present Verifiable ID")
-                .addTagsItem("verifier")
+                .addTagsItem("Verifier")
                 .operationId("presentVID")
             }
               .queryParam<String>("walletId")
@@ -40,7 +40,7 @@ object VerifierController {
           post("{nonce}", documented(
             document().operation {
               it.summary("SIOPv2 request verification callback")
-                .addTagsItem("verifier")
+                .addTagsItem("Verifier")
                 .operationId("verifySIOPv2Request")
             }
               .formParamBody<String> { }
@@ -52,7 +52,7 @@ object VerifierController {
           get(documented(
             document().operation {
               it.summary("Complete authentication by siopv2 verification")
-                .addTagsItem("verifier")
+                .addTagsItem("Verifier")
                 .operationId("completeAuthentication")
             }
               .queryParam<String>("access_token")
@@ -64,7 +64,7 @@ object VerifierController {
           get(documented(
             document().operation {
               it.summary("Fetch protected data (example)")
-                .addTagsItem("verifier")
+                .addTagsItem("Verifier")
                 .operationId("get protected data")
             }
               .result<String>("200"),
