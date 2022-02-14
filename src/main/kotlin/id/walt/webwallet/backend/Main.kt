@@ -5,6 +5,7 @@ import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import id.walt.issuer.backend.IssuerController
 import id.walt.issuer.backend.IssuerManager
+import id.walt.onboarding.backend.OnboardingController
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -96,6 +97,9 @@ fun main(args: Array<String>) {
         }
         path("issuer-api") {
             IssuerController.routes
+        }
+        path("onboarding-api") {
+            OnboardingController.routes
         }
     }
 
