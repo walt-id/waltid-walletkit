@@ -2,8 +2,6 @@ package id.walt.webwallet.backend.config
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
-import id.walt.verifier.backend.WalletConfiguration
-import id.walt.webwallet.backend.wallet.WalletController
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
