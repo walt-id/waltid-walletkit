@@ -52,7 +52,7 @@ object IssuerController {
           get("list", documented(
             document().operation {
               it.summary("List wallet configurations")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("listWallets")
             }
               .jsonArray<WalletConfiguration>("200"),
@@ -63,7 +63,7 @@ object IssuerController {
           get("listIssuables", documented(
             document().operation {
               it.summary("List issuable credentials")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("listIssuableCredentials")
             }
               .queryParam<String>("sessionId")
@@ -73,7 +73,7 @@ object IssuerController {
             post("request", documented(
               document().operation {
                 it.summary("Request issuance of selected credentials to wallet")
-                  .addTagsItem("issuer")
+                  .addTagsItem("Issuer")
                   .operationId("requestIssuance")
               }
                 .queryParam<String>("walletId")
@@ -85,7 +85,7 @@ object IssuerController {
             post("fulfill/{nonce}", documented(
               document().operation {
                 it.summary("SIOPv2 issuance fulfillment callback")
-                  .addTagsItem("issuer")
+                  .addTagsItem("Issuer")
                   .operationId("fulfillIssuance")
               }
                 .formParamBody<String> { }
@@ -98,7 +98,7 @@ object IssuerController {
           get(".well-known/openid-configuration", documented(
               document().operation {
                 it.summary("get OIDC provider meta data")
-                  .addTagsItem("issuer")
+                  .addTagsItem("Issuer")
                   .operationId("oidcProviderMeta")
               }
                 .json<OIDCProviderMetadata>("200"),
@@ -107,7 +107,7 @@ object IssuerController {
           post("nonce", documented(
             document().operation {
               it.summary("get presentation nonce")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("nonce")
             }
               .json<NonceResponse>("200"),
@@ -116,7 +116,7 @@ object IssuerController {
           post("par", documented(
             document().operation {
               it.summary("pushed authorization request")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("par")
             }
               .formParam<String>("response_type")
@@ -129,14 +129,14 @@ object IssuerController {
             IssuerController::par
           ))
           get("fulfillPAR", documented(
-            document().operation { it.summary("fulfill PAR").addTagsItem("issuer").operationId("fulfillPAR") }
+            document().operation { it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
               .queryParam<String>("request_uri"),
             IssuerController::fulfillPAR
           ))
           post("token", documented(
             document().operation {
               it.summary("token endpoint")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("token")
             }
               .formParam<String>("grant_type")
@@ -148,7 +148,7 @@ object IssuerController {
           ))
           post("credential", documented(
             document().operation {
-              it.summary("Credential endpoint").operationId("credential").addTagsItem("issuer")
+              it.summary("Credential endpoint").operationId("credential").addTagsItem("Issuer")
             }
               .header<String>("Authorization")
               .formParam<String>("format")
