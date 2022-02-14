@@ -1,30 +1,24 @@
 package id.walt.issuer.backend
 import com.beust.klaxon.Klaxon
 import com.nimbusds.oauth2.sdk.*
-import com.nimbusds.oauth2.sdk.http.HTTPRequest
 import com.nimbusds.oauth2.sdk.http.ServletUtils
 import com.nimbusds.oauth2.sdk.id.Issuer
-import com.nimbusds.oauth2.sdk.token.*
-import com.nimbusds.openid.connect.sdk.Nonce
+import com.nimbusds.oauth2.sdk.token.BearerAccessToken
+import com.nimbusds.oauth2.sdk.token.RefreshToken
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.common.OidcUtil
 import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
 import id.walt.model.oidc.Claims
 import id.walt.model.oidc.CredentialResponse
 import id.walt.model.oidc.klaxon
-import id.walt.services.jwt.JwtService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.AbstractVerifiableCredential
-import id.walt.vclib.model.CredentialSubject
 import id.walt.vclib.model.Proof
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.registry.VcTypeRegistry
-import id.walt.vclib.templates.VcTemplateManager
-import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
 import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
@@ -33,15 +27,11 @@ import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.Context
-import io.javalin.http.Handler
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
-import org.bouncycastle.asn1.cms.IssuerAndSerialNumber
 import java.net.URI
-import java.net.http.HttpHeaders
 import java.nio.charset.StandardCharsets
-import java.time.Instant
 import java.util.*
 
 object IssuerController {
@@ -52,7 +42,7 @@ object IssuerController {
           get("list", documented(
             document().operation {
               it.summary("List wallet configurations")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("listWallets")
             }
               .jsonArray<WalletConfiguration>("200"),
@@ -63,7 +53,7 @@ object IssuerController {
           get("listIssuables", documented(
             document().operation {
               it.summary("List issuable credentials")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("listIssuableCredentials")
             }
               .queryParam<String>("sessionId")
@@ -73,7 +63,7 @@ object IssuerController {
             post("request", documented(
               document().operation {
                 it.summary("Request issuance of selected credentials to wallet")
-                  .addTagsItem("issuer")
+                  .addTagsItem("Issuer")
                   .operationId("requestIssuance")
               }
                 .queryParam<String>("walletId")
@@ -85,7 +75,7 @@ object IssuerController {
             post("fulfill/{nonce}", documented(
               document().operation {
                 it.summary("SIOPv2 issuance fulfillment callback")
-                  .addTagsItem("issuer")
+                  .addTagsItem("Issuer")
                   .operationId("fulfillIssuance")
               }
                 .formParamBody<String> { }
@@ -98,7 +88,7 @@ object IssuerController {
           get(".well-known/openid-configuration", documented(
               document().operation {
                 it.summary("get OIDC provider meta data")
-                  .addTagsItem("issuer")
+                  .addTagsItem("Issuer")
                   .operationId("oidcProviderMeta")
               }
                 .json<OIDCProviderMetadata>("200"),
@@ -107,7 +97,7 @@ object IssuerController {
           post("nonce", documented(
             document().operation {
               it.summary("get presentation nonce")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("nonce")
             }
               .json<NonceResponse>("200"),
@@ -116,7 +106,7 @@ object IssuerController {
           post("par", documented(
             document().operation {
               it.summary("pushed authorization request")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("par")
             }
               .formParam<String>("response_type")
@@ -129,14 +119,14 @@ object IssuerController {
             IssuerController::par
           ))
           get("fulfillPAR", documented(
-            document().operation { it.summary("fulfill PAR").addTagsItem("issuer").operationId("fulfillPAR") }
+            document().operation { it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
               .queryParam<String>("request_uri"),
             IssuerController::fulfillPAR
           ))
           post("token", documented(
             document().operation {
               it.summary("token endpoint")
-                .addTagsItem("issuer")
+                .addTagsItem("Issuer")
                 .operationId("token")
             }
               .formParam<String>("grant_type")
@@ -148,7 +138,7 @@ object IssuerController {
           ))
           post("credential", documented(
             document().operation {
-              it.summary("Credential endpoint").operationId("credential").addTagsItem("issuer")
+              it.summary("Credential endpoint").operationId("credential").addTagsItem("Issuer")
             }
               .header<String>("Authorization")
               .formParam<String>("format")

@@ -1,9 +1,6 @@
 package id.walt.webwallet.backend.config
 
-import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
-import id.walt.issuer.backend.IssuerConfig
-import id.walt.verifier.backend.WalletConfiguration
 import java.io.File
 
 data class WalletConfig(
