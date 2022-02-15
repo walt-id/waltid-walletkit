@@ -9,7 +9,7 @@ data class VerifierConfig(
   val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations()
 ) {
   companion object {
-    val CONFIG_FILE = "${id.walt.webwallet.backend.WALTID_DATA_ROOT}/config/verifier-config.json"
+    val CONFIG_FILE = "${id.walt.WALTID_DATA_ROOT}/config/verifier-config.json"
     lateinit var config: VerifierConfig
     init {
       val cf = File(CONFIG_FILE)

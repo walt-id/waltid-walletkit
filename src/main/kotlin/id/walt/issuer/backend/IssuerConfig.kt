@@ -12,7 +12,7 @@ data class IssuerConfig(
   val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations()
 ) {
   companion object {
-    val CONFIG_FILE = "${id.walt.webwallet.backend.WALTID_DATA_ROOT}/config/issuer-config.json"
+    val CONFIG_FILE = "${id.walt.WALTID_DATA_ROOT}/config/issuer-config.json"
     lateinit var config: IssuerConfig
     init {
       val cf = File(CONFIG_FILE)

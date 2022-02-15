@@ -7,7 +7,7 @@ import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
-import id.walt.webwallet.backend.WALTID_DATA_ROOT
+import id.walt.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.UserContext
 import io.javalin.apibuilder.ApiBuilder.get

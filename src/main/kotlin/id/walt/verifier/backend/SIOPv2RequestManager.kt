@@ -22,7 +22,7 @@ import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
-import id.walt.webwallet.backend.WALTID_DATA_ROOT
+import id.walt.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
