@@ -1,4 +1,4 @@
-package id.walt.webwallet.backend
+package id.walt
 
 import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info

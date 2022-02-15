@@ -20,7 +20,7 @@ import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.vclib.credentials.VerifiablePresentation
-import id.walt.webwallet.backend.WALTID_DATA_ROOT
+import id.walt.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.time.Duration

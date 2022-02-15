@@ -6,7 +6,7 @@ import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
-import id.walt.webwallet.backend.WALTID_DATA_ROOT
+import id.walt.WALTID_DATA_ROOT
 
 object UserContextLoader : CacheLoader<String, Context>() {
   override fun load(key: String): UserContext {
