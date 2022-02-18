@@ -40,7 +40,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 class SIOPv2Test : AnnotationSpec() {
-
+/*
   val testUserContext = UserContext(HKVKeyStoreService(), HKVVcStoreService(), FileSystemHKVStore(FilesystemStoreConfig("data/test@mail.com")))
   val waltContext = mockk<WalletContextManager>(relaxed = true)
   private lateinit var siopv2Request: SIOPv2Request
@@ -108,4 +108,6 @@ class SIOPv2Test : AnnotationSpec() {
     (peResponse.vp_token.toCredential() as VerifiablePresentation).verifiableCredential.first().id shouldBe selectedCC.credentialId
 
   }
+
+ */
 }

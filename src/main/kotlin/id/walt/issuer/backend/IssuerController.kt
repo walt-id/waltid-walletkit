@@ -11,9 +11,10 @@ import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
-import id.walt.model.oidc.Claims
 import id.walt.model.oidc.CredentialResponse
 import id.walt.model.oidc.klaxon
+import id.walt.services.jwt.JwtService
+import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.model.Proof
@@ -26,6 +27,7 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
@@ -185,12 +187,7 @@ object IssuerController {
     }
 
     if(wallet != null) {
-      ctx.result(
-        "${wallet.url}/${wallet.receivePath}" +
-            "?${
-              IssuerManager.newIssuanceRequest(userInfo.id, selectedIssuables).toUriQueryString()
-            }"
-      )
+      ctx.result("${wallet.receivePath}?${IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables).toUriQueryString()}")
     } else {
       ctx.result("${session!!.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
     }
@@ -200,9 +197,9 @@ object IssuerController {
     val id_token = ctx.formParam("id_token")
     val vp_token = ctx.formParam("vp_token")?.toCredential() as VerifiablePresentation
     //TODO: verify and parse id token
-    val nonce = ctx.pathParam("nonce")
+    val state = ctx.formParam("state") ?: throw BadRequestResponse("No state specified")
     ctx.result(
-      "[ ${IssuerManager.fulfillIssuanceRequest(nonce, null, vp_token).joinToString(",") } ]"
+      "[ ${IssuerManager.fulfillIssuanceRequest(state, null, vp_token).joinToString(",") } ]"
     )
   }
 
@@ -243,9 +240,7 @@ object IssuerController {
 
   fun par(ctx: Context) {
     val req = AuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
-    val claims = req.customParameters.get("claims")?.firstOrNull()?.let {
-      id.walt.model.oidc.klaxon.parse<Claims>(it)
-    }
+    val claims = OIDCUtils.getVCClaims(req)
     if(claims == null || claims.credentials == null) {
       ctx.status(HttpCode.BAD_REQUEST).json(PushedAuthorizationErrorResponse(ErrorObject("400", "No credential claims given", 400)))
       return
@@ -276,8 +271,10 @@ object IssuerController {
       ctx.status(HttpCode.NOT_FOUND).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
       return
     }
+
     ctx.json(OIDCTokenResponse(OIDCTokens(JWTService.toJWT(UserInfo(session.id)), BearerAccessToken(session.id), RefreshToken()), mapOf(
-      Pair("expires_in", IssuerManager.EXPIRATION_TIME.seconds)
+      "expires_in" to IssuerManager.EXPIRATION_TIME.seconds,
+      "c_nonce" to session.nonce
     )).toJSONObject())
   }
 

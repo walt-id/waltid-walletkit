@@ -9,10 +9,7 @@ import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.dif.DescriptorMapping
 import id.walt.model.dif.PresentationSubmission
-import id.walt.model.oidc.IDToken
-import id.walt.model.oidc.SIOPv2Request
-import id.walt.model.oidc.VpTokenRef
-import id.walt.model.oidc.klaxon
+import id.walt.model.oidc.*
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -25,8 +22,10 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
 import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
+import io.javalin.http.HttpResponseException
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
@@ -79,71 +78,89 @@ object WalletController {
                 )
             }
             path("siopv2") {
-                get("presentationExchange", documented(
+                // called from EXTERNAL verifier
+                get("initPresentation", documented(
                     document().operation {
-                        it.summary("Parse SIOPv2 request from URL query parameters")
-                            .operationId("getPresentationExchange")
-                            .addTagsItem("SIOPv2")
+                        it.summary("Parse siop request from URL query parameters")
+                            .operationId("initPresentation")
+                            .addTagsItem("siop")
                     }
                         .queryParam<String>("response_type")
                         .queryParam<String>("client_id")
                         .queryParam<String>("redirect_uri")
                         .queryParam<String>("scope")
+                        .queryParam<String>("state")
+                        .queryParam<String>("nonce")
+                        .queryParam<String>("registration")
+                        .queryParam<Long>("exp")
+                        .queryParam<Long>("iat")
+                        .queryParam<String>("claims")
+                        .result<String>("302"),
+                    WalletController::initCredentialPresentation
+                ), UserRole.UNAUTHORIZED)
+                // called by wallet UI
+                get("continuePresentation", documented(
+                    document().operation {
+                        it.summary("Continue presentation requested by verifer")
+                            .operationId("continuePresentation")
+                            .addTagsItem("siop")
+                    }
+                        .queryParam<String>("sessionId")
+                        .queryParam<String>("did")
+                        .json<CredentialPresentationSession>("200"),
+                    WalletController::continuePresentation
+                ), UserRole.AUTHORIZED)
+                // called by wallet UI
+                post("fulfillPresentation", documented(
+                    document().operation {
+                        it.summary("Fullfil credentials presentation with selected credentials")
+                            .operationId("fulfillPresentation")
+                            .addTagsItem("siop")
+                    }
+                        .queryParam<String>("sessionId")
+                        .body<List<PresentableCredential>>()
+                        .json<PresentationResponse>("200"),
+                    WalletController::fulfillPresentation
+                ), UserRole.AUTHORIZED)
+                // issuance // CUSTOM // called from EXTERNAL issuer
+                get("initPassiveIssuance", documented(
+                    document().operation {
+                        it.summary("Initialize passive credential issuance through SIOP presentation flow")
+                            .operationId("initPassiveIssuance")
+                            .addTagsItem("siop")
+                    }
+                        .queryParam<String>("response_type")
+                        .queryParam<String>("client_id")
+                        .queryParam<String>("redirect_uri")
+                        .queryParam<String>("scope")
+                        .queryParam<String>("state")
                         .queryParam<String>("nonce")
                         .queryParam<String>("registration")
                         .queryParam<Long>("exp")
                         .queryParam<Long>("iat")
                         .queryParam<String>("claims")
                         .queryParam<String>("subject_did")
-                        .json<PresentationExchange>("200"),
-                    WalletController::getPresentationExchange
-                ), UserRole.AUTHORIZED)
-                post("presentationExchange", documented(
+                        .result<String>("302"),
+                    WalletController::initPassiveIssuance
+                ), UserRole.UNAUTHORIZED)
+                // called by wallet UI
+                post("fulfillPassiveIssuance", documented(
                     document().operation {
-                        it.summary("Post presentation exchange with user selected credentials to be shared")
-                            .operationId("postPresentationExchange")
-                            .addTagsItem("SIOPv2")
+                        it.summary("Post credentials required by issuer, to issue credentials")
+                            .operationId("fulfillPassiveIssuance")
+                            .addTagsItem("siop")
                     }
-                        .body<PresentationExchange>()
-                        .json<PresentationExchangeResponse>("200"),
-                    WalletController::postPresentationExchange
-                ), UserRole.AUTHORIZED)
-                // issuance // LEGACY
-                get("credentialIssuance", documented(
-                    document().operation {
-                        it.summary("Parse SIOPv2 request from URL query parameters")
-                            .operationId("getCredentialIssuanceRequest")
-                            .addTagsItem("SIOPv2")
-                    }
-                        .queryParam<String>("response_type")
-                        .queryParam<String>("client_id")
-                        .queryParam<String>("redirect_uri")
-                        .queryParam<String>("scope")
-                        .queryParam<String>("nonce")
-                        .queryParam<String>("registration")
-                        .queryParam<Long>("exp")
-                        .queryParam<Long>("iat")
-                        .queryParam<String>("claims")
-                        .queryParam<String>("subject_did")
-                        .json<PresentationExchange>("200"),
-                    WalletController::getPresentationExchange // same as getPresentationExchange
-                ), UserRole.AUTHORIZED)
-                post("credentialIssuance", documented(
-                    document().operation {
-                        it.summary("Post presentation required by issuer, to issue credentials")
-                            .operationId("postCredentialIssuanceResponse")
-                            .addTagsItem("SIOPv2")
-                    }
-                        .body<PresentationExchange>()
-                        .json<PresentationExchangeResponse>("200"),
-                    WalletController::postCredentialIssuanceResponse
+                        .queryParam<String>("sessionId")
+                        .body<List<PresentableCredential>>()
+                        .json<String>("200"), // issuance session ID
+                    WalletController::fulfillPassiveIssuance
                 ), UserRole.AUTHORIZED)
                 // issuance // OIDC
                 path("issuer") {
                     get(
                         "list", documented(
                             document().operation {
-                                it.summary("List known credential issuers").addTagsItem("SIOPv2")
+                                it.summary("List known credential issuers").addTagsItem("siop")
                                     .operationId("listIssuers")
                             },
                             WalletController::listIssuers
@@ -152,7 +169,7 @@ object WalletController {
                     )
                     get("metadata", documented(
                         document().operation {
-                            it.summary("get issuer meta data").addTagsItem("SIOPv2").operationId("issuerMeta")
+                            it.summary("get issuer meta data").addTagsItem("siop").operationId("issuerMeta")
                         }
                             .queryParam<String>("issuerId"),
                         WalletController::issuerMeta),
@@ -160,30 +177,32 @@ object WalletController {
                 }
                 post("initIssuance", documented(
                     document().operation {
-                        it.summary("Initialize credential issuance from selected issuer").addTagsItem("SIOPv2")
+                        it.summary("Initialize credential issuance from selected issuer").addTagsItem("siop")
                             .operationId("initIssuance")
                     }
                         .body<CredentialIssuanceRequest>()
                         .result<String>("200"),
                     WalletController::initIssuance
                 ), UserRole.AUTHORIZED)
+                // called from EXTERNAL issuer / user-agent
                 get("finalizeIssuance", documented(
                     document().operation {
-                        it.summary("Finalize credential issuance").addTagsItem("SIOPv2").operationId("finalizeIssuance")
+                        it.summary("Finalize credential issuance").addTagsItem("siop").operationId("finalizeIssuance")
                     }
                         .queryParam<String>("code")
                         .queryParam<String>("state")
                         .result<String>("302"),
                     WalletController::finalizeIssuance
                 ), UserRole.UNAUTHORIZED)
-                get("issuedCredentials", documented(
+                // called by wallet UI
+                get("issuanceSessionInfo", documented(
                     document().operation {
-                        it.summary("Get credentials issued in current issuance session").addTagsItem("SIOPv2")
-                            .operationId("getIssuedCredentials")
+                        it.summary("Get issuance session info, including issued credentials").addTagsItem("siop")
+                            .operationId("issuanceSessionInfo")
                     }
                         .queryParam<String>("sessionId")
-                        .jsonArray<VerifiableCredential>("200"),
-                    WalletController::getIssuedCredentials
+                        .json<CredentialIssuanceSession>("200"),
+                    WalletController::getIssuanceSessionInfo
                 ), UserRole.AUTHORIZED)
             }
         }
@@ -247,109 +266,36 @@ object WalletController {
         }
     }
 
-    fun getPresentationExchange(ctx: Context) {
+    fun initCredentialPresentation(ctx: Context) {
         val req = SIOPv2Request.fromHttpContext(ctx)
-        val did = ctx.queryParam("subject_did")!!
-        ctx.json(PresentationExchange(did, req, getClaimedCredentials(did, req)))
+        val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = false)
+        ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
     }
 
-    private fun handlePresentationResponse(ctx: Context): Any? {
-        val pe = ctx.body().let { klaxon.parse<PresentationExchange>(it) }!!
-        val myCredentials = Custodian.getService().listCredentials()
-        val selectedCredentialIds = pe.claimedCredentials.map { cred -> cred.credentialId }.toSet()
-        val selectedCredentials =
-            myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }
-                .toList()
-        val vp = Custodian.getService().createPresentation(
-            selectedCredentials,
-            pe.subject,
-            null,
-            challenge = pe.request.nonce,
-            expirationDate = null
-        )
-        val id_token = IDToken(
-            subject = pe.subject,
-            client_id = pe.request.client_id,
-            nonce = pe.request.nonce ?: "",
-            vpTokenRef = VpTokenRef(
-                presentation_submission = PresentationSubmission(
-                    id = "1",
-                    definition_id = "1",
-                    descriptor_map = listOf(
-                        DescriptorMapping.fromVP("1", vp)
-                    )
-                )
-            )
-        )
-        val per = PresentationExchangeResponse(
-            id_token = id_token.sign(),
-            vp_token = vp
-        )
-
-        if (pe.request.response_mode == "form_post" || pe.request.response_mode == "fragment") {
-            // trigger form post or call redirect uri with fragment from web UI in browser
-            ctx.json(per)
-            return per
-        } else if (pe.request.response_mode == "post") {
-            // post response to redirect uri and return result (avoiding CORS)
-            val req = HTTPRequest(HTTPRequest.Method.POST, URI.create(pe.request.redirect_uri))
-            req.query = formData(mapOf("id_token" to per.id_token, "vp_token" to per.vp_token))
-            val response = req.send();
-            ctx.status(response.statusCode).result(response.content)
-            return response.content
-        } else {
-            ctx.status(HttpCode.BAD_REQUEST).result("Unknown response mode ${pe.request.response_mode}")
-            return null
-        }
+    fun initPassiveIssuance(ctx: Context) {
+        val req = SIOPv2Request.fromHttpContext(ctx)
+        val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = true)
+        ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
     }
 
-    fun postPresentationExchange(ctx: Context) {
-        handlePresentationResponse(ctx)
+    fun continuePresentation(ctx: Context) {
+        val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
+        val did = ctx.queryParam("did") ?: throw BadRequestResponse("did not specified")
+        ctx.json(CredentialPresentationManager.continueCredentialPresentationFor(sessionId, did))
     }
 
-    val credentialConverter = object : Converter {
-        override fun canConvert(cls: Class<*>) = cls == VerifiableCredential::class.java
+    fun fulfillPresentation(ctx: Context) {
+        val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
+        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) } ?: throw BadRequestResponse("No selected credentials given")
 
-        override fun toJson(value: Any): String = (value as VerifiableCredential).encode()
-
-        override fun fromJson(jv: JsonValue) = jv.toString().toCredential()
-
+        ctx.json(CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials).let { PresentationResponse.fromSiopResponse(it) })
     }
 
-    fun postCredentialIssuanceResponse(ctx: Context) {
-        val credentialsResponse = handlePresentationResponse(ctx)
-        if (credentialsResponse == null) {
-            return
-        }
-        val credentials = Klaxon().parseArray<VerifiableCredential>(credentialsResponse as String)
-        credentials?.forEach {
-            Custodian.getService().storeCredential(it.id!!, it)
-        }
-    }
-
-    private fun getClaimedCredentials(subject: String, req: SIOPv2Request): List<ClaimedCredential> {
-        val myCredentials = Custodian.getService().listCredentials()
-        return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
-            myCredentials.filter {
-                indesc.schema.uri == it.credentialSchema?.id &&
-                        it.subject == subject && !it.id.isNullOrEmpty()
-            }.map { cred ->
-                ClaimedCredential(indesc.id, cred.id!!)
-            }
-        }?.toList() ?: listOf()
-    }
-
-    private fun formData(data: Map<String, String>): String {
-
-        return data.map { (k, v) ->
-            "${(URLEncoder.encode(k, StandardCharsets.UTF_8))}=${
-                URLEncoder.encode(
-                    v,
-                    StandardCharsets.UTF_8
-                )
-            }"
-        }
-            .joinToString("&")
+    fun fulfillPassiveIssuance(ctx: Context) {
+        val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
+        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) } ?: throw BadRequestResponse("No selected credentials given")
+        val issuanceSession = CredentialPresentationManager.fulfillPassiveIssuance(sessionId, selectedCredentials, JWTService.getUserInfo(ctx)!!)
+        ctx.result(issuanceSession.id)
     }
 
     fun listIssuers(ctx: Context) {
@@ -357,7 +303,7 @@ object WalletController {
     }
 
     fun issuerMeta(ctx: Context) {
-        val metadata = WalletConfig.config.issuers.get(ctx.queryParam("issuerId"))?.metadata
+        val metadata = ctx.queryParam("issuerId")?.let { CredentialIssuanceManager.ciSvc(it) }?.metadata
         if (metadata != null)
             ctx.json(metadata.toJSONObject())
         else
@@ -367,8 +313,8 @@ object WalletController {
     fun initIssuance(ctx: Context) {
         val issuance = ctx.bodyAsClass<CredentialIssuanceRequest>()
         val location = CredentialIssuanceManager.initIssuance(issuance, JWTService.getUserInfo(ctx)!!)
-        if (!location.isNullOrEmpty()) {
-            ctx.result(location)
+        if (location != null) {
+            ctx.result(location.toString())
         } else {
             ctx.status(HttpCode.INTERNAL_SERVER_ERROR)
         }
@@ -382,7 +328,7 @@ object WalletController {
             return
         }
         val issuance = CredentialIssuanceManager.finalizeIssuance(state, code)
-        if (issuance?.response != null) {
+        if (issuance?.credentials != null) {
             ctx.status(HttpCode.FOUND)
                 .header("Location", "${WalletConfig.config.walletUiUrl}/ReceiveCredential?sessionId=${issuance.id}")
         } else {
@@ -390,15 +336,13 @@ object WalletController {
         }
     }
 
-    fun getIssuedCredentials(ctx: Context) {
+    fun getIssuanceSessionInfo(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId")
         val issuanceSession = sessionId?.let { CredentialIssuanceManager.getSession(it) }
         if (issuanceSession == null) {
             ctx.status(HttpCode.BAD_REQUEST).result("Invalid or expired session id given")
             return
         }
-        ctx.json(
-            issuanceSession.response?.map { it.credential }?.filterNotNull()
-                ?.map { String(Base64.getUrlDecoder().decode(it)).toCredential() } ?: listOf<VerifiableCredential>())
+        ctx.json(issuanceSession)
     }
 }

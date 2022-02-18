@@ -8,7 +8,6 @@ import id.walt.auditor.VpTokenClaimPolicy
 import id.walt.model.dif.InputDescriptor
 import id.walt.model.dif.PresentationDefinition
 import id.walt.model.dif.VpSchema
-import id.walt.model.oidc.Claims
 import id.walt.model.oidc.Registration
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.VpTokenClaim
@@ -23,6 +22,7 @@ import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
 import id.walt.WALTID_DATA_ROOT
+import id.walt.model.oidc.VCClaims
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
@@ -46,17 +46,10 @@ object SIOPv2RequestManager {
     fun newRequest(schemaUri: String): SIOPv2Request {
         val nonce = UUID.randomUUID().toString()
         val req = SIOPv2Request(
-            client_id = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
             redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
             response_mode = "form_post",
             nonce = nonce,
-            registration = Registration(
-                client_name = "Walt.id Verifier Portal",
-                client_purpose = "Verification of ${Path.of(URL(schemaUri).path).fileName}"
-            ),
-            expiration = Instant.now().epochSecond + 24 * 60 * 60,
-            issuedAt = Instant.now().epochSecond,
-            claims = Claims(
+            claims = VCClaims(
                 vp_token = VpTokenClaim(
                     presentation_definition = PresentationDefinition(
                         id = "1",
