@@ -3,12 +3,12 @@ package id.walt.onboarding.backend
 import id.walt.BaseApiTest
 import id.walt.webwallet.backend.auth.AuthController
 import io.javalin.apibuilder.ApiBuilder
+import io.kotest.core.annotation.EnabledIf
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldHaveLength
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-
 
 class OnboardingApiTests : BaseApiTest() {
 
@@ -21,7 +21,7 @@ class OnboardingApiTests : BaseApiTest() {
         }
     }
 
-    @Test()
+    //@Test()
     fun testGenerateDomainVerificationCode() = runBlocking {
         val userInfo = authenticate()
         val code = client.post<String>("$url/onboarding-api/domain/generateDomainVerificationCode"){
@@ -34,7 +34,7 @@ class OnboardingApiTests : BaseApiTest() {
         code shouldBe "walt-id-verification=6307228575B8DFFDE096FFDA554D15B7261970F3"
     }
 
-    @Test()
+    //@Test()
     fun testCheckDomainVerificationCodeSuccess() = runBlocking {
         val userInfo = authenticate()
         val result = client.post<Boolean>("$url/onboarding-api/domain/checkDomainVerificationCode"){
@@ -46,7 +46,7 @@ class OnboardingApiTests : BaseApiTest() {
         result shouldBe true
     }
 
-    @Test()
+    //@Test()
     fun testCheckDomainVerificationCodeFail() = runBlocking {
         val userInfo = authenticate()
         val result = client.post<Boolean>("$url/onboarding-api/domain/checkDomainVerificationCode"){
