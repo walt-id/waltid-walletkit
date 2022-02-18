@@ -5,8 +5,8 @@
     "walt.id": {
       "id": "walt.id",
       "url": "http://localhost:3000",
-      "presentPath": "CredentialRequest/",
-      "receivePath" : "ReceiveCredential/",
+      "presentPath": "api/wallet/siopv2/initPresentation/",
+      "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
       "description": "walt.id web wallet"
     }
   }
