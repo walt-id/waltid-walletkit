@@ -2,18 +2,19 @@ package id.walt.issuer.backend
 
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.*
+import com.nimbusds.oauth2.sdk.id.ClientID
 import com.nimbusds.oauth2.sdk.id.State
 import com.nimbusds.oauth2.sdk.token.AccessToken
 import com.nimbusds.oauth2.sdk.token.AccessTokenType
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.nimbusds.oauth2.sdk.token.RefreshToken
-import com.nimbusds.openid.connect.sdk.OIDCError
-import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
+import com.nimbusds.openid.connect.sdk.*
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.auditor.Auditor
 import id.walt.auditor.SignaturePolicy
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
+import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -36,9 +37,11 @@ import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.templates.VcTemplateManager
 import id.walt.verifier.backend.SIOPv2RequestManager
 import id.walt.verifier.backend.VerifierConfig
+import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.WALTID_DATA_ROOT
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
+import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URI
@@ -80,17 +83,15 @@ object IssuerManager {
     )
   }
 
-  fun newIssuanceRequest(user: String, selectedIssuables: Issuables): SIOPv2Request {
+  fun newSIOPIssuanceRequest(user: String, selectedIssuables: Issuables): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
+    val redirectUri = URI.create("${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill")
     val req = SIOPv2Request(
-      client_id = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
-      redirect_uri = "${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill/$nonce",
+      redirect_uri = redirectUri.toString(),
       response_mode = "post",
       nonce = nonce,
-      registration = Registration(client_name = IssuerConfig.config.issuerClientName, client_purpose = "Verify DID ownership, for issuance of ${selectedIssuables.credentials.map { it.type }.joinToString(", ") }"),
-      expiration = Instant.now().epochSecond + 24*60*60,
-      issuedAt = Instant.now().epochSecond,
-      claims = Claims()
+      claims = VCClaims(vp_token = VpTokenClaim(PresentationDefinition(listOf()))),
+      state = nonce
     )
     reqCache.put(nonce, IssuanceRequest(user, nonce, selectedIssuables))
     return req
@@ -169,7 +170,7 @@ object IssuerManager {
   fun initializeIssuanceSession(credentialClaims: List<CredentialClaim>, authRequest: AuthorizationRequest): IssuanceSession {
     val id = UUID.randomUUID().toString()
     //TODO: validata/verify PAR request, VP tokens, claims, etc
-    val session = IssuanceSession(id, credentialClaims, authRequest, Issuables.fromCredentialClaims(credentialClaims))
+    val session = IssuanceSession(id, credentialClaims, authRequest, UUID.randomUUID().toString(), Issuables.fromCredentialClaims(credentialClaims))
     sessionCache.put(id, session)
     return session
   }

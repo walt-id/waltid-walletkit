@@ -11,7 +11,7 @@ data class WalletConfiguration(
   companion object {
     fun getDefaultWalletConfigurations(): Map<String, WalletConfiguration> {
       return mapOf(
-        Pair("walt.id", WalletConfiguration("walt.id", "http://localhost:3000", "CredentialRequest/", "ReceiveCredential/" , "walt.id web wallet"))
+        Pair("walt.id", WalletConfiguration("walt.id", "http://localhost:3000", "api/wallet/siopv2/initPresentation", "api/wallet/siopv2/initPassiveIssuance" , "walt.id web wallet"))
       )
     }
   }

@@ -43,17 +43,10 @@ object SIOPv2RequestManager {
     fun newRequest(schemaUri: String): SIOPv2Request {
         val nonce = UUID.randomUUID().toString()
         val req = SIOPv2Request(
-            client_id = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
             redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
             response_mode = "form_post",
             nonce = nonce,
-            registration = Registration(
-                client_name = "Walt.id Verifier Portal",
-                client_purpose = "Verification of ${Path.of(URL(schemaUri).path).fileName}"
-            ),
-            expiration = Instant.now().epochSecond + 24 * 60 * 60,
-            issuedAt = Instant.now().epochSecond,
-            claims = Claims(
+            claims = VCClaims(
                 vp_token = VpTokenClaim(
                     presentation_definition = PresentationDefinition(
                         id = "1",
