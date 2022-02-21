@@ -84,6 +84,9 @@ spec:
             - name: wallet-config
               mountPath: "/waltid/wallet/config/"
               readOnly: true
+            - name: issuers-secret
+              mountPath: "/waltid/wallet/secrets"
+              readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
           env:
@@ -100,6 +103,9 @@ spec:
         - name: wallet-config
           configMap:
             name: wallet-config
+        - name: issuers-secret
+          secret:
+            secretName: issuers-secret
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
