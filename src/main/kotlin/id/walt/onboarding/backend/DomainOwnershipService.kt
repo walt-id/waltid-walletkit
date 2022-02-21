@@ -2,6 +2,8 @@ package id.walt.onboarding.backend
 
 import id.walt.crypto.toHexString
 import java.security.MessageDigest
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.naming.Context
 import javax.naming.directory.DirContext
@@ -9,8 +11,12 @@ import javax.naming.directory.InitialDirContext
 
 object DomainOwnershipService {
 
+    /**
+     * Unique verification code for each domain. The code will change each day.
+     */
     fun generateWaltIdDomainVerificationCode(domain: String): String =
-        "walt-id-verification=" + MessageDigest.getInstance("SHA-1").digest("walt2022$domain".toByteArray()).toHexString()
+        "ssi-onboarding-verification=" + MessageDigest.getInstance("SHA-1")
+            .digest((LocalDateTime.now().format(DateTimeFormatter.ISO_DATE) + domain).toByteArray()).toHexString()
             .replace(" ", "")
 
     fun checkWaltIdDomainVerificationCode(domain: String): Boolean =
