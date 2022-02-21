@@ -5,9 +5,7 @@
     "walt.id": {
       "id": "walt.id",
       "url": "http://localhost:8080/issuer-api/oidc",
-      "description": "walt.id Issuer Portal",
-      "client_id": "FOO",
-      "client_secret": "BAR"
+      "description": "walt.id Issuer Portal"
     }
   }
 }
