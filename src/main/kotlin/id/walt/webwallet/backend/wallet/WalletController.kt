@@ -238,13 +238,8 @@ object WalletController {
                     didCreationReq.method,
                     key.id,
                     DidService.DidWebOptions(
-                        domain = URI.create(didCreationReq.didWebDomain?.run {
-                            when {
-                                startsWith("https://", true) -> this
-                                else -> "https://${this}"
-                            }
-                        } ?: WalletConfig.config.walletApiUrl).authority,
-                        path = didCreationReq.didWebDomain?.run { didCreationReq.didWebPath ?: "" }
+                        domain = didCreationReq.didWebDomain ?: null,
+                        path = didCreationReq.didWebDomain?.run { didCreationReq.didWebPath ?: null }
                             ?: "api/did-registry/${key.id}"
                     )
                 )
