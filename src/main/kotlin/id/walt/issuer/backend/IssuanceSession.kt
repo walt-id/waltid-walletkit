@@ -8,5 +8,6 @@ val id: String,
 val credentialClaims: List<CredentialClaim>,
 val authRequest: AuthorizationRequest,
 val nonce: String,
-var issuables: Issuables?
+var issuables: Issuables?,
+var did: String? = null
     )
