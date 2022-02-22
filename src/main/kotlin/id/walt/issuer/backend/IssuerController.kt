@@ -29,6 +29,7 @@ import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
+import io.javalin.http.ForbiddenResponse
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
@@ -284,14 +285,13 @@ object IssuerController {
     val did = ctx.formParam("did")
     val proof = ctx.formParam("proof")?.let { klaxon.parse<Proof>(it) }
     // TODO: verify proof
-    val session = ctx.header("Authorization")?.substringAfterLast("Bearer ")?.let { IssuerManager.getIssuanceSession(it) }
-    if(session == null) {
-      ctx.status(HttpCode.FORBIDDEN).result("Invalid or unknown access token")
-      return
-    }
-    if(did.isNullOrEmpty() || type.isNullOrEmpty()) {
-      ctx.status(HttpCode.BAD_REQUEST).result("No type or did given")
-      return
+
+    val session = ctx.header("Authorization")?.substringAfterLast("Bearer ")
+      ?.let { IssuerManager.getIssuanceSession(it) }
+      ?: throw ForbiddenResponse("Invalid or unknown access token")
+
+    if(did.isNullOrEmpty() || type.isNullOrEmpty() || (session.did != null && session.did != did)) {
+      throw BadRequestResponse("No type or did given, or invalid did for this session")
     }
     val credential = IssuerManager.fulfillIssuanceSession(session, type, did, format)
     if(credential.isNullOrEmpty()) {

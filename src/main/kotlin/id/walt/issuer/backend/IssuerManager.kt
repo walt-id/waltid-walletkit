@@ -179,8 +179,9 @@ object IssuerManager {
     return sessionCache.getIfPresent(id)
   }
 
-  fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables): String {
+  fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables?): String {
     session.issuables = issuables
+    sessionCache.put(session.id, session)
     return session.id
   }
 
