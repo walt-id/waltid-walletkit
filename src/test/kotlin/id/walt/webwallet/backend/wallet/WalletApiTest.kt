@@ -5,6 +5,7 @@ import id.walt.webwallet.backend.auth.AuthController
 import io.javalin.apibuilder.ApiBuilder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldHaveMinLength
+import io.kotest.matchers.string.shouldStartWith
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
@@ -39,6 +40,19 @@ class WalletApiTest : BaseApiTest() {
         println(did)
     }
 
+    // TODO: analyze potential walt-context issue @Test()
+    fun testDidWebCreate() = runBlocking {
+        val userInfo = authenticate()
+        val did = client.post<String>("$url/api/wallet/did/create"){
+            header("Authorization", "Bearer ${userInfo.token}")
+            accept(ContentType("plain", "text"))
+            contentType(ContentType.Application.Json)
+            body = mapOf("method" to "web", "didWebDomain" to null)
+        }
+        did shouldStartWith "did:web"
+
+        println(did)
+    }
 
 /*    @Test()
     fun listKeys() = runBlocking {
