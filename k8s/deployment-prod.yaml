@@ -12,8 +12,8 @@ data:
         "walt.id": {
           "id": "walt.id",
           "url": "https://wallet.walt.id",
-          "presentPath": "CredentialRequest/",
-          "receivePath" : "ReceiveCredential/",
+          "presentPath": "api/wallet/siopv2/initPresentation/",
+          "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
           "description": "walt.id web wallet"
         }
       }
@@ -26,8 +26,8 @@ data:
         "walt.id": {
           "id": "walt.id",
           "url": "https://wallet.walt.id",
-          "presentPath": "CredentialRequest/",
-          "receivePath" : "ReceiveCredential/",
+          "presentPath": "api/wallet/siopv2/initPresentation/",
+          "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
           "description": "walt.id web wallet"
         }
       }
@@ -41,6 +41,11 @@ data:
           "id": "walt.id",
           "url": "https://wallet.walt.id/issuer-api/oidc",
           "description": "walt.id Issuer Portal"
+        },
+        "yes.com": {
+          "id": "yes.com",
+          "url": "https://demo.sandbox.yes.com/essif/issuer/c2id",
+          "description": "yes.com Bank ID issuer"
         }
       }
     }
@@ -80,6 +85,9 @@ spec:
             - name: wallet-config
               mountPath: "/waltid/wallet/config/"
               readOnly: true
+            - name: issuers-secret
+              mountPath: "/waltid/wallet/secrets"
+              readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
           env:
@@ -96,6 +104,9 @@ spec:
         - name: wallet-config
           configMap:
             name: wallet-config
+        - name: issuers-secret
+          secret:
+            secretName: issuers-secret
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
