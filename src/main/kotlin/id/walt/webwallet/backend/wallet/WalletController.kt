@@ -19,6 +19,7 @@ import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import java.net.URI
 
 object WalletController {
     val routes
@@ -226,12 +227,17 @@ object WalletController {
                 ctx.result(did)
             }
             DidMethod.web -> {
+                val didRegistryAuthority = URI.create(WalletConfig.config.walletApiUrl).authority
+                val didDomain = req.didWebDomain.orEmpty().ifEmpty { didRegistryAuthority }
                 val didStr = DidService.create(
                     req.method,
                     key.id,
                     DidService.DidWebOptions(
-                        domain = req.didWebDomain ?: "walt.id", //TODO: set default domain from config
-                        path =  if (req.didWebDomain == null || req.didWebDomain.contains("walt")) "api/did-registry/${key.id}" else req.didWebPath
+                        domain = didDomain,
+                        path =  when(didDomain) {
+                            didRegistryAuthority -> "api/did-registry/${key.id}"
+                            else -> req.didWebPath
+                        }
                     )
                 )
                 val didDoc = DidService.load(didStr)
