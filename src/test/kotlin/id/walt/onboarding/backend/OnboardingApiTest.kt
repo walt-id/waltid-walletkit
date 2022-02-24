@@ -1,6 +1,9 @@
 package id.walt.onboarding.backend
 
 import id.walt.BaseApiTest
+import id.walt.model.DidMethod
+import id.walt.servicematrix.ServiceMatrix
+import id.walt.services.did.DidService
 import id.walt.webwallet.backend.auth.AuthController
 import io.javalin.apibuilder.ApiBuilder
 import io.kotest.matchers.shouldBe
@@ -59,3 +62,4 @@ class OnboardingApiTests : BaseApiTest() {
         result shouldBe false
     }
 }
+

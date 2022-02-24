@@ -1,23 +1,15 @@
 package id.walt.webwallet.backend.wallet
 
-import com.beust.klaxon.Converter
-import com.beust.klaxon.JsonValue
-import com.beust.klaxon.Klaxon
-import com.nimbusds.oauth2.sdk.http.HTTPRequest
 import id.walt.crypto.KeyAlgorithm
-import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
-import id.walt.model.dif.DescriptorMapping
-import id.walt.model.dif.PresentationSubmission
-import id.walt.model.oidc.*
+import id.walt.model.oidc.SIOPv2Request
+import id.walt.model.oidc.klaxon
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.key.KeyService
-import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -25,13 +17,8 @@ import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
-import io.javalin.http.HttpResponseException
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
-import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import java.util.*
 
 object WalletController {
     val routes
@@ -217,35 +204,34 @@ object WalletController {
     }
 
     fun createDid(ctx: Context) {
-        val didCreationReq = ctx.bodyAsClass<DidCreationRequest>()
+        val req = ctx.bodyAsClass<DidCreationRequest>()
 
-        val key = didCreationReq.keyId?.let { KeyService.getService().load(it).keyId }
+        val key = req.keyId?.let { KeyService.getService().load(it).keyId }
             ?: KeyService.getService().listKeys()
                 .firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
             ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
 
-        when (didCreationReq.method) {
+        when (req.method) {
             DidMethod.ebsi -> {
-                if (didCreationReq.didEbsiBearerToken.isNullOrEmpty()) {
+                if (req.didEbsiBearerToken.isNullOrEmpty()) {
                     ctx.status(HttpCode.BAD_REQUEST)
                         .result("ebsiBearerToken form parameter is required for EBSI DID registration.")
                     return
                 }
 
-                val did = DidService.create(didCreationReq.method, key.id)
-                EssifClient.onboard(did, didCreationReq.didEbsiBearerToken)
+                val did = DidService.create(req.method, key.id)
+                EssifClient.onboard(did, req.didEbsiBearerToken)
                 EssifClient.authApi(did)
                 DidEbsiService.getService().registerDid(did, did)
                 ctx.result(did)
             }
             DidMethod.web -> {
                 val didStr = DidService.create(
-                    didCreationReq.method,
+                    req.method,
                     key.id,
                     DidService.DidWebOptions(
-                        domain = didCreationReq.didWebDomain ?: null,
-                        path = didCreationReq.didWebDomain?.run { didCreationReq.didWebPath ?: null }
-                            ?: "api/did-registry/${key.id}"
+                        domain = req.didWebDomain ?: "walt.id", //TODO: set default domain from config
+                        path =  if (req.didWebDomain == null || req.didWebDomain.contains("walt")) "api/did-registry/${key.id}" else req.didWebPath
                     )
                 )
                 val didDoc = DidService.load(didStr)
@@ -258,7 +244,7 @@ object WalletController {
             DidMethod.key -> {
                 ctx.result(
                     DidService.create(
-                        didCreationReq.method,
+                        req.method,
                         key.id
                     )
                 )
