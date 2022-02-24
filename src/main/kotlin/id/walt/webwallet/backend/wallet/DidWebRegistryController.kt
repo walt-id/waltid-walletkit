@@ -16,6 +16,8 @@ import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 object DidWebRegistryController {
     val routes
@@ -42,7 +44,10 @@ object DidWebRegistryController {
     private fun loadDidWeb(ctx: Context) {
         val id = ctx.pathParam("id")
         ContextManager.runWith(didRegistryContext) {
-            ctx.json(DidService.load("did:web:${URI.create(WalletConfig.config.walletApiUrl).authority}:api:did-registry:${id}"))
+            ctx.json(DidService.load(
+                "did:web:" +
+                    URI.create(WalletConfig.config.walletApiUrl).authority.let { URLEncoder.encode(it, StandardCharsets.UTF_8) } +
+                    ":api:did-registry:${id}").encode())
         }
     }
 
