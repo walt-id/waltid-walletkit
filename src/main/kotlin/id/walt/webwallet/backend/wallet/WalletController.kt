@@ -4,6 +4,7 @@ import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.klaxon
+import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -25,23 +26,28 @@ object WalletController {
     val routes
         get() = path("wallet") {
             path("did") {
-                // list dids
+                // list DIDs
                 path("list") {
                     get(
                         documented(document().operation {
-                            it.summary("List my DIDs").operationId("listDids").addTagsItem("Wallet")
+                            it.summary("List DIDs").operationId("listDids").addTagsItem("Wallet")
                         }
                             .jsonArray<String>("200"),
                             WalletController::listDids
                         ), UserRole.AUTHORIZED
                     )
                 }
+                // load DID
+                get("{id}", documented(document().operation {
+                    it.summary("Load DID").operationId("load").addTagsItem("Wallet")
+                }
+                    .json<String>("200"), DidController::load), UserRole.AUTHORIZED)
                 // create new DID
                 path("create") {
                     post(
                         documented(document().operation {
                             it.summary("Create new DID")
-                                .description("Creates and registers a DID. Currently the DID methos: key, web and ebsi are supported. For EBSI: a  bearer token is required.")
+                                .description("Creates and registers a DID. Currently the DID methods: key, web and ebsi are supported. For EBSI: a  bearer token is required.")
                                 .operationId("createDid").addTagsItem("Wallet")
                         }
                             .body<DidCreationRequest>()
@@ -204,6 +210,12 @@ object WalletController {
         ctx.json(DidService.listDids())
     }
 
+
+    fun loadDid(ctx: Context) {
+        val id = ctx.pathParam("id")
+        ctx.json(DidService.load(id))
+    }
+
     fun createDid(ctx: Context) {
         val req = ctx.bodyAsClass<DidCreationRequest>()
 
@@ -234,7 +246,7 @@ object WalletController {
                     key.id,
                     DidService.DidWebOptions(
                         domain = didDomain,
-                        path =  when(didDomain) {
+                        path = when (didDomain) {
                             didRegistryAuthority -> "api/did-registry/${key.id}"
                             else -> req.didWebPath
                         }
@@ -261,13 +273,15 @@ object WalletController {
     fun initCredentialPresentation(ctx: Context) {
         val req = SIOPv2Request.fromHttpContext(ctx)
         val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = false)
-        ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
+        ctx.status(HttpCode.FOUND)
+            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
     }
 
     fun initPassiveIssuance(ctx: Context) {
         val req = SIOPv2Request.fromHttpContext(ctx)
         val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = true)
-        ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
+        ctx.status(HttpCode.FOUND)
+            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
     }
 
     fun continuePresentation(ctx: Context) {
@@ -278,15 +292,23 @@ object WalletController {
 
     fun fulfillPresentation(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
-        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) } ?: throw BadRequestResponse("No selected credentials given")
+        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) }
+            ?: throw BadRequestResponse("No selected credentials given")
 
-        ctx.json(CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials).let { PresentationResponse.fromSiopResponse(it) })
+        ctx.json(
+            CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials)
+                .let { PresentationResponse.fromSiopResponse(it) })
     }
 
     fun fulfillPassiveIssuance(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
-        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) } ?: throw BadRequestResponse("No selected credentials given")
-        val issuanceSession = CredentialPresentationManager.fulfillPassiveIssuance(sessionId, selectedCredentials, JWTService.getUserInfo(ctx)!!)
+        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) }
+            ?: throw BadRequestResponse("No selected credentials given")
+        val issuanceSession = CredentialPresentationManager.fulfillPassiveIssuance(
+            sessionId,
+            selectedCredentials,
+            JWTService.getUserInfo(ctx)!!
+        )
         ctx.result(issuanceSession.id)
     }
 
