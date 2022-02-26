@@ -44,11 +44,19 @@ object DidWebRegistryController {
     private fun loadDidWeb(ctx: Context) {
         val id = ctx.pathParam("id")
         ContextManager.runWith(didRegistryContext) {
-            ctx.json(DidService.load(
-                "did:web:" +
-                    URI.create(WalletConfig.config.walletApiUrl).authority.let { URLEncoder.encode(it, StandardCharsets.UTF_8) } +
-                    ":api:did-registry:${id}").encode())
+            try {
+                ctx.json(DidService.load(
+                    "did:web:" +
+                            URI.create(WalletConfig.config.walletApiUrl).authority.let {
+                                URLEncoder.encode(
+                                    it,
+                                    StandardCharsets.UTF_8
+                                )
+                            } +
+                            ":api:did-registry:${id}"))
+            } catch (e: Exception) {
+                ctx.status(404)
+            }
         }
     }
-
 }
