@@ -3,6 +3,7 @@ package id.walt
 import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
+import com.beust.klaxon.Klaxon
 import id.walt.issuer.backend.IssuerController
 import id.walt.issuer.backend.IssuerManager
 import id.walt.onboarding.backend.OnboardingController
@@ -18,6 +19,8 @@ import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.core.util.RouteOverviewPlugin
+import io.javalin.plugin.json.JavalinJackson
+import io.javalin.plugin.json.JsonMapper
 import io.javalin.plugin.openapi.InitialConfigurationCreator
 import io.javalin.plugin.openapi.OpenApiOptions
 import io.javalin.plugin.openapi.OpenApiPlugin
@@ -81,6 +84,16 @@ fun main(args: Array<String>) {
                 swagger(SwaggerOptions("/api/swagger").title("walt.id wallet backend API"))
                 reDoc(ReDocOptions("/api/redoc").title("walt.id wallet backend API"))
             }))
+
+            this.jsonMapper(object : JsonMapper {
+                override fun toJsonString(obj: Any): String {
+                    return Klaxon().toJsonString(obj)
+                }
+
+                override fun <T : Any?> fromJsonString(json: String, targetClass: Class<T>): T {
+                    return JavalinJackson().fromJsonString(json, targetClass)
+                }
+            })
         }
     }.start(WALTID_WALLET_BACKEND_BIND_ADDRESS, WALTID_WALLET_BACKEND_PORT)
     app.before(JWTService.jwtHandler)
