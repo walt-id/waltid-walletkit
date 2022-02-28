@@ -75,7 +75,7 @@ object IssuerController {
                 .result<String>("200"),
               IssuerController::requestIssuance
             ), UserRole.AUTHORIZED)
-            post("fulfill/{nonce}", documented(
+            post("fulfill", documented(
               document().operation {
                 it.summary("SIOPv2 issuance fulfillment callback")
                   .addTagsItem("Issuer")
