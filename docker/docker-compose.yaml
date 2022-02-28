@@ -5,10 +5,11 @@ services:
     environment:
       WALTID_DATA_ROOT: ./data-root
       WALTID_WALLET_BACKEND_BIND_ADDRESS: 0.0.0.0
+      EXTERNAL_HOSTNAME: $HOSTNAME
     volumes:
       - .:/waltid-wallet-backend/data-root # data store volume incl. config files.
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - "$HOSTNAME:host-gateway"
   wallet-ui:
     image: waltid/ssikit-web-wallet:latest # wallet web ui docker image
   verifier-ui:

@@ -1,12 +1,12 @@
 {
-  "verifierUiUrl": "http://localhost:8081",
-  "verifierApiUrl": "http://localhost:8081/verifier-api",
+  "verifierUiUrl": "http://$EXTERNAL_HOSTNAME:8081",
+  "verifierApiUrl": "http://$EXTERNAL_HOSTNAME:8081/verifier-api",
   "wallets": {
     "walt.id": {
       "id": "walt.id",
-      "url": "http://localhost:8080",
-      "presentPath": "CredentialRequest/",
-      "receivePath" : "ReceiveCredential/",
+      "url": "http://$EXTERNAL_HOSTNAME:8080",
+      "presentPath": "api/wallet/siopv2/initPresentation/",
+      "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
       "description": "walt.id web wallet"
     }
   }

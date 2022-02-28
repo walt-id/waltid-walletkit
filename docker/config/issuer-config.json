@@ -1,12 +1,12 @@
 {
-  "issuerUiUrl": "http://localhost:8082",
-  "issuerApiUrl": "http://host.docker.internal:8082/issuer-api",
+  "issuerUiUrl": "http://$EXTERNAL_HOSTNAME:8082",
+  "issuerApiUrl": "http://$EXTERNAL_HOSTNAME:8082/issuer-api",
   "wallets": {
     "walt.id": {
       "id": "walt.id",
-      "url": "http://localhost:8080",
-      "presentPath": "CredentialRequest/",
-      "receivePath" : "ReceiveCredential/",
+      "url": "http://$EXTERNAL_HOSTNAME:8080",
+      "presentPath": "api/wallet/siopv2/initPresentation/",
+      "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
       "description": "walt.id web wallet"
     }
   }

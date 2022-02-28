@@ -174,7 +174,7 @@ object IssuerController {
       return
     }
 
-    val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets.getOrDefault(it, null) }
+    val wallet = ctx.queryParam("walletId")?.let { IssuerConfig.config.wallets.getOrDefault(it, null) }
     val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
     if (wallet == null && session == null) {
       ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet or session ID given")
@@ -188,7 +188,7 @@ object IssuerController {
     }
 
     if(wallet != null) {
-      ctx.result("${wallet.receivePath}?${IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables).toUriQueryString()}")
+      ctx.result(" ${wallet.url}/${wallet.receivePath}?${IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables).toUriQueryString()}")
     } else {
       ctx.result("${session!!.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
     }

@@ -1,8 +1,10 @@
 package id.walt.verifier.backend
 
+import id.walt.webwallet.backend.config.ExternalHostnameUrl
+
 data class WalletConfiguration(
   val id: String,
-  val url: String,
+  @ExternalHostnameUrl val url: String,
   val presentPath: String,
   val receivePath: String,
   val description: String

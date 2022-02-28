@@ -289,14 +289,14 @@ object WalletController {
         val req = SIOPv2Request.fromHttpContext(ctx)
         val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = false)
         ctx.status(HttpCode.FOUND)
-            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
+            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest/?sessionId=${session.id}")
     }
 
     fun initPassiveIssuance(ctx: Context) {
         val req = SIOPv2Request.fromHttpContext(ctx)
         val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = true)
         ctx.status(HttpCode.FOUND)
-            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest?sessionId=${session.id}")
+            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest/?sessionId=${session.id}")
     }
 
     fun continuePresentation(ctx: Context) {
@@ -359,9 +359,9 @@ object WalletController {
         val issuance = CredentialIssuanceManager.finalizeIssuance(state, code)
         if (issuance?.credentials != null) {
             ctx.status(HttpCode.FOUND)
-                .header("Location", "${WalletConfig.config.walletUiUrl}/ReceiveCredential?sessionId=${issuance.id}")
+                .header("Location", "${WalletConfig.config.walletUiUrl}/ReceiveCredential/?sessionId=${issuance.id}")
         } else {
-            ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/IssuanceError")
+            ctx.status(HttpCode.FOUND).header("Location", "${WalletConfig.config.walletUiUrl}/IssuanceError/")
         }
     }
 
