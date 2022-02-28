@@ -7,8 +7,8 @@ import id.walt.verifier.backend.WalletConfiguration
 import java.io.File
 
 data class WalletConfig(
-  val walletUiUrl: String = "http://localhost:3000",
-  val walletApiUrl: String = "http://localhost:3000/api",
+  @ExternalHostnameUrl val walletUiUrl: String = "http://localhost:3000",
+  @ExternalHostnameUrl val walletApiUrl: String = "http://localhost:3000/api",
   var issuers: Map<String, OIDCProvider> = mapOf()
 ) {
   companion object {
@@ -18,17 +18,18 @@ data class WalletConfig(
     init {
       val cf = File(CONFIG_FILE)
       if(cf.exists()) {
-        config = Klaxon().parse<WalletConfig>(cf) ?: WalletConfig()
+        config = Klaxon().fieldConverter(ExternalHostnameUrl::class, externalHostnameUrlValueConverter).parse<WalletConfig>(cf) ?: WalletConfig()
       } else {
         config = WalletConfig()
       }
 
       val issuerSecretsFile = File(ISSUERS_SECRETS)
-      if(issuerSecretsFile.exists()) {
-        val issuerSecrets = Klaxon().parse<SecretConfigMap>(issuerSecretsFile) ?: SecretConfigMap(mapOf())
-        config.issuers = config.issuers.values.map { issuer ->
-          Pair(issuer.id, issuer.withSecret(issuerSecrets.secrets[issuer.id]))
-        }.toMap()
+      val issuerSecrets = when(issuerSecretsFile.exists()) {
+        true -> Klaxon().parse<SecretConfigMap>(issuerSecretsFile) ?: SecretConfigMap(mapOf())
+        else -> SecretConfigMap(mapOf())
+      }
+      config.issuers = config.issuers.values.associate { issuer ->
+        issuer.id to issuer.withSecret(issuerSecrets.secrets[issuer.id]).withExternalHostnameUrl()
       }
     }
   }

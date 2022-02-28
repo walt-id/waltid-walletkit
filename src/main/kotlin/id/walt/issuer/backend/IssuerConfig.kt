@@ -3,11 +3,13 @@ package id.walt.issuer.backend
 import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
 import id.walt.verifier.backend.WalletConfiguration
+import id.walt.webwallet.backend.config.ExternalHostnameUrl
+import id.walt.webwallet.backend.config.externalHostnameUrlValueConverter
 import java.io.File
 
 data class IssuerConfig(
-  val issuerUiUrl: String = "http://localhost:5000",
-  val issuerApiUrl: String = "http://localhost:8080/issuer-api",
+  @ExternalHostnameUrl val issuerUiUrl: String = "http://localhost:5000",
+  @ExternalHostnameUrl val issuerApiUrl: String = "http://localhost:8080/issuer-api",
   @Json(serializeNull = false) val issuerClientName: String = "Walt.id Issuer Portal",
   val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations()
 ) {
@@ -17,7 +19,7 @@ data class IssuerConfig(
     init {
       val cf = File(CONFIG_FILE)
       if(cf.exists()) {
-        config = Klaxon().parse<IssuerConfig>(cf) ?: IssuerConfig()
+        config = Klaxon().fieldConverter(ExternalHostnameUrl::class, externalHostnameUrlValueConverter).parse<IssuerConfig>(cf) ?: IssuerConfig()
       } else {
         config = IssuerConfig()
       }
