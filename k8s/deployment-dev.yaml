@@ -46,6 +46,11 @@ data:
           "id": "yes.com",
           "url": "https://demo.sandbox.yes.com/essif/issuer/c2id",
           "description": "yes.com Bank ID issuer"
+        },
+        "onboarding@walt.id": {
+          "id": "onboarding@walt.id",
+          "url": "https://wallet.waltid.org/onboarding-api/oidc",
+          "description": "walt.id On-Boarding service"
         }
       }
     }
