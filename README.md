@@ -146,16 +146,20 @@ In order to simply run everything, enter:
     docker-compose up
 
 This configuration will publish the following endpoints by default:
-* **web wallet** on _**localhost:8080**_
-  * wallet frontend: http://localhost:8080/
-  * wallet API: http://localhost:8080/api/
-* **verifier portal** on _**localhost:8081**_
-  * verifier frontend: http://localhost:8081/
-  * verifier API: http://localhost:8081/verifier-api/
-* **issuer portal** on _**localhost:8082**_
-  * issuer frontend: http://localhost:8082/
-  * issuer API: http://localhost:8082/issuer-api/
-  
+* **web wallet** on _**[HOSTNAME]:8080**_
+  * wallet frontend: http://[HOSTNAME]:8080/
+  * wallet API: http://[HOSTNAME]:8080/api/
+* **verifier portal** on _**[HOSTNAME]:8081**_
+  * verifier frontend: http://[HOSTNAME]:8081/
+  * verifier API: http://[HOSTNAME]:8081/verifier-api/
+* **issuer portal** on _**[HOSTNAME]:8082**_
+  * issuer frontend: http://[HOSTNAME]:8082/
+  * issuer API: http://[HOSTNAME]:8082/issuer-api/
+
+*Note*
+
+**[HOSTNAME]** is your local computer name. Using **localhost**, not all features will work correctly.
+
 Visit the `./docker`. folder for adjusting the system config in the following files
 * **docker-compose.yaml** - Docker config for launching containers, volumes & networking
 * **ingress.conf** - Routing config
