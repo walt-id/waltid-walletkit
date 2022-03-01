@@ -275,6 +275,13 @@ spec:
                 name: wallet-backend
                 port:
                   number: 80
+          - path: /onboarding-api/
+            pathType: Prefix
+            backend:
+              service:
+                name: wallet-backend
+                port:
+                  number: 80
           - path: /webjars
             pathType: Prefix
             backend:
@@ -317,6 +324,13 @@ spec:
       http:
         paths:
           - path: /issuer-api/
+            pathType: Prefix
+            backend:
+              service:
+                name: wallet-backend
+                port:
+                  number: 80
+          - path: /onboarding-api/
             pathType: Prefix
             backend:
               service:
