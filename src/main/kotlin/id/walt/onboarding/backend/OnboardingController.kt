@@ -21,11 +21,11 @@ import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.vclib.templates.VcTemplateManager
+import id.walt.webwallet.backend.auth.JWTService
+import id.walt.webwallet.backend.auth.UserInfo
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.Context
-import io.javalin.http.HttpCode
+import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
@@ -80,6 +80,10 @@ object OnboardingController {
                         OnboardingController::fulfillPAR
                     ))
                 }
+                path("auth") {
+                    get("userToken", documented(document().operation { it.summary("get user token") }.json<UserInfo>("200"),
+                        OnboardingController::userToken))
+                }
             }
 
     private fun generateDomainVerificationCode(ctx: Context) {
@@ -96,11 +100,11 @@ object OnboardingController {
 
     private fun oidcProviderMeta(ctx: Context) {
         ctx.json(OIDCProviderMetadata(
-            Issuer(IssuerConfig.config.issuerApiUrl), // TODO: Onboarding API URL
+            Issuer(IssuerConfig.config.onboardingApiUrl),
             listOf(SubjectType.PAIRWISE, SubjectType.PUBLIC),
             URI("http://blank")
         ).apply {
-            authorizationEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/fulfillPAR") // TODO: Onboarding API URL
+            authorizationEndpointURI = URI("${IssuerConfig.config.onboardingApiUrl}/oidc/fulfillPAR")
             pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par") // keep issuer-api
             tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token") // keep issuer-api
             setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/credential") // keep issuer-api
@@ -138,8 +142,9 @@ object OnboardingController {
                 } ?: listOf()
             val vp = vp_token.firstOrNull() ?: throw BadRequestResponse("No VP token found on authorization request")
             val subject = ContextManager.runWith(IssuerManager.issuerContext) {
-                if(!Auditor.getService().verify(vp.encode(), listOf(SignaturePolicy(), ChallengePolicy(session.nonce))).valid) {
-                    throw BadRequestResponse("Invalid VP token given, signature and/or challenge could not be verified")
+                val verificationResult = Auditor.getService().verify(vp.encode(), listOf(SignaturePolicy(), ChallengePolicy(IssuerManager::checkNonce)))
+                if(!verificationResult.valid) {
+                    throw BadRequestResponse("Invalid VP token given, signature (${verificationResult.policyResults["SignaturePolicy"]}) and/or challenge (${verificationResult.policyResults["ChallengePolicy"]}) could not be verified")
                 }
                 vp.subject
             }
@@ -147,15 +152,22 @@ object OnboardingController {
             session.did = subject
             IssuerManager.updateIssuanceSession(session, session.issuables)
 
-            // TODO: onboarding UI url
             ctx.status(HttpCode.FOUND)
-                .header("Location", "${IssuerConfig.config.issuerUiUrl}/?access_token=${session.id}")
+                .header("Location", "${IssuerConfig.config.onboardingUiUrl}?access_token=${session.id}")
         } catch (exc: Exception) {
-            // TODO: onboarding UI url
             ctx.status(HttpCode.FOUND).header(
                 "Location",
-                "${IssuerConfig.config.issuerUiUrl}/issuanceError?message=${exc.message}"
+                "${IssuerConfig.config.issuerUiUrl}/IssuanceError/?message=${exc.message}"
             )
         }
+    }
+
+    fun userToken(ctx: Context) {
+        val accessToken = ctx.header("Authorization")?.let { it.substringAfterLast("Bearer ") } ?: throw UnauthorizedResponse("No valid access token set on request")
+        val session = IssuerManager.getIssuanceSession(accessToken) ?: throw UnauthorizedResponse("Invalid access token or session expired")
+        val did = session.did ?: throw ForbiddenResponse("No DID specified on current session")
+
+        val userInfo = UserInfo(did)
+        ctx.json(userInfo.apply { token = JWTService.toJWT(userInfo) })
     }
 }

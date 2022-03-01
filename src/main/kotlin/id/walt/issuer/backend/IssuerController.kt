@@ -257,7 +257,7 @@ object IssuerController {
     if(session != null) {
       ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/?sessionId=${session.id}")
     } else {
-      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/issuanceError?message=Invalid issuance session")
+      ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/IssuanceError?message=Invalid issuance session")
     }
   }
 

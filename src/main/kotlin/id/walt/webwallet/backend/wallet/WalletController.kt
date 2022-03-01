@@ -332,7 +332,7 @@ object WalletController {
     }
 
     fun issuerMeta(ctx: Context) {
-        val metadata = ctx.queryParam("issuerId")?.let { CredentialIssuanceManager.ciSvc(it) }?.metadata
+        val metadata = ctx.queryParam("issuerId")?.let { WalletConfig.config.issuers[it] }?.ciSvc?.metadata
         if (metadata != null)
             ctx.json(metadata.toJSONObject())
         else

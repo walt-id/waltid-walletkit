@@ -167,6 +167,10 @@ object IssuerManager {
     return NonceResponse(nonce, expires_in = EXPIRATION_TIME.seconds.toString())
   }
 
+  fun checkNonce(nonce: String): Boolean {
+    return nonceCache.getIfPresent(nonce) ?: false
+  }
+
   fun initializeIssuanceSession(credentialClaims: List<CredentialClaim>, authRequest: AuthorizationRequest): IssuanceSession {
     val id = UUID.randomUUID().toString()
     //TODO: validata/verify PAR request, VP tokens, claims, etc
