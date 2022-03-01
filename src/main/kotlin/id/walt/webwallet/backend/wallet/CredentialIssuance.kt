@@ -11,10 +11,13 @@ import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.services.oidc.OIDC4VPService
+import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
+import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.WalletContextManager
+import org.bouncycastle.asn1.crmf.SubsequentMessage
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -46,23 +49,31 @@ data class CredentialIssuanceSession (
 object CredentialIssuanceManager {
   val EXPIRATION_TIME = Duration.ofMinutes(5)
   val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, CredentialIssuanceSession>()
-  val issuanceServices = mutableMapOf<String, OIDC4CIService>()
   val redirectURI: URI
     get() = URI.create("${WalletConfig.config.walletApiUrl}/wallet/siopv2/finalizeIssuance")
 
-  fun ciSvc(issuerId: String): OIDC4CIService {
-    val svc = issuanceServices[issuerId] ?:
-      WalletConfig.config.issuers[issuerId]?.let { OIDC4CIService(it) }?.also {
-        issuanceServices[issuerId] = it
-      }
-    if(svc == null) {
-      throw Exception("Unknown issuer ID: $issuerId")
+  private fun generateRequiredVpTokenFor(schemaId: String, did: String, issuer: OIDCProvider): List<VerifiablePresentation>? {
+    val nonceResponse = issuer.ciSvc.getNonce() ?: return null
+    return issuer.ciSvc.credentialManifests.filter { m -> m.outputDescriptors.any { od -> od.schema == schemaId } }.map { manifest ->
+      manifest.presentationDefinition?.let { presentationDefinition ->
+        Custodian.getService().createPresentation(
+          vcs = Custodian.getService().listCredentials().filter {
+                cred -> cred.subject == did &&
+                cred.credentialSchema?.id?.let { credSchemaId ->
+                  presentationDefinition.input_descriptors.any { id -> id.schema.uri == credSchemaId }
+                } ?: false
+            }.map { cred -> cred.encode() },
+          holderDid = did,
+          challenge = nonceResponse.p_nonce,
+          expirationDate = null)
+      }?.toCredential() as VerifiablePresentation
+    }.ifEmpty {
+      null // don't generate vp_token if no matching presentations are required
     }
-    return svc
   }
 
   fun initIssuance(issuanceRequest: CredentialIssuanceRequest, user: UserInfo): URI? {
-    val issuer = ciSvc(issuanceRequest.issuerId)
+    val issuer = WalletConfig.config.issuers[issuanceRequest.issuerId] ?: return null
 
     val session = CredentialIssuanceSession(
       id = UUID.randomUUID().toString(),
@@ -71,10 +82,10 @@ object CredentialIssuanceManager {
       user = user)
 
     val claimedCredentials = issuanceRequest.schemaIds.map {
-      CredentialClaim(type = it, manifest_id = null)
+      CredentialClaim(type = it, manifest_id = null, vp_token = generateRequiredVpTokenFor(it, issuanceRequest.did, issuer))
     }
 
-    return issuer.executePushedAuthorizationRequest(redirectURI, claimedCredentials, nonce = session.nonce, state = session.id)?.also {
+    return issuer.ciSvc.executePushedAuthorizationRequest(redirectURI, claimedCredentials, nonce = session.nonce, state = session.id)?.also {
       putSession(session)
     }
   }
@@ -84,9 +95,9 @@ object CredentialIssuanceManager {
   fun finalizeIssuance(id: String, code: String): CredentialIssuanceSession? {
     val session = sessionCache.getIfPresent(id) ?: return null
 
-    val issuer = ciSvc(session.issuanceRequest.issuerId)
+    val issuer = WalletConfig.config.issuers[session.issuanceRequest.issuerId] ?: return null
 
-    val tokenResponse = issuer.getAccessToken(code, redirectURI.toString())
+    val tokenResponse = issuer.ciSvc.getAccessToken(code, redirectURI.toString())
     if(!tokenResponse.indicatesSuccess()) {
       return session
     }
@@ -98,7 +109,7 @@ object CredentialIssuanceManager {
 
     ContextManager.runWith(WalletContextManager.getUserContext(session.user)) {
       session.credentials = session.issuanceRequest.schemaIds.map { schemaId ->
-        issuer.getCredential(session.tokens!!.accessToken, session.issuanceRequest.did, schemaId, issuer.generateDidProof(session.issuanceRequest.did, session.tokenNonce))
+        issuer.ciSvc.getCredential(session.tokens!!.accessToken, session.issuanceRequest.did, schemaId, issuer.ciSvc.generateDidProof(session.issuanceRequest.did, session.tokenNonce))
       }.filterNotNull().map { it!! }
 
       session.credentials?.forEach {
@@ -120,9 +131,7 @@ object CredentialIssuanceManager {
 
   fun findIssuersFor(requiredSchemaIds: Set<String>): List<OIDCProvider> {
     return WalletConfig.config.issuers.values.filter { issuer ->
-        ciSvc(issuer.id).metadata
-          ?.getCustomParameter("credential_manifests")
-          ?.let { klaxon.parseArray<CredentialManifest>(it.toString()) }
+      issuer.ciSvc.credentialManifests
           ?.flatMap { manifest -> manifest.outputDescriptors.map { outDesc -> outDesc.schema } }
           ?.toSet()
           ?.containsAll(requiredSchemaIds) ?: false

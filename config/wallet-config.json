@@ -6,6 +6,11 @@
       "id": "walt.id",
       "url": "http://localhost:8080/issuer-api/oidc",
       "description": "walt.id Issuer Portal"
+    },
+    "onboarding@walt.id": {
+      "id": "onboarding@walt.id",
+      "url": "http://localhost:8080/onboarding-api/oidc",
+      "description": "walt.id On-Boarding service"
     }
   }
 }

@@ -13,6 +13,11 @@ data class IssuerConfig(
   @Json(serializeNull = false) val issuerClientName: String = "Walt.id Issuer Portal",
   val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations()
 ) {
+  val onboardingApiUrl
+    get() = issuerApiUrl.replace("/issuer-api", "/onboarding-api")
+  val onboardingUiUrl
+    get() = "$issuerUiUrl/Onboarding/"
+
   companion object {
     val CONFIG_FILE = "${id.walt.WALTID_DATA_ROOT}/config/issuer-config.json"
     lateinit var config: IssuerConfig
