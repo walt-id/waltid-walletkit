@@ -53,9 +53,9 @@ object CredentialIssuanceManager {
     get() = URI.create("${WalletConfig.config.walletApiUrl}/wallet/siopv2/finalizeIssuance")
 
   private fun generateRequiredVpTokenFor(schemaId: String, did: String, issuer: OIDCProvider): List<VerifiablePresentation>? {
-    val nonceResponse = issuer.ciSvc.getNonce() ?: return null
     return issuer.ciSvc.credentialManifests.filter { m -> m.outputDescriptors.any { od -> od.schema == schemaId } }.map { manifest ->
       manifest.presentationDefinition?.let { presentationDefinition ->
+        val nonceResponse = issuer.ciSvc.getNonce() ?: return null
         Custodian.getService().createPresentation(
           vcs = Custodian.getService().listCredentials().filter {
                 cred -> cred.subject == did &&
@@ -66,8 +66,8 @@ object CredentialIssuanceManager {
           holderDid = did,
           challenge = nonceResponse.p_nonce,
           expirationDate = null)
-      }?.toCredential() as VerifiablePresentation
-    }.ifEmpty {
+      }?.toCredential()?.let { it as VerifiablePresentation }
+    }.filterNotNull().ifEmpty {
       null // don't generate vp_token if no matching presentations are required
     }
   }
