@@ -224,10 +224,7 @@ object WalletController {
     fun createDid(ctx: Context) {
         val req = ctx.bodyAsClass<DidCreationRequest>()
 
-        val key = req.keyId?.let { KeyService.getService().load(it).keyId }
-            ?: KeyService.getService().listKeys()
-                .firstOrNull { k -> k.algorithm == KeyAlgorithm.ECDSA_Secp256k1 }?.keyId
-            ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1)
+        val keyId = req.keyId?.let { KeyService.getService().load(it).keyId.id }
 
         when (req.method) {
             DidMethod.ebsi -> {
@@ -237,7 +234,7 @@ object WalletController {
                     return
                 }
 
-                val did = DidService.create(req.method, key.id)
+                val did = DidService.create(req.method, keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id)
                 EssifClient.onboard(did, req.didEbsiBearerToken)
                 EssifClient.authApi(did)
                 DidEbsiService.getService().registerDid(did, did)
@@ -246,13 +243,16 @@ object WalletController {
             DidMethod.web -> {
                 val didRegistryAuthority = URI.create(WalletConfig.config.walletApiUrl).authority
                 val didDomain = req.didWebDomain.orEmpty().ifEmpty { didRegistryAuthority }
+
+                val didWebKeyId= keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
+
                 val didStr = DidService.create(
                     req.method,
-                    key.id,
+                    didWebKeyId,
                     DidService.DidWebOptions(
                         domain = didDomain,
                         path = when (didDomain) {
-                            didRegistryAuthority -> "api/did-registry/${key.id}"
+                            didRegistryAuthority -> "api/did-registry/$didWebKeyId"
                             else -> req.didWebPath
                         }
                     )
@@ -265,10 +265,11 @@ object WalletController {
                 ctx.result(didStr)
             }
             DidMethod.key -> {
+
                 ctx.result(
                     DidService.create(
                         req.method,
-                        key.id
+                        keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
                     )
                 )
             }
