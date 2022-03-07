@@ -42,7 +42,7 @@ class WalletApiTest : BaseApiTest() {
 
     // TODO: analyze potential walt-context issue @Test()
     fun testDidWebCreate() = runBlocking {
-        val userInfo = authenticate()
+        val userInfo = authenticateDid()
         val did = client.post<String>("$url/api/wallet/did/create"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))

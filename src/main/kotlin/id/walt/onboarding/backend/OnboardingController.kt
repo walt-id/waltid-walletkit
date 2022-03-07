@@ -1,12 +1,8 @@
 package id.walt.onboarding.backend
 
 import com.beust.klaxon.Klaxon
-import com.nimbusds.jwt.JWT
 import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.id.Issuer
-import com.nimbusds.oauth2.sdk.token.AccessToken
-import com.nimbusds.oauth2.sdk.token.AccessTokenType
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.auditor.Auditor
@@ -15,21 +11,13 @@ import id.walt.auditor.SignaturePolicy
 import id.walt.issuer.backend.*
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
-import id.walt.model.DidWeb
 import id.walt.model.dif.*
 import id.walt.services.context.ContextManager
-import id.walt.services.context.WaltIdContextManager
-import id.walt.services.did.DidService
 import id.walt.services.jwt.JwtService
 import id.walt.services.oidc.OIDCUtils
-import id.walt.vclib.credentials.gaiax.ParticipantCredential
-import id.walt.vclib.model.AbstractVerifiableCredential
-import id.walt.vclib.registry.VcTypeRegistry
-import id.walt.vclib.templates.VcTemplateManager
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.auth.UserRole
-import io.javalin.apibuilder.ApiBuilder
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
@@ -56,7 +44,7 @@ object OnboardingController {
                                 .body<GenerateDomainVerificationCodeRequest>()
                                 .result<String>("200"),
                             OnboardingController::generateDomainVerificationCode
-                        ))
+                        ), UserRole.AUTHORIZED)
                     }
                     path("checkDomainVerificationCode") {
                         post("", documented(
@@ -68,7 +56,7 @@ object OnboardingController {
                                 .body<CheckDomainVerificationCodeRequest>()
                                 .result<Boolean>("200"),
                             OnboardingController::checkDomainVerificationCode
-                        ))
+                        ), UserRole.AUTHORIZED)
                     }
                 }
                 // provide customized oidc discovery document and authorize endpoint
@@ -97,13 +85,28 @@ object OnboardingController {
             }
 
     private fun generateDomainVerificationCode(ctx: Context) {
+        val did = checkAuthDid(ctx) ?: return
         val domainReq = ctx.bodyAsClass<GenerateDomainVerificationCodeRequest>()
-        ctx.result(DomainOwnershipService.generateWaltIdDomainVerificationCode(domainReq.domain))
+        ctx.result(DomainOwnershipService.generateWaltIdDomainVerificationCode(domainReq.domain, did))
     }
 
     private fun checkDomainVerificationCode(ctx: Context) {
+        val did = checkAuthDid(ctx) ?: return
         val domainReq = ctx.bodyAsClass<CheckDomainVerificationCodeRequest>()
-        ctx.json(DomainOwnershipService.checkWaltIdDomainVerificationCode(domainReq.domain))
+        ctx.json(DomainOwnershipService.checkWaltIdDomainVerificationCode(domainReq.domain, did))
+    }
+
+    private fun checkAuthDid(ctx: Context): String? {
+        val userInfo = JWTService.getUserInfo(ctx)
+        if (userInfo == null) {
+            ctx.status(HttpCode.UNAUTHORIZED)
+            return null
+        } else if (userInfo.did == null) {
+            ctx.result("An authenticated DID is required for accessing this API")
+            ctx.status(HttpCode.UNAUTHORIZED)
+            return null
+        }
+        return userInfo.did!!
     }
 
     const val PARICIPANT_CREDENTIAL_SCHEMA_ID = "https://raw.githubusercontent.com/walt-id/waltid-ssikit-vclib/master/src/test/resources/schemas/ParticipantCredential.json"
