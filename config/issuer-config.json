@@ -1,6 +1,7 @@
 {
   "issuerUiUrl": "http://localhost:8000",
   "issuerApiUrl": "http://localhost:8000/issuer-api",
+  "issuerDid": "did:key:z6MkpooraZxqm99KwnMiRMzrVibVN5o5ow1BesLGFaG953RS",
   "wallets": {
     "walt.id": {
       "id": "walt.id",

@@ -72,7 +72,7 @@ object IssuerManager {
 
   init {
     WalletContextManager.runWith(issuerContext) {
-      issuerDid = DidService.listDids().firstOrNull() ?: DidService.create(DidMethod.key)
+      issuerDid = IssuerConfig.config.issuerDid ?: DidService.listDids().firstOrNull() ?: DidService.create(DidMethod.key)
     }
   }
 
