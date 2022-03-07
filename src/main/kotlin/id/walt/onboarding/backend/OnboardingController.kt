@@ -2,6 +2,7 @@ package id.walt.onboarding.backend
 
 import com.beust.klaxon.Klaxon
 import com.nimbusds.jwt.JWT
+import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.oauth2.sdk.token.AccessToken
@@ -11,24 +12,31 @@ import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.auditor.Auditor
 import id.walt.auditor.ChallengePolicy
 import id.walt.auditor.SignaturePolicy
-import id.walt.issuer.backend.IssuerConfig
-import id.walt.issuer.backend.IssuerController
-import id.walt.issuer.backend.IssuerManager
+import id.walt.issuer.backend.*
+import id.walt.model.DidMethod
+import id.walt.model.DidUrl
+import id.walt.model.DidWeb
 import id.walt.model.dif.*
 import id.walt.services.context.ContextManager
 import id.walt.services.context.WaltIdContextManager
+import id.walt.services.did.DidService
+import id.walt.services.jwt.JwtService
 import id.walt.services.oidc.OIDCUtils
+import id.walt.vclib.credentials.gaiax.ParticipantCredential
 import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.vclib.templates.VcTemplateManager
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
+import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 data class GenerateDomainVerificationCodeRequest(val domain: String)
 data class CheckDomainVerificationCodeRequest(val domain: String)
@@ -84,6 +92,8 @@ object OnboardingController {
                     get("userToken", documented(document().operation { it.summary("get user token") }.json<UserInfo>("200"),
                         OnboardingController::userToken))
                 }
+                post("issue", documented(document().operation { it.summary("Issue participant credential to did:web-authorized user") }
+                    .queryParam<String>("sessionId"), OnboardingController::issue), UserRole.AUTHORIZED)
             }
 
     private fun generateDomainVerificationCode(ctx: Context) {
@@ -149,11 +159,17 @@ object OnboardingController {
                 vp.subject
             }
 
+            if(subject?.let { DidUrl.from(it).method } != DidMethod.web.name) throw BadRequestResponse("did:web is required for onboarding!")
+
             session.did = subject
             IssuerManager.updateIssuanceSession(session, session.issuables)
 
+            val access_token = ContextManager.runWith(IssuerManager.issuerContext) {
+                JwtService.getService().sign(IssuerManager.issuerDid, JWTClaimsSet.Builder().subject(session.id).build().toString())
+            }
+
             ctx.status(HttpCode.FOUND)
-                .header("Location", "${IssuerConfig.config.onboardingUiUrl}?access_token=${session.id}")
+                .header("Location", "${IssuerConfig.config.onboardingUiUrl}?access_token=${access_token}&sessionId=${session.id}")
         } catch (exc: Exception) {
             ctx.status(HttpCode.FOUND).header(
                 "Location",
@@ -164,10 +180,46 @@ object OnboardingController {
 
     fun userToken(ctx: Context) {
         val accessToken = ctx.header("Authorization")?.let { it.substringAfterLast("Bearer ") } ?: throw UnauthorizedResponse("No valid access token set on request")
-        val session = IssuerManager.getIssuanceSession(accessToken) ?: throw UnauthorizedResponse("Invalid access token or session expired")
+        val sessionId = ContextManager.runWith(IssuerManager.issuerContext) {
+            if(JwtService.getService().verify(accessToken)) {
+                JwtService.getService().parseClaims(accessToken)!!["sub"].toString()
+            } else {
+                null
+            }
+        }
+        val session = sessionId?.let{ IssuerManager.getIssuanceSession(it) } ?: throw UnauthorizedResponse("Invalid access token or session expired")
         val did = session.did ?: throw ForbiddenResponse("No DID specified on current session")
 
         val userInfo = UserInfo(did)
         ctx.json(userInfo.apply { token = JWTService.toJWT(userInfo) })
+    }
+
+    fun issue(ctx: Context) {
+        val userInfo = JWTService.getUserInfo(ctx)
+        if(userInfo == null) {
+            throw UnauthorizedResponse()
+        }
+        if(userInfo.did?.let { DidUrl.from(it).method } != DidMethod.web.name) {
+            throw BadRequestResponse("User is not did:web-authorized")
+        }
+        val session = ctx.queryParam("sessionId")?.let{ IssuerManager.getIssuanceSession(it) } ?: throw BadRequestResponse("Session expired or not found")
+        if(userInfo.did != session.did) {
+            throw BadRequestResponse("Session DID not matching authorized DID")
+        }
+        val domain = DidUrl.from(userInfo.did!!).identifier.substringBefore(":").let { URLDecoder.decode(it, StandardCharsets.UTF_8) }
+        val selectedIssuables = Issuables(
+            credentials = listOf(
+                IssuableCredential(
+                    schemaId = PARICIPANT_CREDENTIAL_SCHEMA_ID,
+                    type = "ParticipantCredential",
+                    credentialData = mapOf(
+                        "credentialSubject" to mapOf(
+                            "domain" to domain
+                        )
+                    )
+                )
+            )
+        )
+        ctx.result("${session!!.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
     }
 }
