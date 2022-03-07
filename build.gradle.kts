@@ -24,7 +24,7 @@ dependencies {
     implementation("io.javalin:javalin-bundle:4.3.0")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.5")
-    implementation("com.nimbusds:oauth2-oidc-sdk:9.21")
+    implementation("com.nimbusds:oauth2-oidc-sdk:9.27")
 
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.7-SNAPSHOT")
@@ -40,11 +40,11 @@ dependencies {
 
     // Testing
     //testImplementation(kotlin("test-junit"))
-    testImplementation("io.mockk:mockk:1.12.0")
+    testImplementation("io.mockk:mockk:1.12.2")
 
-    testImplementation("io.kotest:kotest-runner-junit5:4.6.3")
-    testImplementation("io.kotest:kotest-assertions-core:4.6.3")
-    testImplementation("io.kotest:kotest-assertions-json:4.6.3")
+    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.1.0")
+    testImplementation("io.kotest:kotest-assertions-json:5.1.0")
 
     // HTTP
     testImplementation("io.ktor:ktor-client-core:1.6.7")
