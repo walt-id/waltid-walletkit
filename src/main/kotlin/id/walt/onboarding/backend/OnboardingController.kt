@@ -23,11 +23,10 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 data class GenerateDomainVerificationCodeRequest(val domain: String)
 data class CheckDomainVerificationCodeRequest(val domain: String)
+data class IssueParticipantCredentialRequest(val domain: String)
 
 object OnboardingController {
     val routes
@@ -71,17 +70,20 @@ object OnboardingController {
                         OnboardingController::oidcProviderMeta
                     ))
                     get("fulfillPAR", documented(
-                        document().operation { it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
+                        document().operation {
+                            it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
                             .queryParam<String>("request_uri"),
                         OnboardingController::fulfillPAR
                     ))
                 }
                 path("auth") {
-                    get("userToken", documented(document().operation { it.summary("get user token") }.json<UserInfo>("200"),
+                    get("userToken", documented(document().operation {
+                        it.summary("get user token") }.json<UserInfo>("200"),
                         OnboardingController::userToken))
                 }
-                post("issue", documented(document().operation { it.summary("Issue participant credential to did:web-authorized user") }
-                    .queryParam<String>("sessionId"), OnboardingController::issue), UserRole.AUTHORIZED)
+                post("issue", documented(document().operation {
+                    it.summary("Issue participant credential to did:web-authorized user").addTagsItem("Onboarding") }
+                    .queryParam<String>("sessionId").body<IssueParticipantCredentialRequest>(), OnboardingController::issue), UserRole.AUTHORIZED)
             }
 
     private fun generateDomainVerificationCode(ctx: Context) {
@@ -198,10 +200,7 @@ object OnboardingController {
     }
 
     fun issue(ctx: Context) {
-        val userInfo = JWTService.getUserInfo(ctx)
-        if(userInfo == null) {
-            throw UnauthorizedResponse()
-        }
+        val userInfo = JWTService.getUserInfo(ctx) ?: throw UnauthorizedResponse()
         if(userInfo.did?.let { DidUrl.from(it).method } != DidMethod.web.name) {
             throw BadRequestResponse("User is not did:web-authorized")
         }
@@ -209,7 +208,9 @@ object OnboardingController {
         if(userInfo.did != session.did) {
             throw BadRequestResponse("Session DID not matching authorized DID")
         }
-        val domain = DidUrl.from(userInfo.did!!).identifier.substringBefore(":").let { URLDecoder.decode(it, StandardCharsets.UTF_8) }
+        // Use the following if we should rely on the domain used in the did:web
+        // val domain = DidUrl.from(userInfo.did!!).identifier.substringBefore(":").let { URLDecoder.decode(it, StandardCharsets.UTF_8) }
+        val domain = ctx.bodyAsClass<IssueParticipantCredentialRequest>().domain
         val selectedIssuables = Issuables(
             credentials = listOf(
                 IssuableCredential(
