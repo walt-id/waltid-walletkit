@@ -38,11 +38,13 @@ object AuthController {
         val userInfo = ctx.bodyAsClass(UserInfo::class.java)
         // TODO: verify login credentials!!
         ContextManager.runWith(WalletContextManager.getUserContext(userInfo)) {
-            if(DidService.listDids().size == 0) {
+            if(DidService.listDids().isEmpty()) {
                 DidService.create(DidMethod.key)
             }
         }
-        ctx.json(UserInfo(userInfo.id).apply { token = JWTService.toJWT(userInfo) })
+        ctx.json(UserInfo(userInfo.id).apply {
+            token = JWTService.toJWT(userInfo)
+        })
     }
 
     fun userInfo(ctx: Context) {
