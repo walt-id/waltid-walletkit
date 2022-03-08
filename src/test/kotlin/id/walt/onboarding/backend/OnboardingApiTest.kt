@@ -1,9 +1,6 @@
 package id.walt.onboarding.backend
 
 import id.walt.BaseApiTest
-import id.walt.model.DidMethod
-import id.walt.servicematrix.ServiceMatrix
-import id.walt.services.did.DidService
 import id.walt.webwallet.backend.auth.AuthController
 import io.javalin.apibuilder.ApiBuilder
 import io.kotest.matchers.shouldBe
@@ -26,33 +23,33 @@ class OnboardingApiTests : BaseApiTest() {
 
     @Test()
     fun testGenerateDomainVerificationCode() = runBlocking {
-        val userInfo = authenticate()
+        val userInfo = authenticateDid()
         val code = client.post<String>("$url/onboarding-api/domain/generateDomainVerificationCode"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
             contentType(ContentType.Application.Json)
-            body = mapOf("domain" to "waltid.org")
+            body = mapOf("domain" to "issuer.ssikit.org")
         }
         println(code)
         code shouldHaveLength 68
-        code shouldBe DomainOwnershipService.generateWaltIdDomainVerificationCode("waltid.org")
+        code shouldBe DomainOwnershipService.generateWaltIdDomainVerificationCode("issuer.ssikit.org", did)
     }
 
-    // Only works on the same day when the code was generated @Test()
+    @Test()
     fun testCheckDomainVerificationCodeSuccess() = runBlocking {
-        val userInfo = authenticate()
+        val userInfo = authenticateDid()
         val result = client.post<Boolean>("$url/onboarding-api/domain/checkDomainVerificationCode"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
             contentType(ContentType.Application.Json)
-            body = mapOf("domain" to "waltid.org")
+            body = mapOf("domain" to "issuer.ssikit.org")
         }
         result shouldBe true
     }
 
     @Test()
     fun testCheckDomainVerificationCodeFail() = runBlocking {
-        val userInfo = authenticate()
+        val userInfo = authenticateDid()
         val result = client.post<Boolean>("$url/onboarding-api/domain/checkDomainVerificationCode"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))

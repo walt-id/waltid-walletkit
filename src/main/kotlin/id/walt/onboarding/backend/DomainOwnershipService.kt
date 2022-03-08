@@ -12,15 +12,14 @@ import javax.naming.directory.InitialDirContext
 object DomainOwnershipService {
 
     /**
-     * Unique verification code for each domain. The code will change each day.
+     * Unique verification code for each domain and DID
      */
-    fun generateWaltIdDomainVerificationCode(domain: String): String =
+    fun generateWaltIdDomainVerificationCode(domain: String, did: String): String =
         "ssi-onboarding-verification=" + MessageDigest.getInstance("SHA-1")
-            .digest((LocalDateTime.now().format(DateTimeFormatter.ISO_DATE) + domain).toByteArray()).toHexString()
-            .replace(" ", "")
+            .digest(domain.plus(did).toByteArray()).toHexString().replace(" ", "")
 
-    fun checkWaltIdDomainVerificationCode(domain: String): Boolean =
-        checkDomainVerificationCode(domain, generateWaltIdDomainVerificationCode(domain))
+    fun checkWaltIdDomainVerificationCode(domain: String, did: String): Boolean =
+        checkDomainVerificationCode(domain, generateWaltIdDomainVerificationCode(domain, did))
 
     fun checkDomainVerificationCode(domain: String, code: String): Boolean {
         println("Checking domain: $domain (code: $code)")
@@ -37,5 +36,4 @@ object DomainOwnershipService {
         }
         return false
     }
-
 }
