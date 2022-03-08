@@ -41,6 +41,7 @@ abstract class BaseApiTest : AnnotationSpec() {
         expectSuccess = false
     }
     val email = "test@walt.id"
+    val did = "did:web:issuer.ssikit.org"
 
     @BeforeAll
     fun init() {
@@ -79,9 +80,23 @@ abstract class BaseApiTest : AnnotationSpec() {
     fun authenticate(): UserInfo = runBlocking {
         val userInfo = client.post<UserInfo>("$url/api/auth/login") {
             contentType(ContentType.Application.Json)
-            body = mapOf("id" to email, "email" to email, "password" to "1234")
+            body = mapOf(
+                "id" to email,
+                "email" to email,
+                "password" to "1234"
+            )
         }
         return@runBlocking userInfo
     }
 
+    fun authenticateDid(): UserInfo = runBlocking {
+        val userInfo = client.post<UserInfo>("$url/api/auth/login") {
+            contentType(ContentType.Application.Json)
+            body = mapOf(
+                "id" to did,
+                "did" to did
+            )
+        }
+        return@runBlocking userInfo
+    }
 }
