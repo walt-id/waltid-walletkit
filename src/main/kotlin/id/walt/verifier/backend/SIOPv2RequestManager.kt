@@ -38,6 +38,7 @@ object SIOPv2RequestManager {
         CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, ResponseVerification>()
 
     val verifierContext = UserContext(
+        contextId = "Verifier",
         hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/verifier")),
         keyStore = HKVKeyStoreService(),
         vcStore = HKVVcStoreService()

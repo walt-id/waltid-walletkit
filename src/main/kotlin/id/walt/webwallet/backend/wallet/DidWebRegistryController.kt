@@ -36,6 +36,7 @@ object DidWebRegistryController {
         }
 
     val didRegistryContext = UserContext(
+        contextId = "did registry",
         hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/did-registry")),
         keyStore = HKVKeyStoreService(),
         vcStore = HKVVcStoreService()

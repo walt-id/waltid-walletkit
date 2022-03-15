@@ -25,7 +25,9 @@ dependencies {
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.5")
     implementation("com.nimbusds:oauth2-oidc-sdk:9.27")
-
+    // CLI
+    implementation("com.github.ajalt.clikt:clikt-jvm:3.4.0")
+    implementation("com.github.ajalt.clikt:clikt:3.4.0")
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.7-SNAPSHOT")
     implementation("id.walt:waltid-ssikit-vclib:1.15.0")
