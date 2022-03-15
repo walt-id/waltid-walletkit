@@ -60,6 +60,7 @@ fun isSchema(typeOrSchema: String): Boolean {
 object IssuerManager {
 
   val issuerContext = UserContext(
+    contextId = "Issuer",
     hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/issuer")),
     keyStore = HKVKeyStoreService(),
     vcStore = HKVVcStoreService()

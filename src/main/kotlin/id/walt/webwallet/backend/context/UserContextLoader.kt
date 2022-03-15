@@ -11,6 +11,6 @@ import id.walt.WALTID_DATA_ROOT
 object UserContextLoader : CacheLoader<String, Context>() {
   override fun load(key: String): UserContext {
     //TODO: get user context preferences from user database
-    return UserContext(HKVKeyStoreService(), HKVVcStoreService(), FileSystemHKVStore(FilesystemStoreConfig("${WALTID_DATA_ROOT}/data/${key}")))
+    return UserContext(key, HKVKeyStoreService(), HKVVcStoreService(), FileSystemHKVStore(FilesystemStoreConfig("${WALTID_DATA_ROOT}/data/${key}")))
   }
 }

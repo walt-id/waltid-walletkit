@@ -4,6 +4,8 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import com.beust.klaxon.Klaxon
+import com.github.ajalt.clikt.core.subcommands
+import id.walt.cli.*
 import id.walt.issuer.backend.IssuerController
 import id.walt.issuer.backend.IssuerManager
 import id.walt.onboarding.backend.OnboardingController
@@ -13,6 +15,9 @@ import id.walt.services.context.ContextManager
 import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.JWTService
+import id.walt.webwallet.backend.cli.ConfigCmd
+import id.walt.webwallet.backend.cli.RunCmd
+import id.walt.webwallet.backend.cli.WalletCmd
 import id.walt.webwallet.backend.context.WalletContextManager
 import id.walt.webwallet.backend.wallet.DidWebRegistryController
 import id.walt.webwallet.backend.wallet.WalletController
@@ -37,7 +42,6 @@ internal var WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_B
 
 internal val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
 
-private val log = KotlinLogging.logger {}
 
 fun main(args: Array<String>) {
     ServiceMatrix("service-matrix.properties")
@@ -51,73 +55,42 @@ fun main(args: Array<String>) {
         args.contains("--bind-all") -> WALTID_WALLET_BACKEND_BIND_ADDRESS = "0.0.0.0"
     }
 
-    val app = Javalin.create { config ->
-        config.apply {
-            enableDevLogging()
-            enableCorsForAllOrigins()
-            requestLogger { ctx, ms ->
-                log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
-            }
-            accessManager(JWTService)
-            registerPlugin(RouteOverviewPlugin("/api-routes"))
-            registerPlugin(OpenApiPlugin(OpenApiOptions(InitialConfigurationCreator {
-                OpenAPI().apply {
-                    info {
-                        title = "walt.id wallet backend API"
-                    }
-                    servers = listOf(Server().url("/"))
-                    components {
-                        addSecuritySchemes("bearerAuth", SecurityScheme().apply {
-                            name = "bearerAuth"
-                            type = SecurityScheme.Type.HTTP
-                            scheme = "bearer"
-                            `in` = SecurityScheme.In.HEADER
-                            bearerFormat = "JWT"
-                        })
-                    }
-                    security {
-                        addList("bearerAuth")
-                    }
-                }
-            }).apply {
-                path("/api/api-documentation")
-                swagger(SwaggerOptions("/api/swagger").title("walt.id wallet backend API"))
-                reDoc(ReDocOptions("/api/redoc").title("walt.id wallet backend API"))
-            }))
-
-            this.jsonMapper(object : JsonMapper {
-                override fun toJsonString(obj: Any): String {
-                    return Klaxon().toJsonString(obj)
-                }
-
-                override fun <T : Any?> fromJsonString(json: String, targetClass: Class<T>): T {
-                    return JavalinJackson().fromJsonString(json, targetClass)
-                }
-            })
-        }
-    }.start(WALTID_WALLET_BACKEND_BIND_ADDRESS, WALTID_WALLET_BACKEND_PORT)
-    app.before(JWTService.jwtHandler)
-    app.before(WalletContextManager.preRequestHandler)
-    app.after(WalletContextManager.postRequestHandler)
-
-    app.routes {
-        path("api") {
-            AuthController.routes
-            WalletController.routes
-            DidWebRegistryController.routes
-        }
-        path("verifier-api") {
-            VerifierController.routes
-        }
-        path("issuer-api") {
-            IssuerController.routes
-        }
-        path("onboarding-api") {
-            OnboardingController.routes
-        }
-    }
-
-    println("web wallet backend started at: http://$WALTID_WALLET_BACKEND_BIND_ADDRESS:$WALTID_WALLET_BACKEND_PORT")
-
-    println("swagger docs are hosted at: http://$WALTID_WALLET_BACKEND_BIND_ADDRESS:$WALTID_WALLET_BACKEND_PORT/api/swagger")
+    WalletCmd().subcommands(
+        RunCmd(),
+        ConfigCmd().subcommands(
+            KeyCommand().subcommands(
+                GenKeyCommand(),
+                ListKeysCommand(),
+                ImportKeyCommand(),
+                ExportKeyCommand()
+            ),
+            DidCommand().subcommands(
+                CreateDidCommand(),
+                ResolveDidCommand(),
+                ListDidsCommand(),
+                ImportDidCommand()
+            ),
+            EssifCommand().subcommands(
+                EssifOnboardingCommand(),
+                EssifAuthCommand(),
+//                        EssifVcIssuanceCommand(),
+//                        EssifVcExchangeCommand(),
+                EssifDidCommand().subcommands(
+                    EssifDidRegisterCommand()
+                )
+            ),
+            VcCommand().subcommands(
+                VcIssueCommand(),
+                PresentVcCommand(),
+                VerifyVcCommand(),
+                ListVcCommand(),
+                ListVerificationPoliciesCommand(),
+                VcTemplatesCommand().subcommands(
+                    VcTemplatesListCommand(),
+                    VcTemplatesExportCommand()
+                ),
+                VcImportCommand()
+            )
+        )
+    ).main(args)
 }
