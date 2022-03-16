@@ -26,7 +26,7 @@ class ConfigCmd : CliktCommand(name = "config", help = "Configure or setup dids,
   ).single().required()
 
   override fun run() {
-    log.info("Running in context of: ${context!!.contextId}")
-    WalletContextManager.setCurrentContext(context!!)
+    log.info("Running in context of: ${context.contextId}")
+    WalletContextManager.setCurrentContext(context)
   }
 }
