@@ -97,6 +97,8 @@ spec:
               value: 0.0.0.0
             - name: WALTID_WALLET_AUTH_SECRET
               value: 0b218176-d8f3-4a58-83db-fd328defc30f
+          args:
+            - run
           ports:
             - containerPort: 8080
               name: http-api
