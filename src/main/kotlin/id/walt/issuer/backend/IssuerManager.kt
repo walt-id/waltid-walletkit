@@ -1,17 +1,6 @@
 package id.walt.issuer.backend
 
 import com.google.common.cache.CacheBuilder
-import com.nimbusds.oauth2.sdk.*
-import com.nimbusds.oauth2.sdk.id.ClientID
-import com.nimbusds.oauth2.sdk.id.State
-import com.nimbusds.oauth2.sdk.token.AccessToken
-import com.nimbusds.oauth2.sdk.token.AccessTokenType
-import com.nimbusds.oauth2.sdk.token.BearerAccessToken
-import com.nimbusds.oauth2.sdk.token.RefreshToken
-import com.nimbusds.openid.connect.sdk.*
-import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.auditor.Auditor
-import id.walt.auditor.SignaturePolicy
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
@@ -30,17 +19,6 @@ import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
-import id.walt.vclib.credentials.*
-import id.walt.vclib.model.AbstractVerifiableCredential
-import id.walt.vclib.model.CredentialSubject
-import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.templates.VcTemplateManager
-import id.walt.verifier.backend.SIOPv2RequestManager
-import id.walt.verifier.backend.VerifierConfig
-import id.walt.verifier.backend.WalletConfiguration
-import id.walt.webwallet.backend.auth.JWTService
-import id.walt.webwallet.backend.auth.UserInfo
-import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.WALTID_DATA_ROOT
@@ -48,7 +26,6 @@ import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URI
 import java.time.Duration
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 

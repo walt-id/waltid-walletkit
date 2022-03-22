@@ -71,14 +71,14 @@ object OnboardingController {
                     ))
                     get("fulfillPAR", documented(
                         document().operation {
-                            it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
+                            it.summary("fulfill PAR").addTagsItem("Onboarding").operationId("fulfillPAR") }
                             .queryParam<String>("request_uri"),
                         OnboardingController::fulfillPAR
                     ))
                 }
                 path("auth") {
                     get("userToken", documented(document().operation {
-                        it.summary("get user token") }.json<UserInfo>("200"),
+                        it.summary("get user token").addTagsItem("Onboarding").operationId("userToken") }.json<UserInfo>("200"),
                         OnboardingController::userToken))
                 }
                 post("issue", documented(document().operation {

@@ -21,6 +21,7 @@ import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.context.WalletContextManager
+import id.walt.webwallet.backend.rest.RestAPI
 import id.walt.webwallet.backend.wallet.DidWebRegistryController
 import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
@@ -50,71 +51,7 @@ class RunCmd : CliktCommand(name = "run", help = "Run wallet backend service") {
   val bindPort: Int by option("-p", "--port", help = "Bind to port, defaults to env. variable WALTID_WALLET_BACKEND_PORT: $WALTID_WALLET_BACKEND_PORT").int().default(WALTID_WALLET_BACKEND_PORT)
 
   override fun run() {
-    val app = Javalin.create { config ->
-      config.apply {
-        enableDevLogging()
-        enableCorsForAllOrigins()
-        requestLogger { ctx, ms ->
-          log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
-        }
-        accessManager(JWTService)
-        registerPlugin(RouteOverviewPlugin("/api-routes"))
-        registerPlugin(OpenApiPlugin(OpenApiOptions(InitialConfigurationCreator {
-          OpenAPI().apply {
-            info {
-              title = "walt.id wallet backend API"
-            }
-            servers = listOf(Server().url("/"))
-            components {
-              addSecuritySchemes("bearerAuth", SecurityScheme().apply {
-                name = "bearerAuth"
-                type = SecurityScheme.Type.HTTP
-                scheme = "bearer"
-                `in` = SecurityScheme.In.HEADER
-                bearerFormat = "JWT"
-              })
-            }
-            security {
-              addList("bearerAuth")
-            }
-          }
-        }).apply {
-          path("/api/api-documentation")
-          swagger(SwaggerOptions("/api/swagger").title("walt.id wallet backend API"))
-          reDoc(ReDocOptions("/api/redoc").title("walt.id wallet backend API"))
-        }))
-
-        this.jsonMapper(object : JsonMapper {
-          override fun toJsonString(obj: Any): String {
-            return Klaxon().toJsonString(obj)
-          }
-
-          override fun <T : Any?> fromJsonString(json: String, targetClass: Class<T>): T {
-            return JavalinJackson().fromJsonString(json, targetClass)
-          }
-        })
-      }
-    }.start(bindAddress, bindPort)
-    app.before(JWTService.jwtHandler)
-    app.before(WalletContextManager.preRequestHandler)
-    app.after(WalletContextManager.postRequestHandler)
-
-    app.routes {
-      ApiBuilder.path("api") {
-        AuthController.routes
-        WalletController.routes
-        DidWebRegistryController.routes
-      }
-      ApiBuilder.path("verifier-api") {
-        VerifierController.routes
-      }
-      ApiBuilder.path("issuer-api") {
-        IssuerController.routes
-      }
-      ApiBuilder.path("onboarding-api") {
-        OnboardingController.routes
-      }
-    }
+    RestAPI.start(bindAddress, bindPort)
 
     println("web wallet backend started at: http://$bindAddress:$bindPort")
 
