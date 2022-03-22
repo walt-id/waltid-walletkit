@@ -104,5 +104,7 @@ object RestAPI {
     val javalin = createJavalin()
     javalin.routes(routes)
     javalin.start(bindAddress, port)
+    println("web wallet backend started at: http://$bindAddress:$port")
+    println("swagger docs are hosted at: http://$bindAddress:$port/api/swagger")
   }
 }
