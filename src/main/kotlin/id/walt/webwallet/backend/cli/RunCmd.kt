@@ -52,10 +52,6 @@ class RunCmd : CliktCommand(name = "run", help = "Run wallet backend service") {
 
   override fun run() {
     RestAPI.start(bindAddress, bindPort)
-
-    println("web wallet backend started at: http://$bindAddress:$bindPort")
-
-    println("swagger docs are hosted at: http://$bindAddress:$bindPort/api/swagger")
   }
 
 }
