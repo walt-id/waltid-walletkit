@@ -6,7 +6,7 @@ plugins {
     `maven-publish`
 }
 
-group = "id.walt.webwallet"
+group = "id.walt"
 version = "1.0-SNAPSHOT"
 
 repositories {
