@@ -94,17 +94,14 @@ object RestAPI {
           }
         })
       }
-    }.apply {
-      before(JWTService.jwtHandler)
-      before(WalletContextManager.preRequestHandler)
-      after(WalletContextManager.postRequestHandler)
     }
 
-  fun start(bindAddress: String, port: Int, routes: () -> Unit= DEFAULT_ROUTES) {
+  fun start(bindAddress: String, port: Int, routes: () -> Unit= DEFAULT_ROUTES): Javalin {
     val javalin = createJavalin()
     javalin.routes(routes)
     javalin.start(bindAddress, port)
     println("web wallet backend started at: http://$bindAddress:$port")
     println("swagger docs are hosted at: http://$bindAddress:$port/api/swagger")
+    return javalin
   }
 }

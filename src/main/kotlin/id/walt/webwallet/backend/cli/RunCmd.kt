@@ -51,7 +51,11 @@ class RunCmd : CliktCommand(name = "run", help = "Run wallet backend service") {
   val bindPort: Int by option("-p", "--port", help = "Bind to port, defaults to env. variable WALTID_WALLET_BACKEND_PORT: $WALTID_WALLET_BACKEND_PORT").int().default(WALTID_WALLET_BACKEND_PORT)
 
   override fun run() {
-    RestAPI.start(bindAddress, bindPort)
+    RestAPI.start(bindAddress, bindPort).apply {
+      before(JWTService.jwtHandler)
+      before(WalletContextManager.preRequestHandler)
+      after(WalletContextManager.postRequestHandler)
+    }
   }
 
 }
