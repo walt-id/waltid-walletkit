@@ -48,7 +48,7 @@ object RestAPI {
     }
   }
 
-  val apiTitle = "walt.id wallet backend API"
+  var apiTitle = "walt.id wallet backend API"
 
   fun createJavalin(): Javalin = Javalin.create { config ->
       config.apply {
