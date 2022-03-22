@@ -38,11 +38,16 @@ abstract class VerifierManager: BaseService() {
     CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, ResponseVerification>()
 
   abstract val verifierContext: UserContext
+  abstract val apiPath: String
+  abstract val uiPath: String
+
+  val externalApiUrl: String get() = "${VerifierConfig.config.externalUrl}/$apiPath"
+  val externalUiUrl: String get() = "${VerifierConfig.config.externalUrl}/$uiPath"
 
   open fun newRequest(tokenClaim: VpTokenClaim): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
     val req = SIOPv2Request(
-      redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify/$nonce",
+      redirect_uri = "${externalApiUrl}/verify/$nonce",
       response_mode = "form_post",
       nonce = nonce,
       claims = VCClaims(
@@ -141,5 +146,7 @@ class DefaultVerifierManager : VerifierManager() {
     keyStore = HKVKeyStoreService(),
     vcStore = HKVVcStoreService()
   )
+  override val apiPath: String = "verifier-api"
+  override val uiPath: String = ""
 
 }

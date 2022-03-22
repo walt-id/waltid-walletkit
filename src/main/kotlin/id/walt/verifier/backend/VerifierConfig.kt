@@ -6,8 +6,7 @@ import id.walt.webwallet.backend.config.externalHostnameUrlValueConverter
 import java.io.File
 
 data class VerifierConfig(
-  @ExternalHostnameUrl val verifierUiUrl: String = "http://localhost:4000",
-  @ExternalHostnameUrl val verifierApiUrl: String = "http://localhost:8080/verifier-api",
+  @ExternalHostnameUrl val externalUrl: String = "http://localhost:4000",
   val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations()
 ) {
   companion object {
