@@ -1,6 +1,5 @@
 {
-  "verifierUiUrl": "http://$EXTERNAL_HOSTNAME:8081",
-  "verifierApiUrl": "http://$EXTERNAL_HOSTNAME:8081/verifier-api",
+  "externalUrl": "http://$EXTERNAL_HOSTNAME:8081",
   "wallets": {
     "walt.id": {
       "id": "walt.id",
