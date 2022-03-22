@@ -2,6 +2,7 @@ package id.walt.verifier.backend
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
+import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
@@ -37,15 +38,16 @@ object VerifierController {
           ))
         }
         path("verify") {
-          post("{nonce}", documented(
+          post( documented(
             document().operation {
               it.summary("SIOPv2 request verification callback")
                 .addTagsItem("Verifier")
                 .operationId("verifySIOPv2Request")
             }
+              .queryParam<String>("state")
               .formParamBody<String> { }
               .result<String>("302"),
-            VerifierController::verifySIOPv2Request
+            VerifierController::verifySIOPResponse
           ))
         }
         path("auth") {
@@ -91,20 +93,14 @@ object VerifierController {
     }
   }
 
-  fun verifySIOPv2Request(ctx: Context) {
-    // TODO: verify siop response
-    val nonce = ctx.pathParam("nonce")
-    val id_token = ctx.formParam("id_token")
-    val vp_token = ctx.formParam("vp_token")
+  fun verifySIOPResponse(ctx: Context) {
+    val state = ctx.queryParam("state") ?: throw  BadRequestResponse("State not specified")
+    val id_token = ctx.formParam("id_token") ?: throw BadRequestResponse("id_token not specified")
+    val vp_token = ctx.formParam("vp_token") ?: throw BadRequestResponse("vp_token not specified")
 
-    if(nonce.isNullOrEmpty() || id_token.isNullOrEmpty() || vp_token.isNullOrEmpty()) {
-      ctx.status(HttpStatus.SC_BAD_REQUEST).result("Missing required parameters")
-      return
-    }
+    val result = VerifierManager.getService().verifyResponse(state, id_token, vp_token)
 
-    val result = VerifierManager.getService().verifyResponse(nonce, id_token, vp_token)
-
-    ctx.status(HttpCode.FOUND).header("Location", "${VerifierManager.getService().verifierUiUrl}/success/?access_token=${result?.id ?: ""}")
+    ctx.status(HttpCode.FOUND).header("Location", VerifierManager.getService().getVerificationRedirectionUri(result).toString())
   }
 
   fun completeAuthentication(ctx: Context) {

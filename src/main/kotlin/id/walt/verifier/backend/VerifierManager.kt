@@ -26,6 +26,7 @@ import id.walt.servicematrix.ServiceRegistry
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
+import java.net.URI
 import java.net.URL
 import java.nio.file.Path
 import java.time.Instant
@@ -47,12 +48,13 @@ abstract class VerifierManager: BaseService() {
   open fun newRequest(tokenClaim: VpTokenClaim): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
     val req = SIOPv2Request(
-      redirect_uri = "${verifierApiUrl}/verify/$nonce",
+      redirect_uri = "${verifierApiUrl}/verify",
       response_mode = "form_post",
       nonce = nonce,
       claims = VCClaims(
         vp_token = tokenClaim
-      )
+      ),
+      state = nonce
     )
     reqCache.put(nonce, req)
     return req
@@ -123,6 +125,13 @@ abstract class VerifierManager: BaseService() {
     respCache.put(result.id, result)
 
     return result
+  }
+
+  open fun getVerificationRedirectionUri(verificationResponse: ResponseVerification?): URI {
+    if(verificationResponse?.isValid == true)
+      return URI.create("${verifierUiUrl}/success/?access_token=${verificationResponse.id}")
+    else
+      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResponse?.id ?: ""}")
   }
 
   fun getVerificationResult(id: String): ResponseVerification? {
