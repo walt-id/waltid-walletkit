@@ -1,43 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
-import com.beust.klaxon.Klaxon
-import com.nimbusds.jwt.JWTParser
-import id.walt.custodian.Custodian
-import id.walt.model.DidMethod
-import id.walt.model.oidc.IDToken
-import id.walt.model.oidc.SIOPv2Request
-import id.walt.model.oidc.klaxon
-import id.walt.servicematrix.ServiceMatrix
-import id.walt.servicematrix.ServiceRegistry
-import id.walt.services.context.ContextManager
-import id.walt.services.did.DidService
-import id.walt.services.hkvstore.FileSystemHKVStore
-import id.walt.services.hkvstore.FilesystemStoreConfig
-import id.walt.services.jwt.JwtService
-import id.walt.services.keystore.HKVKeyStoreService
-import id.walt.services.vcstore.HKVVcStoreService
-import id.walt.signatory.ProofConfig
-import id.walt.signatory.Signatory
-import id.walt.vclib.credentials.VerifiablePresentation
-import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.model.toCredential
-import id.walt.vclib.templates.VcTemplateManager
-import id.walt.verifier.backend.SIOPv2RequestManager
-import id.walt.webwallet.backend.context.UserContext
-import id.walt.webwallet.backend.context.WalletContextManager
-import io.javalin.http.Context
 import io.kotest.core.spec.style.AnnotationSpec
-import io.kotest.matchers.collections.shouldBeIn
-import io.kotest.matchers.collections.shouldHaveSize
-import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
-import io.kotest.matchers.shouldNotBe
-import io.kotest.matchers.types.beOfType
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 class SIOPv2Test : AnnotationSpec() {
 /*
