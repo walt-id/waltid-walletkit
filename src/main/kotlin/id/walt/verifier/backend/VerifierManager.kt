@@ -20,6 +20,9 @@ import id.walt.vclib.model.toCredential
 import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
 import id.walt.model.oidc.VCClaims
+import id.walt.servicematrix.BaseService
+import id.walt.servicematrix.ServiceMatrix
+import id.walt.servicematrix.ServiceRegistry
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
@@ -29,7 +32,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractVerifierManager {
+abstract class VerifierManager: BaseService() {
   val reqCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPv2Request>()
   val respCache =
     CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, ResponseVerification>()
@@ -122,9 +125,16 @@ abstract class AbstractVerifierManager {
       respCache.invalidate(id)
     }
   }
+
+  override val implementation: BaseService
+    get() = serviceImplementation<VerifierManager>()
+
+  companion object {
+    fun getService(): VerifierManager = ServiceRegistry.getService()
+  }
 }
 
-object VerifierManager : AbstractVerifierManager() {
+class DefaultVerifierManager : VerifierManager() {
   override val verifierContext = UserContext(
     contextId = "Verifier",
     hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/verifier")),
