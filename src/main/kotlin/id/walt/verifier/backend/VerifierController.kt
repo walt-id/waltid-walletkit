@@ -104,7 +104,7 @@ object VerifierController {
 
     val result = VerifierManager.getService().verifyResponse(nonce, id_token, vp_token)
 
-    ctx.status(HttpCode.FOUND).header("Location", "${VerifierManager.getService().externalUiUrl}/success/?access_token=${result?.id ?: ""}")
+    ctx.status(HttpCode.FOUND).header("Location", "${VerifierManager.getService().verifierUiUrl}/success/?access_token=${result?.id ?: ""}")
   }
 
   fun completeAuthentication(ctx: Context) {
