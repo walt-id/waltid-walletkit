@@ -87,7 +87,7 @@ object VerifierController {
     } else {
       val wallet = VerifierConfig.config.wallets.get(walletId)!!
       ctx.status(HttpCode.FOUND).header("Location", "${wallet.url}/${wallet.presentPath}"+
-          "?${VerifierManager.newRequest(schemaUri).toUriQueryString()}")
+          "?${VerifierManager.getService().newRequest(schemaUri).toUriQueryString()}")
     }
   }
 
@@ -102,7 +102,7 @@ object VerifierController {
       return
     }
 
-    val result = VerifierManager.verifyResponse(nonce, id_token, vp_token)
+    val result = VerifierManager.getService().verifyResponse(nonce, id_token, vp_token)
 
     ctx.status(HttpCode.FOUND).header("Location", "${VerifierConfig.config.verifierUiUrl}/success/?access_token=${result?.id ?: ""}")
   }
@@ -113,7 +113,7 @@ object VerifierController {
       ctx.status(HttpCode.FORBIDDEN)
       return
     }
-    val result = VerifierManager.getVerificationResult(access_token)
+    val result = VerifierManager.getService().getVerificationResult(access_token)
     if(result == null) {
       ctx.status(HttpCode.FORBIDDEN)
       return
