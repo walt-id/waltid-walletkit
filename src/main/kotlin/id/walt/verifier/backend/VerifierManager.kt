@@ -123,11 +123,11 @@ abstract class VerifierManager: BaseService() {
     return result
   }
 
-  open fun getVerificationRedirectionUri(verificationResponse: SIOPResponseVerificationResult): URI {
-    if(verificationResponse.isValid == true)
-      return URI.create("${verifierUiUrl}/success/?access_token=${verificationResponse.state}")
+  open fun getVerificationRedirectionUri(verificationResult: SIOPResponseVerificationResult): URI {
+    if(verificationResult.isValid == true)
+      return URI.create("${verifierUiUrl}/success/?access_token=${verificationResult.state}")
     else
-      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResponse.state ?: ""}")
+      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResult.state ?: ""}")
   }
 
   fun getVerificationResult(id: String): SIOPResponseVerificationResult? {
