@@ -45,8 +45,9 @@ abstract class VerifierManager: BaseService() {
   val verifierApiUrl: String get() = "${VerifierConfig.config.externalUrl}/$verifierApiPath"
   val verifierUiUrl: String get() = "${VerifierConfig.config.externalUrl}/$verifierUiPath"
 
-  open fun newRequest(tokenClaim: VpTokenClaim): SIOPv2Request {
+  open fun newRequest(tokenClaim: VpTokenClaim, state: String? = null): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
+    val requestId = state ?: nonce
     val req = SIOPv2Request(
       redirect_uri = "${verifierApiUrl}/verify",
       response_mode = "form_post",
@@ -54,13 +55,13 @@ abstract class VerifierManager: BaseService() {
       claims = VCClaims(
         vp_token = tokenClaim
       ),
-      state = nonce
+      state = requestId
     )
-    reqCache.put(nonce, req)
+    reqCache.put(requestId, req)
     return req
   }
 
-  open fun newRequest(schemaUri: String): SIOPv2Request {
+  open fun newRequest(schemaUri: String, state: String? = null): SIOPv2Request {
     return newRequest(VpTokenClaim(
       presentation_definition = PresentationDefinition(
         id = "1",
@@ -71,7 +72,7 @@ abstract class VerifierManager: BaseService() {
           )
         )
       )
-    ))
+    ), state)
   }
 
   open fun getVerififactionPoliciesFor(req: SIOPv2Request): List<VerificationPolicy> {
@@ -91,16 +92,15 @@ abstract class VerifierManager: BaseService() {
   -  - compare nonce (verification policy)
   -  - compare token_claim => token_ref => vp (verification policy)
    */
-  open fun verifyResponse(reqId: String, id_token: String, vp_token: String): ResponseVerification? {
-    val req = reqCache.getIfPresent(reqId) ?: return null
-    reqCache.invalidate(reqId)
-    val respId = UUID.randomUUID().toString()
+  open fun verifyResponse(state: String, id_token: String, vp_token: String): ResponseVerification? {
+    val req = reqCache.getIfPresent(state) ?: return null
+    reqCache.invalidate(state)
     val id_token_claims = JwtService.getService().parseClaims(id_token)!!
     val sub = id_token_claims.get("sub").toString()
     val vp = vp_token.toCredential() as VerifiablePresentation
 
     var result = ResponseVerification(
-      respId,
+      state,
       sub,
       req,
       ContextManager.runWith(verifierContext) {
@@ -122,16 +122,16 @@ abstract class VerifierManager: BaseService() {
       result.auth_token = JWTService.toJWT(UserInfo(result.subject!!))
     }
 
-    respCache.put(result.id, result)
+    respCache.put(result.state, result)
 
     return result
   }
 
   open fun getVerificationRedirectionUri(verificationResponse: ResponseVerification?): URI {
     if(verificationResponse?.isValid == true)
-      return URI.create("${verifierUiUrl}/success/?access_token=${verificationResponse.id}")
+      return URI.create("${verifierUiUrl}/success/?access_token=${verificationResponse.state}")
     else
-      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResponse?.id ?: ""}")
+      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResponse?.state ?: ""}")
   }
 
   fun getVerificationResult(id: String): ResponseVerification? {
