@@ -4,7 +4,6 @@ import com.google.common.cache.CacheBuilder
 import id.walt.model.dif.InputDescriptor
 import id.walt.model.dif.PresentationDefinition
 import id.walt.model.dif.VpSchema
-import id.walt.model.oidc.Registration
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.VpTokenClaim
 import id.walt.services.context.ContextManager
@@ -21,22 +20,19 @@ import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
 import id.walt.model.oidc.VCClaims
 import id.walt.servicematrix.BaseService
-import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
+import io.javalin.http.BadRequestResponse
 import java.net.URI
-import java.net.URL
-import java.nio.file.Path
-import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 abstract class VerifierManager: BaseService() {
   val reqCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPv2Request>()
   val respCache =
-    CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, ResponseVerification>()
+    CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPResponseVerificationResult>()
 
   abstract val verifierContext: UserContext
   abstract val verifierApiPath: String
@@ -92,14 +88,14 @@ abstract class VerifierManager: BaseService() {
   -  - compare nonce (verification policy)
   -  - compare token_claim => token_ref => vp (verification policy)
    */
-  open fun verifyResponse(state: String, id_token: String, vp_token: String): ResponseVerification? {
-    val req = reqCache.getIfPresent(state) ?: return null
+  open fun verifyResponse(state: String, id_token: String, vp_token: String): SIOPResponseVerificationResult {
+    val req = reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
     reqCache.invalidate(state)
     val id_token_claims = JwtService.getService().parseClaims(id_token)!!
     val sub = id_token_claims.get("sub").toString()
     val vp = vp_token.toCredential() as VerifiablePresentation
 
-    var result = ResponseVerification(
+    var result = SIOPResponseVerificationResult(
       state,
       sub,
       req,
@@ -127,14 +123,14 @@ abstract class VerifierManager: BaseService() {
     return result
   }
 
-  open fun getVerificationRedirectionUri(verificationResponse: ResponseVerification?): URI {
-    if(verificationResponse?.isValid == true)
+  open fun getVerificationRedirectionUri(verificationResponse: SIOPResponseVerificationResult): URI {
+    if(verificationResponse.isValid == true)
       return URI.create("${verifierUiUrl}/success/?access_token=${verificationResponse.state}")
     else
-      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResponse?.state ?: ""}")
+      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResponse.state ?: ""}")
   }
 
-  fun getVerificationResult(id: String): ResponseVerification? {
+  fun getVerificationResult(id: String): SIOPResponseVerificationResult? {
     return respCache.getIfPresent(id).also {
       respCache.invalidate(id)
     }

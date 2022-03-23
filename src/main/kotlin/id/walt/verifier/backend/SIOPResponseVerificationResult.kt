@@ -4,7 +4,7 @@ import id.walt.auditor.VerificationResult
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.vclib.credentials.VerifiablePresentation
 
-data class ResponseVerification(
+data class SIOPResponseVerificationResult(
   val state: String,
   val subject: String?,
   val request: SIOPv2Request?,
