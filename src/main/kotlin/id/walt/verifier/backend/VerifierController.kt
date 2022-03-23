@@ -93,7 +93,7 @@ object VerifierController {
   }
 
   fun verifySIOPResponse(ctx: Context) {
-    val state = ctx.queryParam("state") ?: throw  BadRequestResponse("State not specified")
+    val state = ctx.formParam("state") ?: throw  BadRequestResponse("State not specified")
     val id_token = ctx.formParam("id_token") ?: throw BadRequestResponse("id_token not specified")
     val vp_token = ctx.formParam("vp_token") ?: throw BadRequestResponse("vp_token not specified")
 
