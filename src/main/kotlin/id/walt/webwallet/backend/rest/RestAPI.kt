@@ -14,6 +14,7 @@ import id.walt.webwallet.backend.wallet.DidWebRegistryController
 import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder
+import io.javalin.core.security.AccessManager
 import io.javalin.core.util.RouteOverviewPlugin
 import io.javalin.plugin.json.JavalinJackson
 import io.javalin.plugin.json.JsonMapper
@@ -50,14 +51,14 @@ object RestAPI {
 
   var apiTitle = "walt.id wallet backend API"
 
-  fun createJavalin(): Javalin = Javalin.create { config ->
+  fun createJavalin(accessManager: AccessManager): Javalin = Javalin.create { config ->
       config.apply {
         enableDevLogging()
         enableCorsForAllOrigins()
         requestLogger { ctx, ms ->
           log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
         }
-        accessManager(JWTService)
+        accessManager(accessManager)
         registerPlugin(RouteOverviewPlugin("/api-routes"))
         registerPlugin(OpenApiPlugin(OpenApiOptions(InitialConfigurationCreator {
           OpenAPI().apply {
@@ -96,8 +97,8 @@ object RestAPI {
       }
     }
 
-  fun start(bindAddress: String, port: Int, routes: () -> Unit= DEFAULT_ROUTES): Javalin {
-    val javalin = createJavalin()
+  fun start(bindAddress: String, port: Int, accessManager: AccessManager, routes: () -> Unit= DEFAULT_ROUTES): Javalin {
+    val javalin = createJavalin(accessManager)
     javalin.routes(routes)
     javalin.start(bindAddress, port)
     println("web wallet backend started at: http://$bindAddress:$port")
