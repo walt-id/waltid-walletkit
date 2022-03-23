@@ -7,7 +7,6 @@ import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
-import org.apache.http.HttpStatus
 
 object VerifierController {
   val routes
@@ -58,7 +57,7 @@ object VerifierController {
                 .operationId("completeAuthentication")
             }
               .queryParam<String>("access_token")
-              .json<ResponseVerification>("200"),
+              .json<SIOPResponseVerificationResult>("200"),
             VerifierController::completeAuthentication
           ))
         }
