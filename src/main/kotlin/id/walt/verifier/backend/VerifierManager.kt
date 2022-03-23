@@ -35,17 +35,12 @@ abstract class VerifierManager: BaseService() {
     CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPResponseVerificationResult>()
 
   abstract val verifierContext: UserContext
-  abstract val verifierApiPath: String
-  abstract val verifierUiPath: String
-
-  val verifierApiUrl: String get() = "${VerifierConfig.config.externalUrl}/$verifierApiPath"
-  val verifierUiUrl: String get() = "${VerifierConfig.config.externalUrl}/$verifierUiPath"
 
   open fun newRequest(tokenClaim: VpTokenClaim, state: String? = null): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
     val requestId = state ?: nonce
     val req = SIOPv2Request(
-      redirect_uri = "${verifierApiUrl}/verify",
+      redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify",
       response_mode = "form_post",
       nonce = nonce,
       claims = VCClaims(
@@ -125,9 +120,9 @@ abstract class VerifierManager: BaseService() {
 
   open fun getVerificationRedirectionUri(verificationResult: SIOPResponseVerificationResult): URI {
     if(verificationResult.isValid == true)
-      return URI.create("${verifierUiUrl}/success/?access_token=${verificationResult.state}")
+      return URI.create("${VerifierConfig.config.verifierUiUrl}/success/?access_token=${verificationResult.state}")
     else
-      return URI.create("${verifierUiUrl}/error/?access_token=${verificationResult.state ?: ""}")
+      return URI.create("${VerifierConfig.config.verifierUiUrl}/error/?access_token=${verificationResult.state ?: ""}")
   }
 
   fun getVerificationResult(id: String): SIOPResponseVerificationResult? {
@@ -151,7 +146,5 @@ class DefaultVerifierManager : VerifierManager() {
     keyStore = HKVKeyStoreService(),
     vcStore = HKVVcStoreService()
   )
-  override val verifierApiPath: String = "verifier-api"
-  override val verifierUiPath: String = ""
 
 }
