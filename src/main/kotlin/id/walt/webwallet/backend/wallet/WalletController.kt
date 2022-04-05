@@ -81,6 +81,11 @@ object WalletController {
                     documented(importDocs(), ::import),
                     UserRole.AUTHORIZED
                 )
+                delete(
+                    "delete",
+                    documented(KeyController.deleteDocs(), KeyController::delete),
+                    UserRole.AUTHORIZED
+                )
             }
             path("siopv2") {
                 // called from EXTERNAL verifier
