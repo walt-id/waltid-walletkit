@@ -14,8 +14,6 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
@@ -24,7 +22,7 @@ private val log = KotlinLogging.logger {}
 
 abstract class BaseApiTest : AnnotationSpec() {
 
-    val waltContext = mockk<WalletContextManager>(relaxed = true)
+    val waltContext = WalletContextManager
     val host = "localhost"
     val port = 7777
     val url = "http://$host:$port"
@@ -48,6 +46,22 @@ abstract class BaseApiTest : AnnotationSpec() {
     fun init() {
         ServiceMatrix("service-matrix.properties")
         ServiceRegistry.registerService<ContextManager>(waltContext)
+
+        val userInfo = UserInfo(email)
+        userInfo.email = email
+        userInfo.password = "1234"
+        userInfo.token = "e4c98176b8acc069d87e40c7f673aa493eea05e766624843b9d2c3f99bf7af25"
+//        every { waltContext.preRequestHandler } returns Handler {
+//            WalletContextManager.setCurrentContext(
+//                WalletContextManager.getUserContext(userInfo)
+//            )
+//        }
+//
+//        every { waltContext.postRequestHandler } returns Handler {
+//            WalletContextManager.setCurrentContext(
+//                WalletContextManager.getUserContext(userInfo)
+//            )
+//        }
     }
 
     @BeforeClass
@@ -62,8 +76,8 @@ abstract class BaseApiTest : AnnotationSpec() {
             }
         }.apply {
             before(JWTService.jwtHandler)
-            before(WalletContextManager.preRequestHandler)
-            after(WalletContextManager.postRequestHandler)
+            before(waltContext.preRequestHandler)
+            after(waltContext.postRequestHandler)
             routes {
                 loadRoutes()
             }
