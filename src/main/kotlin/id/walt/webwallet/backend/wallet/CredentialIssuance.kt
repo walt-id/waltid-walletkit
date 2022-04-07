@@ -11,6 +11,7 @@ import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.services.oidc.OIDC4VPService
+import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.model.toCredential
@@ -57,11 +58,11 @@ object CredentialIssuanceManager {
       manifest.presentationDefinition?.let { presentationDefinition ->
         val nonceResponse = issuer.ciSvc.getNonce() ?: return null
         Custodian.getService().createPresentation(
-          vcs = Custodian.getService().listCredentials().filter {
-                cred -> cred.subject == did &&
-                cred.credentialSchema?.id?.let { credSchemaId ->
-                  presentationDefinition.input_descriptors.any { id -> id.schema.uri == credSchemaId }
-                } ?: false
+          vcs = OIDCUtils.findCredentialsFor(presentationDefinition, did).values
+            .flatMap { credIds ->
+              credIds.map { credId ->
+                Custodian.getService().getCredential(credId) }
+                .filterNotNull()
             }.map { cred -> cred.encode() },
           holderDid = did,
           challenge = nonceResponse.p_nonce,

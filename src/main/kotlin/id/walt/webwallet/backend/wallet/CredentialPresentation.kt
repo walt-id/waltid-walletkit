@@ -4,6 +4,7 @@ import com.beust.klaxon.Klaxon
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.google.common.cache.CacheBuilder
 import id.walt.custodian.Custodian
+import id.walt.model.dif.InputDescriptor
 import id.walt.model.oidc.CredentialClaim
 import id.walt.model.oidc.OIDCProvider
 import id.walt.model.oidc.SIOPv2Request
@@ -14,6 +15,7 @@ import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.model.toCredential
+import id.walt.vclib.templates.VcTemplateManager
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
@@ -67,28 +69,34 @@ object CredentialPresentationManager {
   }
 
   private fun getPresentableCredentials(subject: String, req: SIOPv2Request): List<PresentableCredential> {
-    val myCredentials = Custodian.getService().listCredentials()
-    return req.claims.vp_token?.presentation_definition?.input_descriptors?.flatMap { indesc ->
-      myCredentials.filter {
-        indesc.schema.uri == it.credentialSchema?.id &&
-            it.subject == subject && !it.id.isNullOrEmpty()
-      }.map { cred ->
-        PresentableCredential(cred.id!!, indesc.id)
-      }
-    }?.toList() ?: listOf()
+    return req.claims.vp_token?.presentation_definition?.let { pd ->
+      OIDCUtils.findCredentialsFor(pd, subject).flatMap { kv ->
+        kv.value.map { credId -> PresentableCredential(credId, kv.key) }
+      }.toList()
+    } ?: listOf()
+  }
+
+  private fun getRequiredSchemaIds(input_descriptors: List<InputDescriptor>): Set<String> {
+    return VcTemplateManager.getTemplateList().map { tmplId -> VcTemplateManager.loadTemplate(tmplId) }
+      .filter { templ -> input_descriptors.any { indesc -> OIDCUtils.matchesInputDescriptor(templ, indesc) } }
+      .map { templ -> templ.credentialSchema?.id }
+      .filterNotNull()
+      .toSet()
   }
 
   fun continueCredentialPresentationFor(sessionId: String, did: String): CredentialPresentationSession {
     val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
     session.did = did
     session.presentableCredentials = getPresentableCredentials(did, session.req)
-    val requiredSchemaIds = session.req.claims.vp_token?.presentation_definition?.input_descriptors?.map { inDesc -> inDesc.schema.uri }?.toSet() ?: setOf()
-    if(requiredSchemaIds.isNotEmpty() && session.presentableCredentials!!.isEmpty()) {
-      // credentials are required, but no suitable ones are found
-      session.availableIssuers = CredentialIssuanceManager.findIssuersFor(requiredSchemaIds)
-    } else {
-      session.availableIssuers = null
+    session.availableIssuers = null
+    if(session.presentableCredentials!!.isEmpty()) {
+      val requiredSchemaIds = session.req.claims.vp_token?.presentation_definition?.input_descriptors?.let { getRequiredSchemaIds(it) } ?: setOf()
+      if(requiredSchemaIds.isNotEmpty()) {
+        // credentials are required, but no suitable ones are found
+        session.availableIssuers = CredentialIssuanceManager.findIssuersFor(requiredSchemaIds)
+      }
     }
+
     return session
   }
 

@@ -68,7 +68,7 @@ object IssuerManager {
       redirect_uri = redirectUri.toString(),
       response_mode = "post",
       nonce = nonce,
-      claims = VCClaims(vp_token = VpTokenClaim(PresentationDefinition(listOf()))),
+      claims = VCClaims(vp_token = VpTokenClaim(PresentationDefinition(id = "1", listOf()))),
       state = nonce
     )
     reqCache.put(nonce, IssuanceRequest(user, nonce, selectedIssuables))

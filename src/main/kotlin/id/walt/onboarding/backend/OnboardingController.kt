@@ -133,7 +133,7 @@ object OnboardingController {
                                 PARICIPANT_CREDENTIAL_SCHEMA_ID,
                                 "ParticipantCredential")
                     ),
-                    presentationDefinition = PresentationDefinition(listOf()) // Request empty presentation to be sent along with issuance request
+                    presentationDefinition = PresentationDefinition("1", listOf()) // Request empty presentation to be sent along with issuance request
                 )).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
             )
         }.toJSONObject())
