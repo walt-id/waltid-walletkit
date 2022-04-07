@@ -36,11 +36,12 @@ abstract class VerifierManager: BaseService() {
 
   abstract val verifierContext: UserContext
 
-  open fun newRequest(tokenClaim: VpTokenClaim, state: String? = null): SIOPv2Request {
+  open fun newRequest(tokenClaim: VpTokenClaim, state: String? = null, redirectCustomUrlQuery: String = ""): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
     val requestId = state ?: nonce
+    val redirectQuery = if(redirectCustomUrlQuery.isEmpty()) "" else "?$redirectCustomUrlQuery"
     val req = SIOPv2Request(
-      redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify",
+      redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify$redirectQuery",
       response_mode = "form_post",
       nonce = nonce,
       claims = VCClaims(
@@ -52,18 +53,18 @@ abstract class VerifierManager: BaseService() {
     return req
   }
 
-  open fun newRequest(schemaUri: String, state: String? = null): SIOPv2Request {
+  open fun newRequest(schemaUris: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): SIOPv2Request {
     return newRequest(VpTokenClaim(
       presentation_definition = PresentationDefinition(
         id = "1",
-        input_descriptors = listOf(
+        input_descriptors = schemaUris.map { schemaUri ->
           InputDescriptor(
             id = "1",
             schema = VCSchema(uri = schemaUri)
           )
-        )
+        }.toList()
       )
-    ), state)
+    ), state, redirectCustomUrlQuery)
   }
 
   open fun getVerififactionPoliciesFor(req: SIOPv2Request): List<VerificationPolicy> {
@@ -118,11 +119,11 @@ abstract class VerifierManager: BaseService() {
     return result
   }
 
-  open fun getVerificationRedirectionUri(verificationResult: SIOPResponseVerificationResult): URI {
+  open fun getVerificationRedirectionUri(verificationResult: SIOPResponseVerificationResult, uiUrl: String? = VerifierConfig.config.verifierUiUrl): URI {
     if(verificationResult.isValid == true)
-      return URI.create("${VerifierConfig.config.verifierUiUrl}/success/?access_token=${verificationResult.state}")
+      return URI.create("$uiUrl/success/?access_token=${verificationResult.state}")
     else
-      return URI.create("${VerifierConfig.config.verifierUiUrl}/error/?access_token=${verificationResult.state ?: ""}")
+      return URI.create("$uiUrl/error/?access_token=${verificationResult.state ?: ""}")
   }
 
   fun getVerificationResult(id: String): SIOPResponseVerificationResult? {
