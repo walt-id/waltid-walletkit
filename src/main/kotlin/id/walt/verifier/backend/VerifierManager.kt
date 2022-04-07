@@ -3,7 +3,6 @@ package id.walt.verifier.backend
 import com.google.common.cache.CacheBuilder
 import id.walt.model.dif.InputDescriptor
 import id.walt.model.dif.PresentationDefinition
-import id.walt.model.dif.VpSchema
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.VpTokenClaim
 import id.walt.services.context.ContextManager
@@ -18,6 +17,7 @@ import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
 import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
+import id.walt.model.dif.VCSchema
 import id.walt.model.oidc.VCClaims
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
@@ -59,7 +59,7 @@ abstract class VerifierManager: BaseService() {
         input_descriptors = listOf(
           InputDescriptor(
             id = "1",
-            schema = VpSchema(uri = schemaUri)
+            schema = VCSchema(uri = schemaUri)
           )
         )
       )
