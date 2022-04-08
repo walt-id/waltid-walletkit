@@ -27,8 +27,8 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt-jvm:3.4.0")
     implementation("com.github.ajalt.clikt:clikt:3.4.0")
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.8.0-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.17.1")
+    implementation("id.walt:waltid-ssi-kit:1.9.0-SNAPSHOT")
+    implementation("id.walt:waltid-ssikit-vclib:1.18.0")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")

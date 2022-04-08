@@ -78,12 +78,12 @@ object WalletController {
                 )
                 post(
                     "import",
-                    documented(importDocs(), ::import),
+                    documented(CustodianController.importKeysDocs(), CustodianController::importKey),
                     UserRole.AUTHORIZED
                 )
                 delete(
                     "delete",
-                    documented(KeyController.deleteDocs(), KeyController::delete),
+                    documented(CustodianController.deleteKeysDocs(), CustodianController::deleteKey),
                     UserRole.AUTHORIZED
                 )
             }
@@ -280,16 +280,6 @@ object WalletController {
             }
         }
     }
-
-    fun import(ctx: Context) {
-        ctx.json(KeyService.getService().importKey(ctx.body()))
-    }
-
-    fun importDocs() = document().operation {
-        it.summary("Import key").operationId("importKey").addTagsItem("Wallet")
-    }.body<String> {
-        it.description("Imports the key (JWK format) to the key store")
-    }.json<String>("200")
 
     fun initCredentialPresentation(ctx: Context) {
         val req = SIOPv2Request.fromHttpContext(ctx)
