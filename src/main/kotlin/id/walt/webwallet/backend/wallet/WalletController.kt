@@ -5,7 +5,6 @@ import id.walt.model.DidMethod
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
-import id.walt.rest.core.KeyController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -82,8 +81,13 @@ object WalletController {
                     UserRole.AUTHORIZED
                 )
                 delete(
-                    "delete",
+                    "{id}",
                     documented(CustodianController.deleteKeysDocs(), CustodianController::deleteKey),
+                    UserRole.AUTHORIZED
+                )
+                post(
+                    "export",
+                    documented(CustodianController.exportKeysDocs(), CustodianController::exportKey),
                     UserRole.AUTHORIZED
                 )
             }
