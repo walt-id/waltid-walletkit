@@ -56,7 +56,7 @@ object RestAPI {
         enableDevLogging()
         enableCorsForAllOrigins()
         requestLogger { ctx, ms ->
-          log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
+          log.debug { "Received req.: ${ctx.url()} - Time: ${ms}ms" }
         }
         accessManager(accessManager)
         registerPlugin(RouteOverviewPlugin("/api-routes"))
