@@ -81,7 +81,7 @@ object WalletController {
                     UserRole.AUTHORIZED
                 )
                 delete(
-                    "{id}",
+                    "delete/{id}",
                     documented(CustodianController.deleteKeysDocs(), CustodianController::deleteKey),
                     UserRole.AUTHORIZED
                 )
