@@ -69,7 +69,7 @@ class WalletApiTest : BaseApiTest() {
         val context = waltContext.getUserContext(userInfo)
         val kid = waltContext.runWith(context) { KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519) }
         val response = runBlocking {
-            client.delete<HttpResponse>("$url/api/wallet/keys/delete") {
+            client.delete<HttpResponse>("$url/api/wallet/keys/delete/${kid.id}") {
                 header("Authorization", "Bearer ${userInfo.token}")
                 body = kid.id
             }
