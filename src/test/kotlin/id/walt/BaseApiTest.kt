@@ -14,8 +14,6 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 
@@ -24,7 +22,7 @@ private val log = KotlinLogging.logger {}
 
 abstract class BaseApiTest : AnnotationSpec() {
 
-    val waltContext = mockk<WalletContextManager>(relaxed = true)
+    val waltContext = WalletContextManager
     val host = "localhost"
     val port = 7777
     val url = "http://$host:$port"
@@ -62,8 +60,8 @@ abstract class BaseApiTest : AnnotationSpec() {
             }
         }.apply {
             before(JWTService.jwtHandler)
-            before(WalletContextManager.preRequestHandler)
-            after(WalletContextManager.postRequestHandler)
+            before(waltContext.preRequestHandler)
+            after(waltContext.postRequestHandler)
             routes {
                 loadRoutes()
             }

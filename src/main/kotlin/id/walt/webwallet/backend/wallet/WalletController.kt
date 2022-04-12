@@ -5,7 +5,6 @@ import id.walt.model.DidMethod
 import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
-import id.walt.rest.core.KeyController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -78,7 +77,17 @@ object WalletController {
                 )
                 post(
                     "import",
-                    documented(importDocs(), ::import),
+                    documented(CustodianController.importKeysDocs(), CustodianController::importKey),
+                    UserRole.AUTHORIZED
+                )
+                delete(
+                    "delete/{id}",
+                    documented(CustodianController.deleteKeysDocs(), CustodianController::deleteKey),
+                    UserRole.AUTHORIZED
+                )
+                post(
+                    "export",
+                    documented(CustodianController.exportKeysDocs(), CustodianController::exportKey),
                     UserRole.AUTHORIZED
                 )
             }
@@ -275,16 +284,6 @@ object WalletController {
             }
         }
     }
-
-    fun import(ctx: Context) {
-        ctx.json(KeyService.getService().importKey(ctx.body()))
-    }
-
-    fun importDocs() = document().operation {
-        it.summary("Import key").operationId("importKey").addTagsItem("Wallet")
-    }.body<String> {
-        it.description("Imports the key (JWK format) to the key store")
-    }.json<String>("200")
 
     fun initCredentialPresentation(ctx: Context) {
         val req = SIOPv2Request.fromHttpContext(ctx)
