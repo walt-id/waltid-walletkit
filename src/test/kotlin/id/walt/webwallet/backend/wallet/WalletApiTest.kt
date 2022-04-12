@@ -71,7 +71,6 @@ class WalletApiTest : BaseApiTest() {
         val response = runBlocking {
             client.delete<HttpResponse>("$url/api/wallet/keys/delete/${kid.id}") {
                 header("Authorization", "Bearer ${userInfo.token}")
-                body = kid.id
             }
         }
         response.status shouldBe HttpStatusCode.OK
