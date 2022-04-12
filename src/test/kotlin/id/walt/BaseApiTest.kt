@@ -46,22 +46,6 @@ abstract class BaseApiTest : AnnotationSpec() {
     fun init() {
         ServiceMatrix("service-matrix.properties")
         ServiceRegistry.registerService<ContextManager>(waltContext)
-
-        val userInfo = UserInfo(email)
-        userInfo.email = email
-        userInfo.password = "1234"
-        userInfo.token = "e4c98176b8acc069d87e40c7f673aa493eea05e766624843b9d2c3f99bf7af25"
-//        every { waltContext.preRequestHandler } returns Handler {
-//            WalletContextManager.setCurrentContext(
-//                WalletContextManager.getUserContext(userInfo)
-//            )
-//        }
-//
-//        every { waltContext.postRequestHandler } returns Handler {
-//            WalletContextManager.setCurrentContext(
-//                WalletContextManager.getUserContext(userInfo)
-//            )
-//        }
     }
 
     @BeforeClass
