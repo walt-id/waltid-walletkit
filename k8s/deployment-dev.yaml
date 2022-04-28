@@ -5,13 +5,13 @@ metadata:
 data:
   issuer-config.json: |
     {
-      "issuerUiUrl": "https://issuer.waltid.org",
-      "issuerApiUrl": "https://issuer.waltid.org/issuer-api",
+      "issuerUiUrl": "https://issuer.walt-test.cloud",
+      "issuerApiUrl": "https://issuer.walt-test.cloud/issuer-api",
       "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
-          "url": "https://wallet.waltid.org",
+          "url": "https://wallet.walt-test.cloud",
           "presentPath": "api/wallet/siopv2/initPresentation/",
           "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
           "description": "walt.id web wallet"
@@ -20,12 +20,12 @@ data:
     }
   verifier-config.json: |
     {
-      "verifierUiUrl": "https://verifier.waltid.org",
-      "verifierApiUrl": "https://verifier.waltid.org/verifier-api",
+      "verifierUiUrl": "https://verifier.walt-test.cloud",
+      "verifierApiUrl": "https://verifier.walt-test.cloud/verifier-api",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
-          "url": "https://wallet.waltid.org",
+          "url": "https://wallet.walt-test.cloud",
           "presentPath": "api/wallet/siopv2/initPresentation/",
           "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
           "description": "walt.id web wallet"
@@ -34,12 +34,12 @@ data:
     }
   wallet-config.json: |
     {
-      "walletUiUrl": "https://wallet.waltid.org",
-      "walletApiUrl": "https://wallet.waltid.org/api",
+      "walletUiUrl": "https://wallet.walt-test.cloud",
+      "walletApiUrl": "https://wallet.walt-test.cloud/api",
       "issuers": {
         "walt.id": {
           "id": "walt.id",
-          "url": "https://issuer.waltid.org/issuer-api/oidc",
+          "url": "https://issuer.walt-test.cloud/issuer-api/oidc",
           "description": "walt.id Issuer Portal"
         },
         "yes.com": {
@@ -49,7 +49,7 @@ data:
         },
         "onboarding@walt.id": {
           "id": "onboarding@walt.id",
-          "url": "https://issuer.waltid.org/onboarding-api/oidc",
+          "url": "https://issuer.walt-test.cloud/onboarding-api/oidc",
           "description": "walt.id On-Boarding service"
         }
       }
@@ -248,12 +248,12 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet.waltid.org
-        - verifier.waltid.org
-        - issuer.waltid.org
+        - wallet.walt-test.cloud
+        - verifier.walt-test.cloud
+        - issuer.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
-    - host: wallet.waltid.org
+    - host: wallet.walt-test.cloud
       http:
         paths:
           - path: /api/
@@ -298,7 +298,7 @@ spec:
                 name: web-wallet
                 port:
                   number: 80
-    - host: verifier.waltid.org
+    - host: verifier.walt-test.cloud
       http:
         paths:
           - path: /verifier-api/
@@ -322,7 +322,7 @@ spec:
                 name: verifier-portal
                 port:
                   number: 80
-    - host: issuer.waltid.org
+    - host: issuer.walt-test.cloud
       http:
         paths:
           - path: /issuer-api/
