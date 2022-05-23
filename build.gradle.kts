@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.5.31"
+    kotlin("plugin.serialization") version "1.6.10"
     application
     `maven-publish`
 }
@@ -27,7 +28,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt-jvm:3.4.0")
     implementation("com.github.ajalt.clikt:clikt:3.4.0")
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.9.0-SNAPSHOT")
+    implementation("id.walt:waltid-ssi-kit:1.11-SNAPSHOT")
     implementation("id.walt:waltid-ssikit-vclib:1.18.0")
 
     // Service-Matrix
@@ -38,6 +39,8 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.0-alpha6")
     implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
 
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.1")
+
     // Testing
     //testImplementation(kotlin("test-junit"))
     testImplementation("io.mockk:mockk:1.12.2")
@@ -47,11 +50,11 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-json:5.1.0")
 
     // HTTP
-    testImplementation("io.ktor:ktor-client-core:1.6.7")
-    testImplementation("io.ktor:ktor-client-cio:1.6.7")
-    testImplementation("io.ktor:ktor-client-serialization:1.6.7")
-    testImplementation("io.ktor:ktor-client-logging:1.6.7")
-    testImplementation("io.ktor:ktor-client-jackson:1.6.7")
+    testImplementation("io.ktor:ktor-client-core:2.0.1")
+    testImplementation("io.ktor:ktor-client-cio:2.0.1")
+    testImplementation("io.ktor:ktor-client-logging:2.0.1")
+    testImplementation("io.github.rybalkinsd:kohttp:0.12.0")
+    testImplementation("io.ktor:ktor-client-content-negotiation:2.0.1")
 }
 
 tasks.withType<KotlinCompile> {

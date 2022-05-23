@@ -1,6 +1,6 @@
 package id.walt
 
-import com.fasterxml.jackson.databind.json.JsonMapper
+import com.beust.klaxon.JsonObject
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -10,11 +10,14 @@ import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.Javalin
 import io.kotest.core.spec.style.AnnotationSpec
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.features.json.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 
 
@@ -28,14 +31,8 @@ abstract class BaseApiTest : AnnotationSpec() {
     val url = "http://$host:$port"
     var server: Javalin? = null
     val client = HttpClient(CIO) {
-        install(JsonFeature) {
-            serializer = JacksonSerializer(
-                jackson = JsonMapper.builder()
-                    .findAndAddModules()
-                    .build()
-            ).apply {
-
-            }
+        install(ContentNegotiation) {
+            json()
         }
         expectSuccess = false
     }
@@ -77,25 +74,26 @@ abstract class BaseApiTest : AnnotationSpec() {
     }
 
     fun authenticate(): UserInfo = runBlocking {
-        val userInfo = client.post<UserInfo>("$url/api/auth/login") {
+        val userInfo = client.post("$url/api/auth/login") {
             contentType(ContentType.Application.Json)
-            body = mapOf(
+            setBody(
+                mapOf(
                 "id" to email,
                 "email" to email,
                 "password" to "1234"
-            )
-        }
+            ))
+        }.body<UserInfo>()
         return@runBlocking userInfo
     }
 
     fun authenticateDid(): UserInfo = runBlocking {
-        val userInfo = client.post<UserInfo>("$url/api/auth/login") {
+        val userInfo = client.post("$url/api/auth/login") {
             contentType(ContentType.Application.Json)
-            body = mapOf(
+            setBody(mapOf(
                 "id" to did,
                 "did" to did
-            )
-        }
+            ))
+        }.body<UserInfo>()
         return@runBlocking userInfo
     }
 }
