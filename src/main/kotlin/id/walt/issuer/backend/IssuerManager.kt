@@ -145,8 +145,8 @@ object IssuerManager {
     return NonceResponse(nonce, expires_in = EXPIRATION_TIME.seconds.toString())
   }
 
-  fun checkNonce(nonce: String): Boolean {
-    return nonceCache.getIfPresent(nonce) ?: false
+  fun getValidNonces(): Set<String> {
+    return nonceCache.asMap().keys
   }
 
   fun initializeIssuanceSession(credentialClaims: List<CredentialClaim>, authRequest: AuthorizationRequest): IssuanceSession {

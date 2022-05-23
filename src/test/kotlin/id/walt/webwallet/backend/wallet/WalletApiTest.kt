@@ -42,22 +42,22 @@ class WalletApiTest : BaseApiTest() {
     @Test()
     fun testDidsList() = runBlocking {
         val userInfo = authenticate()
-        val did = client.get<String>("$url/api/wallet/did/list") {
+        val did = client.get("$url/api/wallet/did/list") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
-        }
+        }.bodyAsText()
         println(did)
     }
 
     // TODO: analyze potential walt-context issue @Test()
     fun testDidWebCreate() = runBlocking {
         val userInfo = authenticateDid()
-        val did = client.post<String>("$url/api/wallet/did/create"){
+        val did = client.post("$url/api/wallet/did/create"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
             contentType(ContentType.Application.Json)
-            body = mapOf("method" to "web", "didWebDomain" to null)
-        }
+            setBody(mapOf("method" to "web", "didWebDomain" to null))
+        }.bodyAsText()
         did shouldStartWith "did:web"
 
         println(did)
@@ -69,7 +69,7 @@ class WalletApiTest : BaseApiTest() {
         val context = waltContext.getUserContext(userInfo)
         val kid = waltContext.runWith(context) { KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519) }
         val response = runBlocking {
-            client.delete<HttpResponse>("$url/api/wallet/keys/delete/${kid.id}") {
+            client.delete("$url/api/wallet/keys/delete/${kid.id}") {
                 header("Authorization", "Bearer ${userInfo.token}")
             }
         }
@@ -109,11 +109,11 @@ class WalletApiTest : BaseApiTest() {
                 )
             }
             val response = runBlocking {
-                client.post<String>("$url/api/wallet/keys/export") {
+                client.post("$url/api/wallet/keys/export") {
                     header("Authorization", "Bearer ${userInfo.token}")
                     contentType(ContentType.Application.Json)
-                    body = exportRequest
-                }
+                    setBody(exportRequest)
+                }.bodyAsText()
             }
             println(response)
             response shouldBe keyStr

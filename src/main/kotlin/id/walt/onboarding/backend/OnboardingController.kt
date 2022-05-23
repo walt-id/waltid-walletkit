@@ -157,7 +157,7 @@ object OnboardingController {
                 } ?: listOf()
             val vp = vp_token.firstOrNull() ?: throw BadRequestResponse("No VP token found on authorization request")
             val subject = ContextManager.runWith(IssuerManager.issuerContext) {
-                val verificationResult = Auditor.getService().verify(vp.encode(), listOf(SignaturePolicy(), ChallengePolicy(IssuerManager::checkNonce)))
+                val verificationResult = Auditor.getService().verify(vp.encode(), listOf(SignaturePolicy(), ChallengePolicy(IssuerManager.getValidNonces())))
                 if(!verificationResult.valid) {
                     throw BadRequestResponse("Invalid VP token given, signature (${verificationResult.policyResults["SignaturePolicy"]}) and/or challenge (${verificationResult.policyResults["ChallengePolicy"]}) could not be verified")
                 }

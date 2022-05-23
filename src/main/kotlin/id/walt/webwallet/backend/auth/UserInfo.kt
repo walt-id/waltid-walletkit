@@ -1,5 +1,8 @@
 package id.walt.webwallet.backend.auth
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 class UserInfo(
     val id: String
 ) {
