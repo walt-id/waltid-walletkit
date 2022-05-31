@@ -1,4 +1,4 @@
-name: CI/CD Workflow for Walt.ID Wallet Backend
+name: CI/CD Workflow for Walt.ID Wallet Kit
 
 on:
   push:

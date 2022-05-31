@@ -73,7 +73,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             pom {
-                name.set("walt.id SSI Wallet Backend")
+                name.set("walt.id SSI Wallet Kit")
                 description.set("Kotlin/Java wallet API backend, including issuer and verifier API backends.")
                 url.set("https://walt.id")
             }
