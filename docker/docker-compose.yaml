@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   wallet-kit:
-    image: waltid/ssikit-wallet-kit:latest  # backend docker image
+    image: waltid/wallet-kit:latest  # backend docker image
     command:
       - run
     environment:

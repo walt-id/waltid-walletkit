@@ -131,9 +131,9 @@ unzip package under build/distributions and switch into the new folder. Copy con
 
 ### Docker
 
-    docker build -t waltid/ssikit-wallet-kit .
+    docker build -t waltid/wallet-kit .
 
-    docker run -it -p 8080:8080 waltid/ssikit-wallet-kit
+    docker run -it -p 8080:8080 waltid/wallet-kit
 
 ## Running all components with Docker Compose
 
@@ -172,8 +172,8 @@ By specifying the optional startup parameter **--init-issuer** the wallet kit ca
 
 ```
 cd docker
-docker pull waltid/ssikit-wallet-kit
-docker run -it -v $PWD:/waltid-wallet-kit/data-root -e WALTID_DATA_ROOT=./data-root waltid/ssikit-wallet-kit --init-issuer
+docker pull waltid/wallet-kit
+docker run -it -v $PWD:/waltid-wallet-kit/data-root -e WALTID_DATA_ROOT=./data-root waltid/wallet-kit --init-issuer
 
 # For the DID-method enter: "ebsi"
 # For the bearer token copy/paste the value from: https://app.preprod.ebsi.eu/users-onboarding
