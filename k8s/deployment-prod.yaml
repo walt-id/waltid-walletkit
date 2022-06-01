@@ -79,8 +79,8 @@ spec:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
-        - name: ssikit-wallet-kit
-          image: waltid/ssikit-wallet-kit:_VERSION_TAG_
+        - name: wallet-kit
+          image: waltid/wallet-kit:_VERSION_TAG_
           volumeMounts:
             - name: wallet-config
               mountPath: "/waltid/wallet/config/"
