@@ -44,7 +44,7 @@ jobs:
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
           DOCKER_FILE: Dockerfile
-          CONTAINER_TAG: waltid/wallet-kit:latest
+          CONTAINER_TAG: waltid/walletkit:latest
       - name: Prepare CD
         run: sed "s/_DEFAULT_DEPLOYMENT_/$GITHUB_SHA/g" k8s/deployment-dev.yaml > k8s/deployment_mod.yaml
       - name: Continuous deployment

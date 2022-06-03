@@ -1,7 +1,7 @@
 version: "3.3"
 services:
-  wallet-kit:
-    image: waltid/wallet-kit:latest  # backend docker image
+  walletkit:
+    image: waltid/walletkit:latest  # backend docker image
     command:
       - run
     environment:
@@ -9,7 +9,7 @@ services:
       WALTID_WALLET_BACKEND_BIND_ADDRESS: 0.0.0.0
       EXTERNAL_HOSTNAME: $HOSTNAME$COMPUTERNAME
     volumes:
-      - .:/waltid-wallet-kit/data-root # data store volume incl. config files.
+      - .:/waltid-walletkit/data-root # data store volume incl. config files.
     extra_hosts:
       - "$HOSTNAME$COMPUTERNAME:host-gateway"
   wallet-ui:
