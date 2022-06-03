@@ -49,7 +49,7 @@ object RestAPI {
     }
   }
 
-  var apiTitle = "walt.id wallet kit API"
+  var apiTitle = "walt.id walletkit API"
 
   fun createJavalin(accessManager: AccessManager): Javalin = Javalin.create { config ->
       config.apply {
@@ -101,7 +101,7 @@ object RestAPI {
     val javalin = createJavalin(accessManager)
     javalin.routes(routes)
     javalin.start(bindAddress, port)
-    println("web wallet kit started at: http://$bindAddress:$port")
+    println("web walletkit started at: http://$bindAddress:$port")
     println("swagger docs are hosted at: http://$bindAddress:$port/api/swagger")
     return javalin
   }

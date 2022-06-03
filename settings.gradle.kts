@@ -1,3 +1,3 @@
 
-rootProject.name = "waltid-wallet-kit"
+rootProject.name = "waltid-walletkit"
 

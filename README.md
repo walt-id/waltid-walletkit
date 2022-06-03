@@ -1,13 +1,13 @@
-# waltid-wallet-kit
+# waltid-walletkit
 
-[![CI/CD Workflow for Walt.ID Wallet Kit](https://github.com/walt-id/waltid-wallet-kit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/walt-id/waltid-wallet-kit/actions/workflows/ci.yml)
+[![CI/CD Workflow for Walt.ID Wallet Kit](https://github.com/walt-id/waltid-walletkit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/walt-id/waltid-walletkit/actions/workflows/ci.yml)
 
-The **walt.id wallet kit** provides the API and backend business logic for the walt.id web wallet.
+The **walt.id walletkit** provides the API and backend business logic for the walt.id web wallet.
 Additionally, it includes a reference implementation of a Verifier and Issuer Portal backend. 
 
 The provided services include:
 
-### Web wallet kit
+### Web walletkit
 * **User management**
     * Authorization is currently mocked and not production ready
     * User-context switching and user-specific encapsulated data storage
@@ -82,7 +82,7 @@ It can be overridden by specifying the **environment variable**:
 ```
 {
   "issuerUiUrl": "http://localhost:5000",                   # URL of issuer portal UI
-  "issuerApiUrl": "http://localhost:8080/issuer-api",       # URL of issuer portal API (needs to be accessible from the wallet kit)
+  "issuerApiUrl": "http://localhost:8080/issuer-api",       # URL of issuer portal API (needs to be accessible from the walletkit)
   "wallets": {                                              # wallet configuration
     "walt.id": {                                            # wallet configuration key
       "id": "walt.id",                                      # wallet ID
@@ -127,13 +127,13 @@ _Gradle_ or _Docker_ can be used to build this project independently. Once runni
 
 unzip package under build/distributions and switch into the new folder. Copy config-files _service-matrix.properties_ and _signatory.conf_ from the root folder and run the bash-script:
 
-    ./bin/waltid-wallet-kit
+    ./bin/waltid-walletkit
 
 ### Docker
 
-    docker build -t waltid/wallet-kit .
+    docker build -t waltid/walletkit .
 
-    docker run -it -p 8080:8080 waltid/wallet-kit
+    docker run -it -p 8080:8080 waltid/walletkit
 
 ## Running all components with Docker Compose
 
@@ -168,12 +168,12 @@ Visit the `./docker`. folder for adjusting the system config in the following fi
 
 ## Initializing Wallet Kit as EBSI/ESSIF Issuer
 
-By specifying the optional startup parameter **--init-issuer** the wallet kit can be initialized as issuer-backend in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
+By specifying the optional startup parameter **--init-issuer** the walletkit can be initialized as issuer-backend in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
 
 ```
 cd docker
-docker pull waltid/wallet-kit
-docker run -it -v $PWD:/waltid-wallet-kit/data-root -e WALTID_DATA_ROOT=./data-root waltid/wallet-kit --init-issuer
+docker pull waltid/walletkit
+docker run -it -v $PWD:/waltid-walletkit/data-root -e WALTID_DATA_ROOT=./data-root waltid/walletkit --init-issuer
 
 # For the DID-method enter: "ebsi"
 # For the bearer token copy/paste the value from: https://app.preprod.ebsi.eu/users-onboarding

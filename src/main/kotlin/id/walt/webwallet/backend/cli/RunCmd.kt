@@ -39,7 +39,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 import mu.KotlinLogging
 
-class RunCmd : CliktCommand(name = "run", help = "Run wallet kit service") {
+class RunCmd : CliktCommand(name = "run", help = "Run walletkit service") {
 
   private val log = KotlinLogging.logger {}
 
