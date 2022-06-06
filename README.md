@@ -181,3 +181,33 @@ docker run -it -v $PWD:/waltid-walletkit/data-root -e WALTID_DATA_ROOT=./data-ro
 
 The initialization routine will output the DID, which it registered on the EBSI/ESSIF ecosystem.
 
+
+## Relevant Standards
+
+- Self-Issued OpenID Provider v2 https://openid.bitbucket.io/connect/openid-connect-self-issued-v2-1_0.html
+- OpenID Connect for Verifiable Presentations https://openid.net/specs/openid-connect-4-verifiable-presentations-1_0-07.html
+- OpenID Connect for Verifiable Credential Issuance https://tlodderstedt.github.io/openid-connect-4-verifiable-credential-issuance-1_0-01.html
+- EBSI Wallet Conformance https://ec.europa.eu/digital-building-blocks/wikis/display/EBSIDOC/EBSI+Wallet+Conformance+Testing
+- Verifiable Credentials Data Model 1.0 https://www.w3.org/TR/vc-data-model/
+- Decentralized Identifiers (DIDs) v1.0 https://w3c.github.io/did-core/
+- DID Method Rubric https://w3c.github.io/did-rubric/
+- did:web Decentralized Identifier Method Specification https://w3c-ccg.github.io/did-method-web/
+- The did:key Method v0.7 https://w3c-ccg.github.io/did-method-key/
+
+
+## License
+
+```
+Copyright ((C)) 2022 walt.id GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
