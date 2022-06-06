@@ -39,9 +39,9 @@ The provided services include:
 
 The snap-shot version of this repository is automatically deployed for testing purpose. Feel free to access the test system at the following endpoints:
 
-* https://issuer.waltid.org
-* https://wallet.waltid.org
-* https://verifier.waltid.org
+* https://issuer.walt.id
+* https://wallet.walt.id
+* https://verifier.walt.id
 
 ## Usage
 
