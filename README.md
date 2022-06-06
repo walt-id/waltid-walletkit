@@ -1,13 +1,13 @@
-# waltid-wallet-kit
+# waltid-walletkit
 
-[![CI/CD Workflow for Walt.ID Wallet Kit](https://github.com/walt-id/waltid-wallet-kit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/walt-id/waltid-wallet-kit/actions/workflows/ci.yml)
+[![CI/CD Workflow for Walt.ID Wallet Kit](https://github.com/walt-id/waltid-walletkit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/walt-id/waltid-walletkit/actions/workflows/ci.yml)
 
-The **walt.id wallet kit** provides the API and backend business logic for the walt.id web wallet.
+The **walt.id walletkit** provides the API and backend business logic for the walt.id web wallet.
 Additionally, it includes a reference implementation of a Verifier and Issuer Portal backend. 
 
 The provided services include:
 
-### Web wallet kit
+### Web walletkit
 * **User management**
     * Authorization is currently mocked and not production ready
     * User-context switching and user-specific encapsulated data storage
@@ -82,7 +82,7 @@ It can be overridden by specifying the **environment variable**:
 ```
 {
   "issuerUiUrl": "http://localhost:5000",                   # URL of issuer portal UI
-  "issuerApiUrl": "http://localhost:8080/issuer-api",       # URL of issuer portal API (needs to be accessible from the wallet kit)
+  "issuerApiUrl": "http://localhost:8080/issuer-api",       # URL of issuer portal API (needs to be accessible from the walletkit)
   "wallets": {                                              # wallet configuration
     "walt.id": {                                            # wallet configuration key
       "id": "walt.id",                                      # wallet ID
@@ -127,13 +127,13 @@ _Gradle_ or _Docker_ can be used to build this project independently. Once runni
 
 unzip package under build/distributions and switch into the new folder. Copy config-files _service-matrix.properties_ and _signatory.conf_ from the root folder and run the bash-script:
 
-    ./bin/waltid-wallet-kit
+    ./bin/waltid-walletkit
 
 ### Docker
 
-    docker build -t waltid/wallet-kit .
+    docker build -t waltid/walletkit .
 
-    docker run -it -p 8080:8080 waltid/wallet-kit
+    docker run -it -p 8080:8080 waltid/walletkit
 
 ## Running all components with Docker Compose
 
@@ -168,12 +168,12 @@ Visit the `./docker`. folder for adjusting the system config in the following fi
 
 ## Initializing Wallet Kit as EBSI/ESSIF Issuer
 
-By specifying the optional startup parameter **--init-issuer** the wallet kit can be initialized as issuer-backend in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
+By specifying the optional startup parameter **--init-issuer** the walletkit can be initialized as issuer-backend in line with the EBSI/ESSIF ecosystem. Note that this is for demo-purpose only.
 
 ```
 cd docker
-docker pull waltid/wallet-kit
-docker run -it -v $PWD:/waltid-wallet-kit/data-root -e WALTID_DATA_ROOT=./data-root waltid/wallet-kit --init-issuer
+docker pull waltid/walletkit
+docker run -it -v $PWD:/waltid-walletkit/data-root -e WALTID_DATA_ROOT=./data-root waltid/walletkit --init-issuer
 
 # For the DID-method enter: "ebsi"
 # For the bearer token copy/paste the value from: https://app.preprod.ebsi.eu/users-onboarding
@@ -181,3 +181,33 @@ docker run -it -v $PWD:/waltid-wallet-kit/data-root -e WALTID_DATA_ROOT=./data-r
 
 The initialization routine will output the DID, which it registered on the EBSI/ESSIF ecosystem.
 
+
+## Relevant Standards
+
+- Self-Issued OpenID Provider v2 https://openid.bitbucket.io/connect/openid-connect-self-issued-v2-1_0.html
+- OpenID Connect for Verifiable Presentations https://openid.net/specs/openid-connect-4-verifiable-presentations-1_0-07.html
+- OpenID Connect for Verifiable Credential Issuance https://tlodderstedt.github.io/openid-connect-4-verifiable-credential-issuance-1_0-01.html
+- EBSI Wallet Conformance https://ec.europa.eu/digital-building-blocks/wikis/display/EBSIDOC/EBSI+Wallet+Conformance+Testing
+- Verifiable Credentials Data Model 1.0 https://www.w3.org/TR/vc-data-model/
+- Decentralized Identifiers (DIDs) v1.0 https://w3c.github.io/did-core/
+- DID Method Rubric https://w3c.github.io/did-rubric/
+- did:web Decentralized Identifier Method Specification https://w3c-ccg.github.io/did-method-web/
+- The did:key Method v0.7 https://w3c-ccg.github.io/did-method-key/
+
+
+## License
+
+```
+Copyright ((C)) 2022 walt.id GmbH
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
