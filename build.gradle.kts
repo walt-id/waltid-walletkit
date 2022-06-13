@@ -20,16 +20,16 @@ repositories {
 }
 
 dependencies {
-    implementation("io.javalin:javalin-bundle:4.3.0")
+    implementation("io.javalin:javalin-bundle:4.6.1")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
-    implementation("com.beust:klaxon:5.5")
-    implementation("com.nimbusds:oauth2-oidc-sdk:9.27")
+    implementation("com.beust:klaxon:5.6")
+    implementation("com.nimbusds:oauth2-oidc-sdk:9.37.2")
     // CLI
-    implementation("com.github.ajalt.clikt:clikt-jvm:3.4.0")
-    implementation("com.github.ajalt.clikt:clikt:3.4.0")
+    implementation("com.github.ajalt.clikt:clikt-jvm:3.4.2")
+    implementation("com.github.ajalt.clikt:clikt:3.4.2")
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.11-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.18.0")
+    implementation("id.walt:waltid-ssikit-vclib:1.20.0")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
@@ -37,24 +37,24 @@ dependencies {
     // Logging
     implementation("org.slf4j:slf4j-api:2.0.0-alpha6")
     implementation("org.slf4j:slf4j-simple:2.0.0-alpha6")
-    implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
+    implementation("io.github.microutils:kotlin-logging-jvm:2.1.23")
 
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.1")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.2")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
-    testImplementation("io.mockk:mockk:1.12.2")
+    testImplementation("io.mockk:mockk:1.12.4")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.1.0")
-    testImplementation("io.kotest:kotest-assertions-json:5.1.0")
+    testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.3.0")
+    testImplementation("io.kotest:kotest-assertions-json:5.3.0")
 
     // HTTP
-    testImplementation("io.ktor:ktor-client-core:2.0.1")
-    testImplementation("io.ktor:ktor-client-cio:2.0.1")
-    testImplementation("io.ktor:ktor-client-logging:2.0.1")
+    testImplementation("io.ktor:ktor-client-core:2.0.2")
+    testImplementation("io.ktor:ktor-client-cio:2.0.2")
+    testImplementation("io.ktor:ktor-client-logging:2.0.2")
     testImplementation("io.github.rybalkinsd:kohttp:0.12.0")
-    testImplementation("io.ktor:ktor-client-content-negotiation:2.0.1")
+    testImplementation("io.ktor:ktor-client-content-negotiation:2.0.2")
 }
 
 tasks.withType<KotlinCompile> {
