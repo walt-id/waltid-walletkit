@@ -54,12 +54,13 @@ abstract class VerifierManager: BaseService() {
   }
 
   open fun newRequest(schemaUris: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): SIOPv2Request {
+    var schemaUriId = 1
     return newRequest(VpTokenClaim(
       presentation_definition = PresentationDefinition(
         id = "1",
         input_descriptors = schemaUris.map { schemaUri ->
           InputDescriptor(
-            id = "1",
+            id = "" + schemaUriId++,
             schema = VCSchema(uri = schemaUri)
           )
         }.toList()
