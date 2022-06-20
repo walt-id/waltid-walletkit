@@ -29,7 +29,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:3.4.2")
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.11.0-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.21.0")
+    implementation("id.walt:waltid-ssikit-vclib:1.22.0")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
