@@ -71,9 +71,7 @@ abstract class VerifierManager: BaseService() {
   open fun getVerififactionPoliciesFor(req: SIOPv2Request): List<VerificationPolicy> {
     return listOf(
       SignaturePolicy(),
-      ChallengePolicy(req.nonce!!).apply {
-        applyToVC = false
-      },
+      ChallengePolicy(req.nonce!!, applyToVC = false, applyToVP = true),
       VpTokenClaimPolicy(req.claims.vp_token!!),
       *(VerifierConfig.config.additionalPolicies?.map { p ->
         PolicyRegistry.getPolicyWithJsonArg(p.policy, p.argument?.let { JsonObject(it) })
