@@ -1,5 +1,6 @@
 package id.walt.verifier.backend
 
+import com.beust.klaxon.JsonObject
 import com.google.common.cache.CacheBuilder
 import id.walt.model.dif.InputDescriptor
 import id.walt.model.dif.PresentationDefinition
@@ -13,14 +14,14 @@ import id.walt.services.jwt.JwtService
 import id.walt.services.key.KeyService
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
-import id.walt.vclib.credentials.VerifiablePresentation
-import id.walt.vclib.model.toCredential
 import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
 import id.walt.model.dif.VCSchema
 import id.walt.model.oidc.VCClaims
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
+import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
@@ -73,7 +74,10 @@ abstract class VerifierManager: BaseService() {
       ChallengePolicy(req.nonce!!).apply {
         applyToVC = false
       },
-      VpTokenClaimPolicy(req.claims.vp_token)
+      VpTokenClaimPolicy(req.claims.vp_token!!),
+      *(VerifierConfig.config.additionalPolicies?.map { p ->
+        PolicyRegistry.getPolicyWithJsonArg(p.policy, p.argument?.let { JsonObject(it) })
+      }?.toList() ?: listOf()).toTypedArray()
     )
   }
 

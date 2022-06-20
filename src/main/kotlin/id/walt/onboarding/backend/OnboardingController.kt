@@ -7,6 +7,7 @@ import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.auditor.Auditor
 import id.walt.auditor.ChallengePolicy
+import id.walt.auditor.ChallengePolicyArg
 import id.walt.auditor.SignaturePolicy
 import id.walt.issuer.backend.*
 import id.walt.model.DidMethod
@@ -157,7 +158,7 @@ object OnboardingController {
                 } ?: listOf()
             val vp = vp_token.firstOrNull() ?: throw BadRequestResponse("No VP token found on authorization request")
             val subject = ContextManager.runWith(IssuerManager.issuerContext) {
-                val verificationResult = Auditor.getService().verify(vp.encode(), listOf(SignaturePolicy(), ChallengePolicy(IssuerManager.getValidNonces())))
+                val verificationResult = Auditor.getService().verify(vp.encode(), listOf(SignaturePolicy(), ChallengePolicy(ChallengePolicyArg(IssuerManager.getValidNonces()))))
                 if(!verificationResult.valid) {
                     throw BadRequestResponse("Invalid VP token given, signature (${verificationResult.policyResults["SignaturePolicy"]}) and/or challenge (${verificationResult.policyResults["ChallengePolicy"]}) could not be verified")
                 }
