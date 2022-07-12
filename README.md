@@ -128,6 +128,11 @@ _Gradle_ or _Docker_ can be used to build this project independently. Once runni
 unzip package under build/distributions and switch into the new folder. Copy config-files _service-matrix.properties_ and _signatory.conf_ from the root folder and run the bash-script:
 
     ./bin/waltid-walletkit
+    
+To run the backend you will execute:
+   ```waltid-walletkit run``` 
+To have issuers, you will have to execute: 
+   ```waltid-walletkit --init-issuer```
 
 ### Docker
 
