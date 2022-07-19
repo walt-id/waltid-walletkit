@@ -10,4 +10,8 @@ class UserContext(
     override val keyStore: KeyStoreService,
     override val vcStore: VcStoreService,
     override val hkvStore: HKVStoreService
-): Context
+): Context {
+    override fun toString(): String {
+        return contextId
+    }
+}
