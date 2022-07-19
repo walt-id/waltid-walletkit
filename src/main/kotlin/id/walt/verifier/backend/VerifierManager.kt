@@ -20,6 +20,7 @@ import id.walt.model.dif.VCSchema
 import id.walt.model.oidc.VCClaims
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
+import id.walt.services.context.Context
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
@@ -35,7 +36,7 @@ abstract class VerifierManager: BaseService() {
   val respCache =
     CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPResponseVerificationResult>()
 
-  abstract val verifierContext: UserContext
+  abstract val verifierContext: Context
 
   open fun newRequest(tokenClaim: VpTokenClaim, state: String? = null, redirectCustomUrlQuery: String = ""): SIOPv2Request {
     val nonce = UUID.randomUUID().toString()
