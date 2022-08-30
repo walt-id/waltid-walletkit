@@ -1,12 +1,39 @@
-# waltid-walletkit
+<div align="center">
+ <h1>Wallet Kit</h1>
+ <span>by </span><a href="https://walt.id">walt.id</a>
+ <p>Supercharge your app with SSI, NFTs or fungible tokens<p>
 
 [![CI/CD Workflow for Walt.ID Wallet Kit](https://github.com/walt-id/waltid-walletkit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/walt-id/waltid-walletkit/actions/workflows/ci.yml)
 
-The **walt.id walletkit** provides the API and backend business logic for the walt.id web wallet.
+<a href="https://walt.id/community">
+<img src="https://img.shields.io/badge/Join-The Community-blue.svg?style=flat" alt="Join community!" />
+</a>
+<a href="https://twitter.com/intent/follow?screen_name=walt_id">
+<img src="https://img.shields.io/twitter/follow/walt_id.svg?label=Follow%20@walt_id" alt="Follow @walt_id" />
+</a>
+
+</div>
+
+## Getting Started
+
+- [REST Api](https://docs.walt.id/v/web-wallet/getting-started/rest-apis) - Use the functionality of the Wallet Kit via an REST api.
+- [Maven/Gradle Dependency](https://docs.walt.id/v/web-wallet/getting-started/dependency-jvm) - Use the functions of the Wallet Kit in a Kotlin/Java project.
+
+The Wallet Kit on its own gives you, the backend infrastructure to build a custom wallet solution. However, in conjunction with our pre-build frontend components,
+you can even have a full solution. Get started with the full solution, using:
+- [Docker Compose](https://docs.walt.id/v/web-wallet/getting-started/local-build/docker-build/docker-compose#docker-compose)
+- [Local Docker Build](https://docs.walt.id/v/web-wallet/getting-started/local-build#docker-build)
+- [Local Build](https://docs.walt.id/v/web-wallet/getting-started/local-build/local-build)
+
+Checkout the [Official Documentation](https://docs.walt.id/v/web-wallet/wallet-kit/readme), to find out more.
+
+## What is the Wallet Kit?
+
+It is the API and backend business logic for the walt.id web wallet.
 Additionally, it includes a reference implementation of a Verifier and Issuer Portal backend. 
 
-The provided services include:
 
+## Services
 ### Web walletkit
 * **User management**
     * Authorization is currently mocked and not production ready
@@ -30,10 +57,10 @@ The provided services include:
   * Support for issuing verifiable credentials to the web wallet, based on OIDC-SIOPv2 spec
 
 
-## Related components
-* Web wallet frontend https://github.com/walt-id/waltid-web-wallet
-* Verifier portal https://github.com/walt-id/waltid-verifier-portal
-* Issuer portal https://github.com/walt-id/waltid-issuer-portal
+## Related components | Full Solution
+* [Web Wallet](https://github.com/walt-id/waltid-web-wallet) - The frontend solution for holders
+* [Verifier Portal](https://github.com/walt-id/waltid-verifier-portal) - The frontend solution for verifiers
+* [Issuer Portal](https://github.com/walt-id/waltid-issuer-portal) - The frontend solution for issuers
 
 ## Test deployment
 
@@ -189,30 +216,17 @@ The initialization routine will output the DID, which it registered on the EBSI/
 
 ## Relevant Standards
 
-- Self-Issued OpenID Provider v2 https://openid.bitbucket.io/connect/openid-connect-self-issued-v2-1_0.html
-- OpenID Connect for Verifiable Presentations https://openid.net/specs/openid-connect-4-verifiable-presentations-1_0-07.html
-- OpenID Connect for Verifiable Credential Issuance https://tlodderstedt.github.io/openid-connect-4-verifiable-credential-issuance-1_0-01.html
-- EBSI Wallet Conformance https://ec.europa.eu/digital-building-blocks/wikis/display/EBSIDOC/EBSI+Wallet+Conformance+Testing
-- Verifiable Credentials Data Model 1.0 https://www.w3.org/TR/vc-data-model/
-- Decentralized Identifiers (DIDs) v1.0 https://w3c.github.io/did-core/
-- DID Method Rubric https://w3c.github.io/did-rubric/
-- did:web Decentralized Identifier Method Specification https://w3c-ccg.github.io/did-method-web/
-- The did:key Method v0.7 https://w3c-ccg.github.io/did-method-key/
+- [Self-Issued OpenID Provider v2](https://openid.bitbucket.io/connect/openid-connect-self-issued-v2-1_0.html)
+- [OpenID Connect for Verifiable Presentations](https://openid.net/specs/openid-connect-4-verifiable-presentations-1_0-07.html)
+- [OpenID Connect for Verifiable Credential Issuance](https://tlodderstedt.github.io/openid-connect-4-verifiable-credential-issuance-1_0-01.html)
+- [EBSI Wallet Conformance](https://ec.europa.eu/digital-building-blocks/wikis/display/EBSIDOC/EBSI+Wallet+Conformance+Testing)
+- [Verifiable Credentials Data Model 1.0](https://www.w3.org/TR/vc-data-model/)
+- [Decentralized Identifiers (DIDs) v1.0](https://w3c.github.io/did-core/)
+- [DID Method Rubric](https://w3c.github.io/did-rubric/)
+- [did:web Decentralized Identifier Method Specification](https://w3c-ccg.github.io/did-method-web/)
+- [The did:key Method v0.7](https://w3c-ccg.github.io/did-method-key/)
 
 
 ## License
 
-```
-Copyright ((C)) 2022 walt.id GmbH
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+Licensed under the [Apache License, Version 2.0](https://github.com/walt-id/waltid-walletkit/blob/master/LICENSE)
