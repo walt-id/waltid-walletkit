@@ -55,6 +55,11 @@ Additionally, it includes a reference implementation of a Verifier and Issuer Po
   * Possibility to configure list of supported wallets (defaults to walt.id web wallet)
 * **Verifiable credential issuance**
   * Support for issuing verifiable credentials to the web wallet, based on OIDC-SIOPv2 spec
+ 
+## Join the community
+
+* Connect and get the latest updates: [Discord](https://discord.gg/zUnxncExF5) | [Newsletter](https://walt.id/newsletter) | [YouTube](https://www.youtube.com/channel/UCXfOzrv3PIvmur_CmwwmdLA) | [Twitter](https://mobile.twitter.com/walt_id)
+* Get help, request features and report bugs: [GitHub Discussions](https://github.com/walt-id/.github/discussions)
 
 
 ## Related components | Full Solution
