@@ -58,7 +58,7 @@ Additionally, it includes a reference implementation of a Verifier and Issuer Po
  
 ## Join the community
 
-* Connect and get the latest updates: [Discord](https://discord.gg/zUnxncExF5) | [Newsletter](https://walt.id/newsletter) | [YouTube](https://www.youtube.com/channel/UCXfOzrv3PIvmur_CmwwmdLA) | [Twitter](https://mobile.twitter.com/walt_id)
+* Connect and get the latest updates: [Discord](https://discord.gg/AW8AgqJthZ) | [Newsletter](https://walt.id/newsletter) | [YouTube](https://www.youtube.com/channel/UCXfOzrv3PIvmur_CmwwmdLA) | [Twitter](https://mobile.twitter.com/walt_id)
 * Get help, request features and report bugs: [GitHub Discussions](https://github.com/walt-id/.github/discussions)
 
 
