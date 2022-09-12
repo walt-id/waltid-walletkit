@@ -13,10 +13,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - kube.waltid.org
+        - kube.walt.id
       secretName: dashboard-tls-secret
   rules:
-    - host: kube.waltid.org
+    - host: kube.walt.id
       http:
         paths:
           - path: /
