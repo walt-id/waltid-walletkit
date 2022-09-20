@@ -188,7 +188,7 @@ object IssuerController {
     }
 
     if(wallet != null) {
-      ctx.result(IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables, URI.create("${wallet.url}/${wallet.receivePath}")).toString())
+      ctx.result(IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables, URI.create("${wallet.url}/${wallet.receivePath}")).toURI().toString())
     } else {
       ctx.result("${session!!.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
     }
