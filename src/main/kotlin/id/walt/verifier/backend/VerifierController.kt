@@ -7,6 +7,7 @@ import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -34,6 +35,7 @@ object VerifierController {
             }
               .queryParam<String>("walletId")
               .queryParam<String>("schemaUri", isRepeatable = true)
+              .queryParam<String>("vcType", isRepeatable = true)
               .result<String>("302"),
             VerifierController::presentCredential
           ))
@@ -83,22 +85,26 @@ object VerifierController {
   fun presentCredential(ctx: Context) {
     val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets.get(it) } ?: throw BadRequestResponse("Unknown or missing walletId")
     val schemaUris = ctx.queryParams("schemaUri")
-    if(schemaUris.isEmpty()) {
-      throw BadRequestResponse("No schema URI(s) given")
+    val vcTypes = ctx.queryParams("vcType")
+    if(schemaUris.isEmpty() && vcTypes.isEmpty()) {
+      throw BadRequestResponse("No schema URI(s) or VC type(s) given")
     }
-    val customQueryParams = ctx.queryParamMap().keys.filter { k -> k != "walletId" && k != "schemaUri" }.flatMap { k ->
+    val customQueryParams = ctx.queryParamMap().keys.filter { k -> k != "walletId" && k != "schemaUri" && k != "vcType" }.flatMap { k ->
       ctx.queryParams(k).map { v -> "$k=${URLEncoder.encode(v, StandardCharsets.UTF_8)}" }
     }.joinToString("&" )
-    ctx.status(HttpCode.FOUND).header("Location", "${wallet.url}/${wallet.presentPath}"+
-          "?${VerifierManager.getService().newRequest(schemaUris.toSet(), redirectCustomUrlQuery = customQueryParams).toUriQueryString()}")
+    val req = if(schemaUris.isNotEmpty()) {
+      VerifierManager.getService().newRequestBySchemaUris(URI.create("${wallet.url}/${wallet.presentPath}"), schemaUris.toSet(), redirectCustomUrlQuery = customQueryParams)
+    } else {
+      VerifierManager.getService().newRequestByVcTypes(URI.create("${wallet.url}/${wallet.presentPath}"), vcTypes.toSet(), redirectCustomUrlQuery = customQueryParams)
+    }
+    ctx.status(HttpCode.FOUND).header("Location", req.toURI().toString())
   }
 
   fun verifySIOPResponse(ctx: Context) {
     val state = ctx.formParam("state") ?: throw  BadRequestResponse("State not specified")
-    val id_token = ctx.formParam("id_token") ?: throw BadRequestResponse("id_token not specified")
     val vp_token = ctx.formParam("vp_token") ?: throw BadRequestResponse("vp_token not specified")
     val verifierUiUrl = ctx.queryParam("verifierUiUrl") ?: VerifierConfig.config.verifierUiUrl
-    val result = VerifierManager.getService().verifyResponse(state, id_token, vp_token)
+    val result = VerifierManager.getService().verifyResponse(state, vp_token)
 
     ctx.status(HttpCode.FOUND).header("Location", VerifierManager.getService().getVerificationRedirectionUri(result, verifierUiUrl).toString())
   }

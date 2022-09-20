@@ -188,19 +188,17 @@ object IssuerController {
     }
 
     if(wallet != null) {
-      ctx.result(" ${wallet.url}/${wallet.receivePath}?${IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables).toUriQueryString()}")
+      ctx.result(IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables, URI.create("${wallet.url}/${wallet.receivePath}")).toString())
     } else {
       ctx.result("${session!!.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
     }
   }
 
   fun fulfillIssuance(ctx: Context) {
-    val id_token = ctx.formParam("id_token")
-    val vp_token = ctx.formParam("vp_token")?.toCredential() as VerifiablePresentation
-    //TODO: verify and parse id token
+    val vp_token = ctx.formParam("vp_token")?.let { it.toCredential() as VerifiablePresentation } ?: throw BadRequestResponse("No vp_token found on request")
     val state = ctx.formParam("state") ?: throw BadRequestResponse("No state specified")
     ctx.result(
-      "[ ${IssuerManager.fulfillIssuanceRequest(state, null, vp_token).joinToString(",") } ]"
+      "[ ${IssuerManager.fulfillIssuanceRequest(state, vp_token).joinToString(",") } ]"
     )
   }
 
