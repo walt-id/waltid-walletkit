@@ -2,7 +2,6 @@ package id.walt.webwallet.backend.wallet
 
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
-import id.walt.model.oidc.SIOPv2Request
 import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
@@ -11,6 +10,7 @@ import id.walt.services.did.DidService
 import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.key.KeyService
+import id.walt.services.oidc.OIDC4VPService
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -286,14 +286,14 @@ object WalletController {
     }
 
     fun initCredentialPresentation(ctx: Context) {
-        val req = SIOPv2Request.fromHttpContext(ctx)
+        val req = OIDC4VPService.parseOIDC4VPRequestUriFromHttpCtx(ctx)
         val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = false)
         ctx.status(HttpCode.FOUND)
             .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest/?sessionId=${session.id}")
     }
 
     fun initPassiveIssuance(ctx: Context) {
-        val req = SIOPv2Request.fromHttpContext(ctx)
+        val req = OIDC4VPService.parseOIDC4VPRequestUriFromHttpCtx(ctx)
         val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = true)
         ctx.status(HttpCode.FOUND)
             .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest/?sessionId=${session.id}")

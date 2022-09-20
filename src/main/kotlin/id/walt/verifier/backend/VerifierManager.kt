@@ -2,9 +2,10 @@ package id.walt.verifier.backend
 
 import com.beust.klaxon.JsonObject
 import com.google.common.cache.CacheBuilder
-import id.walt.model.dif.InputDescriptor
-import id.walt.model.dif.PresentationDefinition
-import id.walt.model.oidc.SIOPv2Request
+import com.nimbusds.oauth2.sdk.AuthorizationRequest
+import com.nimbusds.oauth2.sdk.ResponseMode
+import com.nimbusds.oauth2.sdk.id.State
+import com.nimbusds.openid.connect.sdk.Nonce
 import id.walt.model.oidc.VpTokenClaim
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -16,11 +17,12 @@ import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
-import id.walt.model.dif.VCSchema
+import id.walt.model.dif.*
 import id.walt.model.oidc.VCClaims
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.Context
+import id.walt.services.oidc.OIDC4VPService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
@@ -32,32 +34,30 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 abstract class VerifierManager: BaseService() {
-  val reqCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPv2Request>()
+  val reqCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, AuthorizationRequest>()
   val respCache =
     CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPResponseVerificationResult>()
 
   abstract val verifierContext: Context
 
-  open fun newRequest(tokenClaim: VpTokenClaim, state: String? = null, redirectCustomUrlQuery: String = ""): SIOPv2Request {
+  open fun newRequest(walletUrl: URI, presentationDefinition: PresentationDefinition, state: String? = null, redirectCustomUrlQuery: String = ""): AuthorizationRequest {
     val nonce = UUID.randomUUID().toString()
     val requestId = state ?: nonce
     val redirectQuery = if(redirectCustomUrlQuery.isEmpty()) "" else "?$redirectCustomUrlQuery"
-    val req = SIOPv2Request(
-      redirect_uri = "${VerifierConfig.config.verifierApiUrl}/verify$redirectQuery",
-      response_mode = "form_post",
-      nonce = nonce,
-      claims = VCClaims(
-        vp_token = tokenClaim
-      ),
-      state = requestId
+    val req = OIDC4VPService.createOIDC4VPRequest(
+      wallet_url = walletUrl,
+      redirect_uri = URI.create("${VerifierConfig.config.verifierApiUrl}/verify$redirectQuery"),
+      response_mode = ResponseMode.FORM_POST,
+      nonce = Nonce(nonce),
+      presentation_definition = presentationDefinition,
+      state = State(requestId)
     )
     reqCache.put(requestId, req)
     return req
   }
 
-  open fun newRequest(schemaUris: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): SIOPv2Request {
-    return newRequest(VpTokenClaim(
-      presentation_definition = PresentationDefinition(
+  open fun newRequestBySchemaUris(walletUrl: URI, schemaUris: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): AuthorizationRequest {
+    return newRequest(walletUrl, PresentationDefinition(
         id = "1",
         input_descriptors = schemaUris.map { schemaUri ->
           InputDescriptor(
@@ -65,15 +65,35 @@ abstract class VerifierManager: BaseService() {
             schema = VCSchema(uri = schemaUri)
           )
         }.toList()
-      )
+      ), state, redirectCustomUrlQuery)
+  }
+
+  open fun newRequestByVcTypes(walletUrl: URI, vcTypes: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): AuthorizationRequest {
+    return newRequest(walletUrl, PresentationDefinition(
+      id = "1",
+      input_descriptors = vcTypes.map { vcType ->
+        InputDescriptor(
+          id = "1",
+          constraints = InputDescriptorConstraints(
+            fields = listOf(
+              InputDescriptorField(
+                path = listOf("$.type"),
+                filter = mapOf(
+                  "const" to vcType
+                )
+              )
+            )
+          )
+        )
+      }.toList()
     ), state, redirectCustomUrlQuery)
   }
 
-  open fun getVerififactionPoliciesFor(req: SIOPv2Request): List<VerificationPolicy> {
+  open fun getVerififactionPoliciesFor(req: AuthorizationRequest): List<VerificationPolicy> {
     return listOf(
       SignaturePolicy(),
-      ChallengePolicy(req.nonce!!, applyToVC = false, applyToVP = true),
-      VpTokenClaimPolicy(req.claims.vp_token!!),
+      ChallengePolicy(req.getCustomParameter("nonce")!!.first(), applyToVC = false, applyToVP = true),
+      PresentationDefinitionPolicy(OIDC4VPService.getPresentationDefinition(req)),
       *(VerifierConfig.config.additionalPolicies?.map { p ->
         PolicyRegistry.getPolicyWithJsonArg(p.policy, p.argument?.let { JsonObject(it) })
       }?.toList() ?: listOf()).toTypedArray()
@@ -87,22 +107,15 @@ abstract class VerifierManager: BaseService() {
   -  - compare nonce (verification policy)
   -  - compare token_claim => token_ref => vp (verification policy)
    */
-  open fun verifyResponse(state: String, id_token: String, vp_token: String): SIOPResponseVerificationResult {
+  open fun verifyResponse(state: String, vp_token: String): SIOPResponseVerificationResult {
     val req = reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
     reqCache.invalidate(state)
-    val id_token_claims = JwtService.getService().parseClaims(id_token)!!
-    val sub = id_token_claims.get("sub").toString()
     val vp = vp_token.toCredential() as VerifiablePresentation
 
     var result = SIOPResponseVerificationResult(
       state,
-      sub,
+      vp.holder,
       req,
-      ContextManager.runWith(verifierContext) {
-        if (!KeyService.getService().hasKey(sub))
-          DidService.importKey(sub)
-        JwtService.getService().verify(id_token)
-      },
       ContextManager.runWith(verifierContext) {
 
         Auditor.getService().verify(
