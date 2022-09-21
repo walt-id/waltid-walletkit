@@ -1,4 +1,5 @@
 package id.walt.verifier.backend
+import id.walt.model.oidc.SIOPv2Response
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
@@ -101,11 +102,10 @@ object VerifierController {
   }
 
   fun verifySIOPResponse(ctx: Context) {
-    val state = ctx.formParam("state") ?: throw  BadRequestResponse("State not specified")
-    val vp_token = ctx.formParam("vp_token") ?: throw BadRequestResponse("vp_token not specified")
     val verifierUiUrl = ctx.queryParam("verifierUiUrl") ?: VerifierConfig.config.verifierUiUrl
-    val result = VerifierManager.getService().verifyResponse(state, vp_token)
+    val siopResponse = SIOPv2Response.fromFormParams(ctx.formParamMap().map { kv -> Pair(kv.key, kv.value.first()) }.toMap())
 
+    val result = VerifierManager.getService().verifyResponse(siopResponse)
     ctx.status(HttpCode.FOUND).header("Location", VerifierManager.getService().getVerificationRedirectionUri(result, verifierUiUrl).toString())
   }
 
