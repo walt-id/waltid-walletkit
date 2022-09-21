@@ -15,9 +15,7 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.Context
-import io.javalin.http.HttpCode
+import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
@@ -302,7 +300,7 @@ object WalletController {
     fun continuePresentation(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
         val did = ctx.queryParam("did") ?: throw BadRequestResponse("did not specified")
-        ctx.json(CredentialPresentationManager.continueCredentialPresentationFor(sessionId, did))
+        ctx.contentType(ContentType.APPLICATION_JSON).result(klaxon.toJsonString(CredentialPresentationManager.continueCredentialPresentationFor(sessionId, did).sessionInfo))
     }
 
     fun fulfillPresentation(ctx: Context) {

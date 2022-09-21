@@ -1,5 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
+import com.beust.klaxon.Json
 import com.beust.klaxon.Klaxon
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
@@ -20,18 +21,21 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-data class CredentialPresentationSession (
+data class CredentialPresentationSessionInfo (
   val id: String,
-  val req: AuthorizationRequest,
   val presentationDefinition: PresentationDefinition,
   val isPassiveIssuanceSession: Boolean,
+  val redirectUri: String,
   var did: String? = null,
   var presentableCredentials: List<PresentableCredential>? = null,
   var availableIssuers: List<OIDCProvider>? = null
-  ) {
-  val redirectUri: String
-    get() = req.redirectionURI.toString()
-}
+        )
+
+data class CredentialPresentationSession (
+  val id: String,
+  @Json(ignored = true) val req: AuthorizationRequest,
+  val sessionInfo: CredentialPresentationSessionInfo
+  )
 
 data class PresentableCredential(
   val credentialId: String,
@@ -61,18 +65,23 @@ object CredentialPresentationManager {
   val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, CredentialPresentationSession>()
 
   fun initCredentialPresentation(siopReq: AuthorizationRequest, passiveIssuance: Boolean): CredentialPresentationSession {
+    val id = UUID.randomUUID().toString()
     return CredentialPresentationSession(
-      id = UUID.randomUUID().toString(),
+      id = id,
       req = siopReq,
-      presentationDefinition = OIDC4VPService.getPresentationDefinition(siopReq),
-      isPassiveIssuanceSession = passiveIssuance
+      sessionInfo = CredentialPresentationSessionInfo (
+        id,
+        presentationDefinition = OIDC4VPService.getPresentationDefinition(siopReq),
+        isPassiveIssuanceSession = passiveIssuance,
+        redirectUri = siopReq.redirectionURI.toString()
+      )
     ).also {
       sessionCache.put(it.id, it)
     }
   }
 
   private fun getPresentableCredentials(session: CredentialPresentationSession): List<PresentableCredential> {
-    return OIDCUtils.findCredentialsFor(session.presentationDefinition, session.did).flatMap { kv ->
+    return OIDCUtils.findCredentialsFor(session.sessionInfo.presentationDefinition, session.sessionInfo.did).flatMap { kv ->
         kv.value.map { credId -> PresentableCredential(credId, kv.key) }
       }.toList()
   }
@@ -87,14 +96,14 @@ object CredentialPresentationManager {
 
   fun continueCredentialPresentationFor(sessionId: String, did: String): CredentialPresentationSession {
     val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
-    session.did = did
-    session.presentableCredentials = getPresentableCredentials(session)
-    session.availableIssuers = null
-    if(session.presentableCredentials!!.isEmpty()) {
-      val requiredSchemaIds = session.presentationDefinition?.input_descriptors?.let { getRequiredSchemaIds(it) } ?: setOf()
+    session.sessionInfo.did = did
+    session.sessionInfo.presentableCredentials = getPresentableCredentials(session)
+    session.sessionInfo.availableIssuers = null
+    if(session.sessionInfo.presentableCredentials!!.isEmpty()) {
+      val requiredSchemaIds = session.sessionInfo.presentationDefinition?.input_descriptors?.let { getRequiredSchemaIds(it) } ?: setOf()
       if(requiredSchemaIds.isNotEmpty()) {
         // credentials are required, but no suitable ones are found
-        session.availableIssuers = CredentialIssuanceManager.findIssuersFor(requiredSchemaIds)
+        session.sessionInfo.availableIssuers = CredentialIssuanceManager.findIssuersFor(requiredSchemaIds)
       }
     }
 
@@ -103,7 +112,7 @@ object CredentialPresentationManager {
 
   fun fulfillPresentation(sessionId: String, selectedCredentials: List<PresentableCredential>): SIOPv2Response {
     val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
-    val did = session.did ?: throw  Exception("Did not set for this session")
+    val did = session.sessionInfo.did ?: throw  Exception("Did not set for this session")
 
     val myCredentials = Custodian.getService().listCredentials()
     val selectedCredentialIds = selectedCredentials.map { cred -> cred.credentialId }.toSet()
@@ -136,7 +145,7 @@ object CredentialPresentationManager {
 
     return CredentialIssuanceSession(
       UUID.randomUUID().toString(),
-      issuanceRequest = CredentialIssuanceRequest(did = session.did!!, issuerId = "", schemaIds = listOf(), walletRedirectUri = ""),
+      issuanceRequest = CredentialIssuanceRequest(did = session.sessionInfo.did!!, issuerId = "", schemaIds = listOf(), walletRedirectUri = ""),
       nonce = session.req.getCustomParameter("nonce")?.firstOrNull() ?: "",
       user = userInfo,
       credentials = credentials
