@@ -2,6 +2,9 @@ package id.walt.issuer.backend
 
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
+import com.nimbusds.oauth2.sdk.ResponseMode
+import com.nimbusds.oauth2.sdk.id.State
+import com.nimbusds.openid.connect.sdk.Nonce
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.dif.PresentationDefinition
@@ -22,6 +25,9 @@ import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.WALTID_DATA_ROOT
+import id.walt.auditor.Auditor
+import id.walt.auditor.SignaturePolicy
+import id.walt.services.oidc.OIDC4VPService
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URI
@@ -61,33 +67,30 @@ object IssuerManager {
     )
   }
 
-  fun newSIOPIssuanceRequest(user: String, selectedIssuables: Issuables): SIOPv2Request {
+  fun newSIOPIssuanceRequest(user: String, selectedIssuables: Issuables, walletUrl: URI): AuthorizationRequest {
     val nonce = UUID.randomUUID().toString()
     val redirectUri = URI.create("${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill")
-    val req = SIOPv2Request(
-      redirect_uri = redirectUri.toString(),
-      response_mode = "post",
-      nonce = nonce,
-      claims = VCClaims(vp_token = VpTokenClaim(PresentationDefinition(id = "1", listOf()))),
-      state = nonce
+    val req = OIDC4VPService.createOIDC4VPRequest(
+      walletUrl,
+      redirect_uri = redirectUri,
+      nonce = Nonce(nonce),
+      response_mode = ResponseMode("post"),
+      presentation_definition = PresentationDefinition(id = "1", listOf()),
+      state = State(nonce)
     )
     reqCache.put(nonce, IssuanceRequest(user, nonce, selectedIssuables))
     return req
   }
 
-  fun fulfillIssuanceRequest(nonce: String, id_token: IDToken?, vp_token: VerifiablePresentation): List<String> {
+  fun fulfillIssuanceRequest(nonce: String, vp_token: VerifiablePresentation): List<String> {
     val issuanceReq = reqCache.getIfPresent(nonce);
     if(issuanceReq == null) {
       return listOf()
     }
-    // TODO: verify id_token!!
+
     return WalletContextManager.runWith(issuerContext) {
       if(vp_token.challenge == nonce &&
-        // TODO: verify id_token subject
-        //id_token.subject == VcUtils.getSubject(vp_token) &&
-        // TODO: verify VP signature (import public key for did, currently not supported for did:key!)
-        //Auditor.getService().verify(vp_token.encode(), listOf(SignaturePolicy())).overallStatus
-        true
+        Auditor.getService().verify(vp_token, listOf(SignaturePolicy())).valid
       ) {
         issuanceReq.selectedIssuables.credentials.map {
           Signatory.getService().issue(it.type,
