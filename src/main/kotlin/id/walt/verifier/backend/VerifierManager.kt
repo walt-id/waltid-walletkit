@@ -18,6 +18,7 @@ import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
 import id.walt.model.dif.*
+import id.walt.model.oidc.SIOPv2Response
 import id.walt.model.oidc.VCClaims
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
@@ -107,23 +108,25 @@ abstract class VerifierManager: BaseService() {
   -  - compare nonce (verification policy)
   -  - compare token_claim => token_ref => vp (verification policy)
    */
-  open fun verifyResponse(state: String, vp_token: String): SIOPResponseVerificationResult {
+  open fun verifyResponse(siopResponse: SIOPv2Response): SIOPResponseVerificationResult {
+    val state = siopResponse.state ?: throw BadRequestResponse("No state set on SIOP response")
     val req = reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
     reqCache.invalidate(state)
-    val vp = vp_token.toCredential() as VerifiablePresentation
+    val vps = siopResponse.vp_token
 
     var result = SIOPResponseVerificationResult(
       state,
-      vp.holder,
-      req,
-      ContextManager.runWith(verifierContext) {
-
-        Auditor.getService().verify(
-          vp_token, getVerififactionPoliciesFor(req)
+      subject = vps.firstOrNull { !it.holder.isNullOrEmpty() }?.holder,
+      vps.map { vp ->
+        VPVerificationResult(
+          vp = vp,
+          verification_result = ContextManager.runWith(verifierContext) {
+            Auditor.getService().verify(
+              vp, getVerififactionPoliciesFor(req)
+            )
+          }
         )
-      },
-      vp_token = vp,
-      null
+      }, null
     )
 
     if (result.isValid) {

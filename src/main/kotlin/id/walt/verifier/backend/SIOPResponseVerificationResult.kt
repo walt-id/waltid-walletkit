@@ -4,14 +4,17 @@ import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import id.walt.auditor.VerificationResult
 import id.walt.vclib.credentials.VerifiablePresentation
 
+data class VPVerificationResult(
+  val vp: VerifiablePresentation,
+  val verification_result: VerificationResult
+)
+
 data class SIOPResponseVerificationResult(
   val state: String,
   val subject: String?,
-  val request: AuthorizationRequest?,
-  val verification_result: VerificationResult?,
-  val vp_token: VerifiablePresentation?,
+  val vps: List<VPVerificationResult>,
   var auth_token: String?
 ) {
   val isValid
-    get() = !subject.isNullOrEmpty() && request != null && (verification_result?.valid ?: false)
+    get() = !subject.isNullOrEmpty() && vps.isNotEmpty() && vps.all {vp -> (vp.verification_result.valid) }
 }

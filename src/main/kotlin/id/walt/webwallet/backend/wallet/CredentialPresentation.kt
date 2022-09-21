@@ -8,6 +8,7 @@ import id.walt.model.dif.InputDescriptor
 import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.OIDCProvider
 import id.walt.model.oidc.SIOPv2Response
+import id.walt.model.oidc.klaxon
 import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.credentials.VerifiablePresentation
@@ -38,15 +39,17 @@ data class PresentableCredential(
 )
 
 data class PresentationResponse(
+  val vp_token: String,
+  val presentation_submission: String,
   val id_token: String?,
-  val vp_token: String?,
   val state: String?
 ) {
   companion object {
     fun fromSiopResponse(siopResp: SIOPv2Response): PresentationResponse {
       return PresentationResponse(
-        siopResp.id_token,
         OIDCUtils.toVpToken(siopResp.vp_token),
+        klaxon.toJsonString(siopResp.presentation_submission),
+        siopResp.id_token,
         siopResp.state
       )
     }
@@ -115,8 +118,7 @@ object CredentialPresentationManager {
       expirationDate = null
     ).toCredential() as VerifiablePresentation
 
-    val vpSvc = OIDC4VPService(OIDCProvider("", ""))
-    val siopResponse = vpSvc.getSIOPResponseFor(session.req, did, listOf(vp))
+    val siopResponse = OIDC4VPService.getSIOPResponseFor(session.req, did, listOf(vp))
 
     return siopResponse
   }
@@ -125,8 +127,7 @@ object CredentialPresentationManager {
     val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
     val siopResponse = fulfillPresentation(sessionId, selectedCredentials)
 
-    val vpSvc = OIDC4VPService(OIDCProvider("", ""))
-    val body = vpSvc.postSIOPResponse(session.req, siopResponse)
+    val body = OIDC4VPService.postSIOPResponse(session.req, siopResponse)
     val credentials = Klaxon().parseArray<VerifiableCredential>(body)?.also { creds ->
       creds.forEach { cred ->
         Custodian.getService().storeCredential(cred.id!!, cred)
