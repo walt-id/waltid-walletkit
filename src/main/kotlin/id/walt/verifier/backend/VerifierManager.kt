@@ -41,14 +41,14 @@ abstract class VerifierManager: BaseService() {
 
   abstract val verifierContext: Context
 
-  open fun newRequest(walletUrl: URI, presentationDefinition: PresentationDefinition, state: String? = null, redirectCustomUrlQuery: String = ""): AuthorizationRequest {
+  open fun newRequest(walletUrl: URI, presentationDefinition: PresentationDefinition, state: String? = null, redirectCustomUrlQuery: String = "", responseMode: ResponseMode = ResponseMode.FORM_POST): AuthorizationRequest {
     val nonce = UUID.randomUUID().toString()
     val requestId = state ?: nonce
     val redirectQuery = if(redirectCustomUrlQuery.isEmpty()) "" else "?$redirectCustomUrlQuery"
     val req = OIDC4VPService.createOIDC4VPRequest(
       wallet_url = walletUrl,
       redirect_uri = URI.create("${VerifierConfig.config.verifierApiUrl}/verify$redirectQuery"),
-      response_mode = ResponseMode.FORM_POST,
+      response_mode = responseMode,
       nonce = Nonce(nonce),
       presentation_definition = presentationDefinition,
       state = State(requestId)
@@ -57,7 +57,7 @@ abstract class VerifierManager: BaseService() {
     return req
   }
 
-  open fun newRequestBySchemaUris(walletUrl: URI, schemaUris: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): AuthorizationRequest {
+  open fun newRequestBySchemaUris(walletUrl: URI, schemaUris: Set<String>, state: String? = null, redirectCustomUrlQuery: String = "", responseMode: ResponseMode = ResponseMode.FORM_POST): AuthorizationRequest {
     return newRequest(walletUrl, PresentationDefinition(
         id = "1",
         input_descriptors = schemaUris.map { schemaUri ->
@@ -66,10 +66,10 @@ abstract class VerifierManager: BaseService() {
             schema = VCSchema(uri = schemaUri)
           )
         }.toList()
-      ), state, redirectCustomUrlQuery)
+      ), state, redirectCustomUrlQuery, responseMode)
   }
 
-  open fun newRequestByVcTypes(walletUrl: URI, vcTypes: Set<String>, state: String? = null, redirectCustomUrlQuery: String = ""): AuthorizationRequest {
+  open fun newRequestByVcTypes(walletUrl: URI, vcTypes: Set<String>, state: String? = null, redirectCustomUrlQuery: String = "", responseMode: ResponseMode = ResponseMode.FORM_POST): AuthorizationRequest {
     return newRequest(walletUrl, PresentationDefinition(
       id = "1",
       input_descriptors = vcTypes.map { vcType ->
@@ -87,7 +87,7 @@ abstract class VerifierManager: BaseService() {
           )
         )
       }.toList()
-    ), state, redirectCustomUrlQuery)
+    ), state, redirectCustomUrlQuery, responseMode)
   }
 
   open fun getVerififactionPoliciesFor(req: AuthorizationRequest): List<VerificationPolicy> {
