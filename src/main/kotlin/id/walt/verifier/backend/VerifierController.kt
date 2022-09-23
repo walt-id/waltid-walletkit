@@ -1,4 +1,5 @@
 package id.walt.verifier.backend
+import com.nimbusds.oauth2.sdk.ResponseMode
 import id.walt.model.oidc.SIOPv2Response
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
@@ -39,6 +40,19 @@ object VerifierController {
               .queryParam<String>("vcType", isRepeatable = true)
               .result<String>("302"),
             VerifierController::presentCredential
+          ))
+        }
+        path("presentXDevice") {
+          get(documented(
+            document().operation {
+              it.summary("Present Verifiable ID cross-device")
+                .addTagsItem("Verifier")
+                .operationId("presentXDevice")
+            }
+              .queryParam<String>("schemaUri", isRepeatable = true)
+              .queryParam<String>("vcType", isRepeatable = true)
+              .result<PresentationRequestInfo>("200"),
+            VerifierController::presentCredentialXDevice
           ))
         }
         path("verify") {
@@ -99,6 +113,23 @@ object VerifierController {
       VerifierManager.getService().newRequestByVcTypes(URI.create("${wallet.url}/${wallet.presentPath}"), vcTypes.toSet(), redirectCustomUrlQuery = customQueryParams)
     }
     ctx.status(HttpCode.FOUND).header("Location", req.toURI().toString())
+  }
+
+  fun presentCredentialXDevice(ctx: Context) {
+    val schemaUris = ctx.queryParams("schemaUri")
+    val vcTypes = ctx.queryParams("vcType")
+    if(schemaUris.isEmpty() && vcTypes.isEmpty()) {
+      throw BadRequestResponse("No schema URI(s) or VC type(s) given")
+    }
+    val customQueryParams = ctx.queryParamMap().keys.filter { k -> k != "walletId" && k != "schemaUri" && k != "vcType" }.flatMap { k ->
+      ctx.queryParams(k).map { v -> "$k=${URLEncoder.encode(v, StandardCharsets.UTF_8)}" }
+    }.joinToString("&" )
+    val req = if(schemaUris.isNotEmpty()) {
+      VerifierManager.getService().newRequestBySchemaUris(URI.create("openid:///"), schemaUris.toSet(), redirectCustomUrlQuery = customQueryParams, responseMode = ResponseMode("post"))
+    } else {
+      VerifierManager.getService().newRequestByVcTypes(URI.create("openid:///"), vcTypes.toSet(), redirectCustomUrlQuery = customQueryParams, responseMode = ResponseMode("post"))
+    }
+    ctx.json(PresentationRequestInfo(req.state.value, req.toURI().toString()))
   }
 
   fun verifySIOPResponse(ctx: Context) {

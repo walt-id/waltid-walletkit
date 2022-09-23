@@ -280,6 +280,7 @@ object WalletController {
                     )
                 )
             }
+            else -> throw BadRequestResponse("DID method ${req.method} not yet supported")
         }
     }
 

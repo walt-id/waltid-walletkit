@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.31"
+    kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.6.10"
     application
     `maven-publish`
@@ -45,9 +45,9 @@ dependencies {
     //testImplementation(kotlin("test-junit"))
     testImplementation("io.mockk:mockk:1.12.4")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.3.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.3.0")
-    testImplementation("io.kotest:kotest-assertions-json:5.3.0")
+    testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.4.2")
+    testImplementation("io.kotest:kotest-assertions-json:5.4.2")
 
     // HTTP
     testImplementation("io.ktor:ktor-client-core:2.0.2")
