@@ -66,6 +66,7 @@ object WalletController {
                     documented(CustodianController.deleteCredentialDocs(), CustodianController::deleteCredential),
                     UserRole.AUTHORIZED
                 )
+                put("{alias}",  documented(CustodianController.storeCredentialsDocs(),CustodianController::storeCredential), UserRole.AUTHORIZED)
             }
             path("keys") {
                 get(
