@@ -29,7 +29,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.11.0-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.22.0")
+    implementation("id.walt:waltid-ssikit-vclib:1.23.5")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
@@ -39,7 +39,9 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.0-alpha6")
     implementation("io.github.microutils:kotlin-logging-jvm:2.1.23")
 
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.0.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.1")
+    implementation("io.ktor:ktor-client-core:2.1.1")
+    implementation("io.ktor:ktor-client-cio:2.1.1")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
@@ -50,8 +52,8 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-json:5.4.2")
 
     // HTTP
-    testImplementation("io.ktor:ktor-client-core:2.0.2")
-    testImplementation("io.ktor:ktor-client-cio:2.0.2")
+    testImplementation("io.ktor:ktor-client-core:2.1.1")
+    testImplementation("io.ktor:ktor-client-cio:2.1.1")
     testImplementation("io.ktor:ktor-client-logging:2.0.2")
     testImplementation("io.github.rybalkinsd:kohttp:0.12.0")
     testImplementation("io.ktor:ktor-client-content-negotiation:2.0.2")
