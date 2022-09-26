@@ -14,6 +14,7 @@ import id.walt.services.key.KeyService
 import id.walt.services.oidc.OIDC4VPService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
+import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -21,9 +22,16 @@ import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.runBlocking
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+
+data class GaiaXCredentialRequest(val did: String, val credentialData: Map<String, Any>? = null)
 
 object WalletController {
     val routes
@@ -223,6 +231,21 @@ object WalletController {
                     WalletController::getIssuanceSessionInfo
                 ), UserRole.AUTHORIZED)
             }
+            path("onboard"){
+                path("gaiax"){
+                    post(
+                        documented(document().operation {
+                            it.summary("Onboard legal person")
+                                .description("Creates a gaia-x compliant credential from the given self-description.")
+                                .operationId("onboardGaiaX").addTagsItem("Wallet")
+                        }
+                            .body<GaiaXCredentialRequest>()
+                            .result<String>("200"),
+                            WalletController::onboardGaiaX
+                        ), UserRole.AUTHORIZED
+                    )
+                }
+            }
         }
 
     fun listDids(ctx: Context) {
@@ -257,24 +280,31 @@ object WalletController {
                 val didRegistryAuthority = URI.create(WalletConfig.config.walletApiUrl).authority
                 val didDomain = req.didWebDomain.orEmpty().ifEmpty { didRegistryAuthority }
 
-                val didWebKeyId= keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
-
-                val didStr = DidService.create(
-                    req.method,
-                    didWebKeyId,
-                    DidService.DidWebOptions(
-                        domain = didDomain,
-                        path = when (didDomain) {
-                            didRegistryAuthority -> "api/did-registry/$didWebKeyId"
-                            else -> req.didWebPath
-                        }
-                    )
-                )
-                val didDoc = DidService.load(didStr)
                 // !! Implicit USER CONTEXT is LOST after this statement !!
-                ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
+                val didStr = ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
+                    val didWebKeyId = keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
+                    val didStr = DidService.create(
+                        req.method,
+                        didWebKeyId,
+                        DidService.DidWebOptions(
+                            domain = didDomain,
+                            path = when (didDomain) {
+                                didRegistryAuthority -> "api/did-registry/$didWebKeyId"
+                                else -> req.didWebPath
+                            }
+                        )
+                    )
+                    val didDoc = DidService.load(didStr)
                     DidService.storeDid(didStr, didDoc.encodePretty())
-                    val vc = issueSelfSignedCredential(didStr, didDoc, "LegalPerson")
+                    val vc = issueSelfSignedCredential(
+                        "LegalPerson",
+                        didStr,
+                        didDoc.verificationMethod?.first()?.id ?: didStr
+                    ).run{
+                        println("Compliance credential:")
+                        println(generateGaiaxComplianceCredential(this))
+                    }
+                    didStr
                 }
 
                 ctx.result(didStr)
@@ -382,23 +412,32 @@ object WalletController {
         ctx.json(issuanceSession)
     }
 
-    private fun issueSelfSignedCredential(did: String, didDoc: Did, template: String): String {
-        val vm = didDoc.verificationMethod!!.first().id
+    fun onboardGaiaX(ctx: Context){
+        val credentialRequest = ctx.bodyAsClass<GaiaXCredentialRequest>()
+        issueSelfSignedCredential(
+            "LegalPerson",
+            credentialRequest.did,
+            credentialRequest.did,
+            credentialRequest.credentialData
+        ).run {
+            generateGaiaxComplianceCredential(this)
+        }
+    }
+
+    private fun issueSelfSignedCredential(template: String, did: String, verificationMethod: String, data: Map<String, Any>? = null): String {
         return Signatory.getService().issue(
             template, ProofConfig(
                 subjectDid = did,
                 issuerDid = did,
-                issueDate = LocalDateTime.of(2020, 11, 3, 0, 0).toInstant(ZoneOffset.UTC),
-                issuerVerificationMethod = vm
-            )
+                issueDate = LocalDateTime.now().toInstant(ZoneOffset.UTC),
+                issuerVerificationMethod = verificationMethod
+            ), dataProvider = data?.let { MergingDataProvider(data) }
         )
     }
 
-//    private fun generateGaiaxComplianceCredential(){
-//        val complianceCredential = runBlocking {
-//            HttpClient(CIO).post("https://compliance.lab.gaia-x.eu/api/v2206/sign") {
-//                setBody(sdText)
-//            }.bodyAsText()
-//        }
-//    }
+    private fun generateGaiaxComplianceCredential(selfDescription: String) = runBlocking {
+        HttpClient(CIO).post("https://compliance.lab.gaia-x.eu/api/v2206/sign") {
+            setBody(selfDescription)
+        }.bodyAsText()
+    }
 }
