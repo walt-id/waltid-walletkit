@@ -1,8 +1,11 @@
 package id.walt.verifier.backend
 import com.nimbusds.oauth2.sdk.ResponseMode
 import id.walt.model.oidc.SIOPv2Response
+import id.walt.rest.auditor.AuditorRestController
+import id.walt.services.context.ContextManager
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
+import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
@@ -67,6 +70,13 @@ object VerifierController {
               .result<String>("302"),
             VerifierController::verifySIOPResponse
           ))
+        }
+        path("policies") {
+          before { WalletContextManager.setCurrentContext(VerifierManager.getService().verifierContext) }
+          after { WalletContextManager.resetCurrentContext() }
+          get("list", documented(AuditorRestController.listPoliciesDocs(), AuditorRestController::listPolicies))
+          post("create/{name}", documented(AuditorRestController.createDynamicPolicyDocs(), AuditorRestController::createDynamicPolicy))
+          delete("delete/{name}", documented(AuditorRestController.deleteDynamicPolicyDocs(), AuditorRestController::deleteDynamicPolicy))
         }
         path("auth") {
           get(documented(
