@@ -21,7 +21,7 @@ data class IssuerConfig(
 
   companion object {
     val CONFIG_FILE = "${id.walt.WALTID_DATA_ROOT}/config/issuer-config.json"
-    lateinit var config: IssuerConfig
+    var config: IssuerConfig
     init {
       val cf = File(CONFIG_FILE)
       if(cf.exists()) {

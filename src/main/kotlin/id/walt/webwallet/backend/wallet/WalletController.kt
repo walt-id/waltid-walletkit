@@ -1,15 +1,15 @@
 package id.walt.webwallet.backend.wallet
 
 import id.walt.crypto.KeyAlgorithm
-import id.walt.model.Did
 import id.walt.model.DidMethod
 import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
-import id.walt.services.essif.EssifClient
-import id.walt.services.essif.didebsi.DidEbsiService
+import id.walt.services.ecosystems.essif.EssifClient
+import id.walt.services.ecosystems.essif.didebsi.DidEbsiService
+import id.walt.services.ecosystems.gaiax.GaiaxService
 import id.walt.services.key.KeyService
 import id.walt.services.oidc.OIDC4VPService
 import id.walt.signatory.ProofConfig
@@ -19,14 +19,12 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.*
+import io.javalin.http.BadRequestResponse
+import io.javalin.http.ContentType
+import io.javalin.http.Context
+import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import kotlinx.coroutines.runBlocking
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -79,7 +77,11 @@ object WalletController {
                     documented(CustodianController.deleteCredentialDocs(), CustodianController::deleteCredential),
                     UserRole.AUTHORIZED
                 )
-                put("{alias}",  documented(CustodianController.storeCredentialsDocs(),CustodianController::storeCredential), UserRole.AUTHORIZED)
+                put(
+                    "{alias}",
+                    documented(CustodianController.storeCredentialsDocs(), CustodianController::storeCredential),
+                    UserRole.AUTHORIZED
+                )
             }
             path("keys") {
                 get(
@@ -231,8 +233,8 @@ object WalletController {
                     WalletController::getIssuanceSessionInfo
                 ), UserRole.AUTHORIZED)
             }
-            path("onboard"){
-                path("gaiax"){
+            path("onboard") {
+                path("gaiax") {
                     post(
                         documented(document().operation {
                             it.summary("Onboard legal person")
@@ -270,12 +272,14 @@ object WalletController {
                     return
                 }
 
-                val did = DidService.create(req.method, keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id)
+                val did =
+                    DidService.create(req.method, keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id)
                 EssifClient.onboard(did, req.didEbsiBearerToken)
                 EssifClient.authApi(did)
                 DidEbsiService.getService().registerDid(did, did)
                 ctx.result(did)
             }
+
             DidMethod.web -> {
                 val didRegistryAuthority = URI.create(WalletConfig.config.walletApiUrl).authority
                 val didDomain = req.didWebDomain.orEmpty().ifEmpty { didRegistryAuthority }
@@ -300,15 +304,16 @@ object WalletController {
                         "LegalPerson",
                         didStr,
                         didDoc.verificationMethod?.first()?.id ?: didStr
-                    ).run{
+                    ).run {
                         println("Compliance credential:")
-                        println(generateGaiaxComplianceCredential(this))
+                        println(GaiaxService.getService().generateGaiaxComplianceCredential(this))
                     }
                     didStr
                 }
 
                 ctx.result(didStr)
             }
+
             DidMethod.key -> {
 
                 ctx.result(
@@ -318,6 +323,7 @@ object WalletController {
                     )
                 )
             }
+
             else -> throw BadRequestResponse("DID method ${req.method} not yet supported")
         }
     }
@@ -339,7 +345,14 @@ object WalletController {
     fun continuePresentation(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
         val did = ctx.queryParam("did") ?: throw BadRequestResponse("did not specified")
-        ctx.contentType(ContentType.APPLICATION_JSON).result(klaxon.toJsonString(CredentialPresentationManager.continueCredentialPresentationFor(sessionId, did).sessionInfo))
+        ctx.contentType(ContentType.APPLICATION_JSON).result(
+            klaxon.toJsonString(
+                CredentialPresentationManager.continueCredentialPresentationFor(
+                    sessionId,
+                    did
+                ).sessionInfo
+            )
+        )
     }
 
     fun fulfillPresentation(ctx: Context) {
@@ -412,7 +425,7 @@ object WalletController {
         ctx.json(issuanceSession)
     }
 
-    fun onboardGaiaX(ctx: Context){
+    fun onboardGaiaX(ctx: Context) {
         val credentialRequest = ctx.bodyAsClass<GaiaXCredentialRequest>()
         issueSelfSignedCredential(
             "LegalPerson",
@@ -420,24 +433,25 @@ object WalletController {
             credentialRequest.did,
             credentialRequest.credentialData
         ).run {
-            generateGaiaxComplianceCredential(this)
+            GaiaxService.getService().generateGaiaxComplianceCredential(this)
         }
     }
 
-    private fun issueSelfSignedCredential(template: String, did: String, verificationMethod: String, data: Map<String, Any>? = null): String {
+    private fun issueSelfSignedCredential(
+        template: String,
+        did: String,
+        verificationMethod: String,
+        data: Map<String, Any>? = null
+    ): String {
         return Signatory.getService().issue(
             template, ProofConfig(
                 subjectDid = did,
                 issuerDid = did,
                 issueDate = LocalDateTime.now().toInstant(ZoneOffset.UTC),
-                issuerVerificationMethod = verificationMethod
+                issuerVerificationMethod = verificationMethod,
+                proofPurpose = "assertionMethod"
             ), dataProvider = data?.let { MergingDataProvider(data) }
         )
     }
 
-    private fun generateGaiaxComplianceCredential(selfDescription: String) = runBlocking {
-        HttpClient(CIO).post("https://compliance.lab.gaia-x.eu/api/v2206/sign") {
-            setBody(selfDescription)
-        }.bodyAsText()
-    }
 }
