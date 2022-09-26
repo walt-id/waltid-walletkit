@@ -1,6 +1,7 @@
 package id.walt.webwallet.backend.wallet
 
 import id.walt.crypto.KeyAlgorithm
+import id.walt.model.Did
 import id.walt.model.DidMethod
 import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
@@ -11,6 +12,8 @@ import id.walt.services.essif.EssifClient
 import id.walt.services.essif.didebsi.DidEbsiService
 import id.walt.services.key.KeyService
 import id.walt.services.oidc.OIDC4VPService
+import id.walt.signatory.ProofConfig
+import id.walt.signatory.Signatory
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -19,6 +22,8 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 object WalletController {
     val routes
@@ -269,7 +274,9 @@ object WalletController {
                 // !! Implicit USER CONTEXT is LOST after this statement !!
                 ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
                     DidService.storeDid(didStr, didDoc.encodePretty())
+                    val vc = issueSelfSignedCredential(didStr, didDoc, "LegalPerson")
                 }
+
                 ctx.result(didStr)
             }
             DidMethod.key -> {
@@ -374,4 +381,24 @@ object WalletController {
         }
         ctx.json(issuanceSession)
     }
+
+    private fun issueSelfSignedCredential(did: String, didDoc: Did, template: String): String {
+        val vm = didDoc.verificationMethod!!.first().id
+        return Signatory.getService().issue(
+            template, ProofConfig(
+                subjectDid = did,
+                issuerDid = did,
+                issueDate = LocalDateTime.of(2020, 11, 3, 0, 0).toInstant(ZoneOffset.UTC),
+                issuerVerificationMethod = vm
+            )
+        )
+    }
+
+//    private fun generateGaiaxComplianceCredential(){
+//        val complianceCredential = runBlocking {
+//            HttpClient(CIO).post("https://compliance.lab.gaia-x.eu/api/v2206/sign") {
+//                setBody(sdText)
+//            }.bodyAsText()
+//        }
+//    }
 }
