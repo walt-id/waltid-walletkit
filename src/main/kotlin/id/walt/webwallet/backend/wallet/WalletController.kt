@@ -1,5 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
+import com.beust.klaxon.Klaxon
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.oidc.klaxon
@@ -15,6 +16,7 @@ import id.walt.services.oidc.OIDC4VPService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
+import id.walt.vclib.credentials.gaiax.n.LegalPerson
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -29,7 +31,7 @@ import java.net.URI
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-data class GaiaXCredentialRequest(val did: String, val credentialData: Map<String, Any>? = null)
+data class GaiaXCredentialRequest(val credentialData: Map<String, Any>? = null)
 
 object WalletController {
     val routes
@@ -234,14 +236,14 @@ object WalletController {
                 ), UserRole.AUTHORIZED)
             }
             path("onboard") {
-                path("gaiax") {
+                path("gaiax/{did}") {
                     post(
                         documented(document().operation {
                             it.summary("Onboard legal person")
                                 .description("Creates a gaia-x compliant credential from the given self-description.")
                                 .operationId("onboardGaiaX").addTagsItem("Wallet")
                         }
-                            .body<GaiaXCredentialRequest>()
+                            .body<String>()
                             .result<String>("200"),
                             WalletController::onboardGaiaX
                         ), UserRole.AUTHORIZED
@@ -284,31 +286,23 @@ object WalletController {
                 val didRegistryAuthority = URI.create(WalletConfig.config.walletApiUrl).authority
                 val didDomain = req.didWebDomain.orEmpty().ifEmpty { didRegistryAuthority }
 
-                // !! Implicit USER CONTEXT is LOST after this statement !!
-                val didStr = ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
-                    val didWebKeyId = keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
-                    val didStr = DidService.create(
-                        req.method,
-                        didWebKeyId,
-                        DidService.DidWebOptions(
-                            domain = didDomain,
-                            path = when (didDomain) {
-                                didRegistryAuthority -> "api/did-registry/$didWebKeyId"
-                                else -> req.didWebPath
-                            }
-                        )
+
+                val didWebKeyId = keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
+                val didStr = DidService.create(
+                    req.method,
+                    didWebKeyId,
+                    DidService.DidWebOptions(
+                        domain = didDomain,
+                        path = when (didDomain) {
+                            didRegistryAuthority -> "api/did-registry/$didWebKeyId"
+                            else -> req.didWebPath
+                        }
                     )
-                    val didDoc = DidService.load(didStr)
+                )
+                val didDoc = DidService.load(didStr)
+                // !! Implicit USER CONTEXT is LOST after this statement !!
+                ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
                     DidService.storeDid(didStr, didDoc.encodePretty())
-                    val vc = issueSelfSignedCredential(
-                        "LegalPerson",
-                        didStr,
-                        didDoc.verificationMethod?.first()?.id ?: didStr
-                    ).run {
-                        println("Compliance credential:")
-                        println(GaiaxService.getService().generateGaiaxComplianceCredential(this))
-                    }
-                    didStr
                 }
 
                 ctx.result(didStr)
@@ -426,15 +420,16 @@ object WalletController {
     }
 
     fun onboardGaiaX(ctx: Context) {
-        val credentialRequest = ctx.bodyAsClass<GaiaXCredentialRequest>()
-        issueSelfSignedCredential(
+        val credential = Klaxon().parse<LegalPerson>(ctx.body())
+        val did = ctx.pathParam("did")
+        ctx.result(issueSelfSignedCredential(
             "LegalPerson",
-            credentialRequest.did,
-            credentialRequest.did,
-            credentialRequest.credentialData
+            did,
+            did,
+            credential?.copy(proof = null)?.toMap()
         ).run {
-            GaiaxService.getService().generateGaiaxComplianceCredential(this)
-        }
+             GaiaxService.getService().generateGaiaxComplianceCredential(this)
+        })
     }
 
     private fun issueSelfSignedCredential(
