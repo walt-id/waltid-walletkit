@@ -2,9 +2,11 @@ package id.walt.webwallet.backend.wallet
 
 import com.beust.klaxon.Klaxon
 import id.walt.crypto.KeyAlgorithm
+import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
+import id.walt.rest.core.VcController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -13,10 +15,12 @@ import id.walt.services.ecosystems.essif.didebsi.DidEbsiService
 import id.walt.services.ecosystems.gaiax.GaiaxService
 import id.walt.services.key.KeyService
 import id.walt.services.oidc.OIDC4VPService
+import id.walt.services.vcstore.VcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.vclib.credentials.gaiax.n.LegalPerson
+import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -30,6 +34,7 @@ import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.util.*
 
 data class GaiaXCredentialRequest(val credentialData: Map<String, Any>? = null)
 
@@ -422,14 +427,18 @@ object WalletController {
     fun onboardGaiaX(ctx: Context) {
         val credential = Klaxon().parse<LegalPerson>(ctx.body())
         val did = ctx.pathParam("did")
-        ctx.result(issueSelfSignedCredential(
+        val compliance = issueSelfSignedCredential(
             "LegalPerson",
             did,
             did,
             credential?.copy(proof = null)?.toMap()
         ).run {
-             GaiaxService.getService().generateGaiaxComplianceCredential(this)
-        })
+            this.toCredential().let{
+                Custodian.getService().storeCredential(it.id ?: UUID.randomUUID().toString(), it)
+            }
+            GaiaxService.getService().generateGaiaxComplianceCredential(this)
+        }
+        ctx.result(compliance)
     }
 
     private fun issueSelfSignedCredential(
