@@ -20,6 +20,7 @@ import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.vclib.credentials.gaiax.n.LegalPerson
+import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
@@ -31,6 +32,7 @@ import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import okio.ByteString.Companion.encode
 import java.net.URI
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -436,7 +438,16 @@ object WalletController {
             this.toCredential().let{
                 Custodian.getService().storeCredential(it.id ?: UUID.randomUUID().toString(), it)
             }
-            GaiaxService.getService().generateGaiaxComplianceCredential(this)
+            // TODO: this is just for demo purpose, generate credential from compliance service
+            issueSelfSignedCredential(
+                "ParticipantCredential",
+                did,
+                did,
+            ).toCredential().run {
+                Custodian.getService().storeCredential(this.id ?: UUID.randomUUID().toString(), this)
+                this
+            }.encode()
+//            GaiaxService.getService().generateGaiaxComplianceCredential(this)
         }
         ctx.result(compliance)
     }
