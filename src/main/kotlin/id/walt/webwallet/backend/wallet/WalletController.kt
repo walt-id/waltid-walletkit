@@ -393,11 +393,7 @@ object WalletController {
     fun initIssuance(ctx: Context) {
         val issuance = ctx.bodyAsClass<CredentialIssuanceRequest>()
         val location = CredentialIssuanceManager.initIssuance(issuance, JWTService.getUserInfo(ctx)!!)
-        if (location != null) {
-            ctx.result(location.toString())
-        } else {
-            ctx.status(HttpCode.INTERNAL_SERVER_ERROR)
-        }
+        ctx.result(location.toString())
     }
 
     fun finalizeIssuance(ctx: Context) {

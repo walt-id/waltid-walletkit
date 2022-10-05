@@ -3,18 +3,21 @@ package id.walt.webwallet.backend.wallet
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.custodian.Custodian
-import id.walt.model.oidc.CredentialClaim
-import id.walt.model.oidc.OIDCProvider
+import id.walt.model.DidMethod
+import id.walt.model.DidUrl
+import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
-import id.walt.services.oidc.OIDCUtils
-import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.services.oidc.OIDC4CIService
 import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.WalletContextManager
+import io.javalin.http.BadRequestResponse
+import io.javalin.http.InternalServerErrorResponse
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -27,104 +30,167 @@ import java.util.concurrent.*
 data class CredentialIssuanceRequest(
     val did: String,
     val issuerId: String,
-    val schemaIds: List<String>,
-    val walletRedirectUri: String
+    val credentialTypes: List<String>,
+    val walletRedirectUri: String,
 )
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 data class CredentialIssuanceSession(
     val id: String,
-    val issuanceRequest: CredentialIssuanceRequest,
+    val issuerId: String,
+    val credentialTypes: List<String>,
+    val isPreAuthorized: Boolean,
+    val isIssuerInitiated: Boolean,
+    val userPinRequired: Boolean,
     @JsonIgnore val nonce: String,
-    @JsonIgnore val user: UserInfo,
+    var did: String? = null,
+    var walletRedirectUri: String? = null,
+    @JsonIgnore var user: UserInfo? = null,
     @JsonIgnore var tokens: OIDCTokens? = null,
     @JsonIgnore var lastTokenUpdate: Instant? = null,
     @JsonIgnore var tokenNonce: String? = null,
+    @JsonIgnore var preAuthzCode: String? = null,
+    @JsonIgnore var opState: String? = null,
     var credentials: List<VerifiableCredential>? = null
-)
+) {
+    companion object {
+        fun fromIssuanceRequest(credentialIssuanceRequest: CredentialIssuanceRequest): CredentialIssuanceSession {
+            return CredentialIssuanceSession(
+                id = UUID.randomUUID().toString(),
+                issuerId = credentialIssuanceRequest.issuerId,
+                credentialTypes = credentialIssuanceRequest.credentialTypes,
+                false, false, false,
+                nonce = UUID.randomUUID().toString(),
+                did = credentialIssuanceRequest.did,
+                walletRedirectUri = credentialIssuanceRequest.walletRedirectUri
+            )
+        }
+
+        fun fromInitiationRequest(issuanceInitiationRequest: IssuanceInitiationRequest): CredentialIssuanceSession {
+            return CredentialIssuanceSession(
+                id = UUID.randomUUID().toString(),
+                issuerId = issuanceInitiationRequest.issuer_url,
+                credentialTypes = issuanceInitiationRequest.credential_types,
+                isPreAuthorized = issuanceInitiationRequest.isPreAuthorized,
+                isIssuerInitiated = true,
+                userPinRequired = issuanceInitiationRequest.user_pin_required,
+                nonce = UUID.randomUUID().toString()
+            )
+        }
+    }
+}
 
 object CredentialIssuanceManager {
     val EXPIRATION_TIME = Duration.ofMinutes(5)
     val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS)
         .build<String, CredentialIssuanceSession>()
+    val issuerCache: LoadingCache<String, OIDCProviderWithMetadata> = CacheBuilder.newBuilder().maximumSize(256)
+        .build(
+            CacheLoader.from { issuerId ->
+                (   // find issuer from config
+                    WalletConfig.config.issuers[issuerId!!] ?:
+                    // else, assume issuerId is a valid issuer url
+                    OIDCProvider(issuerId, issuerId)
+                ).let {
+                    OIDC4CIService.getWithProviderMetadata(it)
+                }
+            }
+    )
+
     val redirectURI: URI
         get() = URI.create("${WalletConfig.config.walletApiUrl}/wallet/siopv2/finalizeIssuance")
 
-    private fun generateRequiredVpTokenFor(schemaId: String, did: String, issuer: OIDCProvider): List<VerifiablePresentation>? {
-        return issuer.ciSvc.credentialManifests.filter { m -> m.outputDescriptors.any { od -> od.schema == schemaId } }
-            .map { manifest ->
-                manifest.presentationDefinition?.let { presentationDefinition ->
-                    val nonceResponse = issuer.ciSvc.getNonce() ?: return null
-                    Custodian.getService().createPresentation(
-                        vcs = OIDCUtils.findCredentialsFor(presentationDefinition, did).values
-                            .flatMap { credIds ->
-                                credIds.map { credId ->
-                                    Custodian.getService().getCredential(credId)
-                                }
-                                    .filterNotNull()
-                            }.map { cred -> cred.encode() },
-                        holderDid = did,
-                        challenge = nonceResponse.p_nonce,
-                        expirationDate = null
-                    )
-                }?.toCredential()?.let { it as VerifiablePresentation }
-            }.filterNotNull().ifEmpty {
-            null // don't generate vp_token if no matching presentations are required
+    private fun getPreferredFormat(credentialTypeId: String, did: String, supportedCredentials: Map<String, CredentialMetadata>): String? {
+        val preferredByEcosystem = when(DidUrl.from(did).method) {
+            DidMethod.iota.name -> "ldp_vc"
+            DidMethod.ebsi.name -> "jwt_vc"
+            else -> "jwt_vc"
         }
+        if(supportedCredentials.containsKey(credentialTypeId)) {
+            if(supportedCredentials[credentialTypeId]!!.formats.containsKey(preferredByEcosystem) == false) {
+                // ecosystem preference is explicitly not supported, check if ldp_vc or jwt_vc is
+                return supportedCredentials[credentialTypeId]!!.formats.keys.firstOrNull { fmt -> setOf("jwt_vc", "ldp_vc").contains(fmt) }
+            }
+        }
+        return preferredByEcosystem
     }
 
-    fun initIssuance(issuanceRequest: CredentialIssuanceRequest, user: UserInfo): URI? {
-        val issuer = WalletConfig.config.issuers[issuanceRequest.issuerId] ?: return null
+    private fun executeAuthorizationStep(session: CredentialIssuanceSession): URI {
+        val issuer = issuerCache[session.issuerId]
 
-        val session = CredentialIssuanceSession(
-            id = UUID.randomUUID().toString(),
-            issuanceRequest = issuanceRequest,
-            nonce = UUID.randomUUID().toString(),
-            user = user
-        )
-
-        val claimedCredentials = issuanceRequest.schemaIds.map {
-            CredentialClaim(
-                type = it,
-                manifest_id = null,
-                vp_token = generateRequiredVpTokenFor(it, issuanceRequest.did, issuer)
+        val supportedCredentials = OIDC4CIService.getSupportedCredentials(issuer)
+        val credentialDetails = session.credentialTypes.map {
+            CredentialAuthorizationDetails(
+                credential_type = it,
+                format = getPreferredFormat(it, session.did!!, supportedCredentials)
             )
         }
 
-        return issuer.ciSvc.executePushedAuthorizationRequest(
+        return OIDC4CIService.executePushedAuthorizationRequest(
+            issuer,
             redirectURI,
-            claimedCredentials,
+            credentialDetails,
             nonce = session.nonce,
-            state = session.id
-        )?.also {
+            state = session.id,
+            wallet_issuer = WalletConfig.config.walletApiUrl,
+            user_hint = URI.create(WalletConfig.config.walletUiUrl).authority,
+            op_state = session.opState
+        ) ?: throw InternalServerErrorResponse("Could not execute pushed authorization request on issuer")
+    }
+
+    fun initIssuance(issuanceRequest: CredentialIssuanceRequest, user: UserInfo): URI {
+
+        val session = CredentialIssuanceSession.fromIssuanceRequest(issuanceRequest).apply {
+            this.user = user
+        }
+        return executeAuthorizationStep(session).also {
             putSession(session)
         }
     }
 
+    fun startIssuerInitiatedIssuance(issuanceInitiationRequest: IssuanceInitiationRequest): String {
+        val session = CredentialIssuanceSession.fromInitiationRequest(issuanceInitiationRequest)
+        putSession(session)
+        return session.id
+    }
+
+    fun continueIssuerInitiatedIssuance(sessionId: String, did: String, user: UserInfo): URI? {
+        val session = sessionCache.getIfPresent(sessionId) ?: throw BadRequestResponse("Session invalid or not found")
+        if(!session.isIssuerInitiated) throw BadRequestResponse("Session is not issuer initiated")
+        session.did = did
+        session.user = user
+        putSession(session)
+        if(!session.isPreAuthorized) {
+            return executeAuthorizationStep(session)
+        }
+        return null
+    }
+
     private fun enc(value: String): String = URLEncoder.encode(value, StandardCharsets.UTF_8)
 
-    fun finalizeIssuance(id: String, code: String): CredentialIssuanceSession? {
+    fun finalizeIssuance(id: String, code: String, userPin: String? = null): CredentialIssuanceSession? {
         val session = sessionCache.getIfPresent(id) ?: return null
+        val issuer = issuerCache[session.issuerId]
+        val user = session.user ?: throw BadRequestResponse("Session has not been confirmed by user")
+        val did = session.did ?: throw BadRequestResponse("No DID assigned to session")
 
-        val issuer = WalletConfig.config.issuers[session.issuanceRequest.issuerId] ?: return null
-
-        val tokenResponse = issuer.ciSvc.getAccessToken(code, redirectURI.toString())
+        val tokenResponse = OIDC4CIService.getAccessToken(issuer, code, redirectURI.toString(), session.isPreAuthorized, userPin)
         if (!tokenResponse.indicatesSuccess()) {
             return session
         }
         session.tokens = tokenResponse.toSuccessResponse().oidcTokens
         session.lastTokenUpdate = Instant.now()
-        tokenResponse.customParameters["c_nonce"]?.let { it.toString() }?.also {
+        tokenResponse.customParameters["c_nonce"]?.toString()?.also {
             session.tokenNonce = it
         }
 
-        ContextManager.runWith(WalletContextManager.getUserContext(session.user)) {
-            session.credentials = session.issuanceRequest.schemaIds.map { schemaId ->
-                issuer.ciSvc.getCredential(
+        ContextManager.runWith(WalletContextManager.getUserContext(user)) {
+            session.credentials = session.credentialTypes.map { typeId ->
+                OIDC4CIService.getCredential(
+                    issuer,
                     session.tokens!!.accessToken,
-                    session.issuanceRequest.did,
-                    schemaId,
-                    issuer.ciSvc.generateDidProof(session.issuanceRequest.did, session.tokenNonce)
+                    typeId,
+                    OIDC4CIService.generateDidProof(issuer, did, session.tokenNonce ?: "")
                 )
             }.filterNotNull().map { it }
 
@@ -146,9 +212,9 @@ object CredentialIssuanceManager {
     }
 
     fun findIssuersFor(requiredSchemaIds: Set<String>): List<OIDCProvider> {
-        return WalletConfig.config.issuers.values.filter { issuer ->
-            issuer.ciSvc.credentialManifests
-                ?.flatMap { manifest -> manifest.outputDescriptors.map { outDesc -> outDesc.schema } }
+        return WalletConfig.config.issuers.keys.map { issuerCache[it] }.filter { issuer ->
+            OIDC4CIService.getSupportedCredentials(issuer)
+                .flatMap { manifest -> manifest.outputDescriptors.map { outDesc -> outDesc.schema } }
                 ?.toSet()
                 ?.containsAll(requiredSchemaIds) ?: false
         }.map {

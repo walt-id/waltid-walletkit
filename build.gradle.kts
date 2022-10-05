@@ -28,7 +28,7 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt-jvm:3.5.0")
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT")
+    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT-OIDC4VCI")
     implementation("id.walt:waltid-ssikit-vclib:1.23.5")
 
     // Service-Matrix

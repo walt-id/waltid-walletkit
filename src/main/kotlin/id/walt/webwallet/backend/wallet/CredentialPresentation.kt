@@ -154,7 +154,7 @@ object CredentialPresentationManager {
             issuanceRequest = CredentialIssuanceRequest(
                 did = session.sessionInfo.did!!,
                 issuerId = "",
-                schemaIds = listOf(),
+                credentialTypes = listOf(),
                 walletRedirectUri = ""
             ),
             nonce = session.req.getCustomParameter("nonce")?.firstOrNull() ?: "",
