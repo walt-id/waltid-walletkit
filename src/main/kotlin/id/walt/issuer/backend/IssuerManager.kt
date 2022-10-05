@@ -5,9 +5,6 @@ import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.id.State
 import com.nimbusds.openid.connect.sdk.Nonce
-import id.walt.WALTID_DATA_ROOT
-import id.walt.auditor.Auditor
-import id.walt.auditor.SignaturePolicy
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.dif.PresentationDefinition
@@ -21,13 +18,17 @@ import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.hkvstore.HKVKey
 import id.walt.services.key.KeyService
 import id.walt.services.keystore.HKVKeyStoreService
-import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.WALTID_DATA_ROOT
+import id.walt.auditor.Auditor
+import id.walt.auditor.SignaturePolicy
+import id.walt.services.oidc.OIDC4VPService
+import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import java.net.URI
@@ -189,28 +190,33 @@ object IssuerManager {
         return session.id
     }
 
-    fun fulfillIssuanceSession(
-        session: IssuanceSession,
-        typeOrSchema: String,
-        did: String,
-        format: String = "ldp_vc"
-    ): String? {
-        return WalletContextManager.runWith(issuerContext) {
-            when (isSchema(typeOrSchema)) {
-                true -> session.issuables!!.credentialsBySchemaId[typeOrSchema]
-                else -> session.issuables!!.credentialsByType[typeOrSchema]
-            }?.let {
-                Signatory.getService().issue(it.type,
-                    ProofConfig(
-                        issuerDid = issuerDid,
-                        proofType = when (format) {
-                            "jwt" -> ProofType.JWT
-                            else -> ProofType.LD_PROOF
-                        },
-                        subjectDid = did
-                    ),
-                    dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
-            }
+  fun fulfillIssuanceSession(session: IssuanceSession, typeOrSchema: String, did: String, format: String = "ldp_vc"): String? {
+    return WalletContextManager.runWith(issuerContext) {
+      when(isSchema(typeOrSchema)) {
+        true -> session.issuables!!.credentialsBySchemaId[typeOrSchema]
+        else -> session.issuables!!.credentialsByType[typeOrSchema]
+      }?.let {
+          Signatory.getService().issue(it.type,
+            ProofConfig(
+              issuerDid = issuerDid,
+              proofType = when (format) {
+                "jwt" -> ProofType.JWT
+                else -> ProofType.LD_PROOF
+              },
+              subjectDid = did
+            ),
+            dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
         }
     }
+  }
+
+  fun getXDeviceWallet() : WalletConfiguration {
+    return WalletConfiguration(
+      id = "x-device",
+      url = "openid:",
+      presentPath = "",
+      receivePath = "",
+      description = "cross device"
+    )
+  }
 }

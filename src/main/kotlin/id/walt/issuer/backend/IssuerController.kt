@@ -173,12 +173,8 @@ object IssuerController {
             return
         }
 
-        val wallet = ctx.queryParam("walletId")?.let { IssuerConfig.config.wallets.getOrDefault(it, null) }
-        val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
-        if (wallet == null && session == null) {
-            ctx.status(HttpCode.BAD_REQUEST).result("Unknown wallet or session ID given")
-            return
-        }
+    val wallet = ctx.queryParam("walletId")?.let { IssuerConfig.config.wallets.getOrDefault(it, null) } ?: IssuerManager.getXDeviceWallet()
+    val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
 
         val selectedIssuables = ctx.bodyAsClass<Issuables>()
         if (selectedIssuables.credentials.isEmpty()) {
@@ -186,25 +182,12 @@ object IssuerController {
             return;
         }
 
-        if (wallet != null) {
-            ctx.result(
-                IssuerManager.newSIOPIssuanceRequest(
-                    userInfo.id,
-                    selectedIssuables,
-                    URI.create("${wallet.url}/${wallet.receivePath}")
-                ).toURI().toString()
-            )
-        } else {
-            ctx.result(
-                "${session!!.authRequest.redirectionURI}?code=${
-                    IssuerManager.updateIssuanceSession(
-                        session,
-                        selectedIssuables
-                    )
-                }&state=${session.authRequest.state.value}"
-            )
-        }
+    if(session != null) {
+      ctx.result("${session.authRequest.redirectionURI}?code=${IssuerManager.updateIssuanceSession(session, selectedIssuables)}&state=${session.authRequest.state.value}")
+    } else {
+      ctx.result(IssuerManager.newSIOPIssuanceRequest(userInfo.id, selectedIssuables, URI.create("${wallet.url}/${wallet.receivePath}")).toURI().toString())
     }
+  }
 
     fun fulfillIssuance(ctx: Context) {
         val vp_token = ctx.formParam("vp_token")?.let { it.toCredential() as VerifiablePresentation }
