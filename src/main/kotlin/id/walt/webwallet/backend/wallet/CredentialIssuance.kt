@@ -9,10 +9,14 @@ import com.nimbusds.openid.connect.sdk.token.OIDCTokens
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
+import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.oidc.OIDC4CIService
+import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.model.VerifiableCredential
+import id.walt.vclib.registry.VcTypeRegistry
+import id.walt.vclib.templates.VcTemplateManager
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -184,13 +188,16 @@ object CredentialIssuanceManager {
             session.tokenNonce = it
         }
 
+        val supportedCredentials = OIDC4CIService.getSupportedCredentials(issuer)
+
         ContextManager.runWith(WalletContextManager.getUserContext(user)) {
             session.credentials = session.credentialTypes.map { typeId ->
                 OIDC4CIService.getCredential(
                     issuer,
                     session.tokens!!.accessToken,
                     typeId,
-                    OIDC4CIService.generateDidProof(issuer, did, session.tokenNonce ?: "")
+                    OIDC4CIService.generateDidProof(issuer, did, session.tokenNonce ?: ""),
+                    format = getPreferredFormat(typeId, did, supportedCredentials)
                 )
             }.filterNotNull().map { it }
 
@@ -211,14 +218,31 @@ object CredentialIssuanceManager {
         sessionCache.put(session.id, session)
     }
 
-    fun findIssuersFor(requiredSchemaIds: Set<String>): List<OIDCProvider> {
+    fun findIssuersFor(presentationDefinition: PresentationDefinition): List<OIDCProvider> {
+        val matchingTemplates = VcTemplateManager.getTemplateList()
+            .map { VcTemplateManager.loadTemplate(it) }
+            .filter { tmpl ->
+                presentationDefinition.input_descriptors.any { inputDescriptor ->
+                    OIDCUtils.matchesInputDescriptor(tmpl, inputDescriptor)
+                }
+            }
+
         return WalletConfig.config.issuers.keys.map { issuerCache[it] }.filter { issuer ->
-            OIDC4CIService.getSupportedCredentials(issuer)
-                .flatMap { manifest -> manifest.outputDescriptors.map { outDesc -> outDesc.schema } }
-                ?.toSet()
-                ?.containsAll(requiredSchemaIds) ?: false
+            val supportedTypeLists = OIDC4CIService.getSupportedCredentials(issuer).values
+                .flatMap { credentialMetadata -> credentialMetadata.formats.values }
+                .map { fmt -> fmt.types }
+            matchingTemplates.map { it.type }.all { reqTypeList ->
+                supportedTypeLists.any { typeList ->
+                    reqTypeList.size == typeList.size &&
+                    reqTypeList.zip(typeList).all { (x,y) -> x == y }
+                }
+            }
         }.map {
             OIDCProvider(it.id, it.url, it.description) // strip secrets
         }
+    }
+
+    fun getIssuerWithMetadata(issuerId: String): OIDCProviderWithMetadata {
+        return issuerCache[issuerId]
     }
 }

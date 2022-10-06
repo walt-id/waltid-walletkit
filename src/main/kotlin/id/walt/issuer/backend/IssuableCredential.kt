@@ -1,5 +1,6 @@
 package id.walt.issuer.backend
 
+import id.walt.model.oidc.CredentialAuthorizationDetails
 import id.walt.model.oidc.CredentialClaim
 import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.model.CredentialSubject
@@ -37,18 +38,9 @@ data class Issuables(
         get() = credentials.associateBy { it.schemaId }
 
     companion object {
-        fun fromCredentialClaims(credentialClaims: List<CredentialClaim>): Issuables {
+        fun fromCredentialAuthorizationDetails(credentialDetails: List<CredentialAuthorizationDetails>): Issuables {
             return Issuables(
-                credentials = credentialClaims.flatMap { claim ->
-                    VcTypeRegistry.getTypesWithTemplate().values
-                        .map { it.metadata.template!!() }
-                        .filter { it.credentialSchema != null }
-                        .filter {
-                            (isSchema(claim.type!!) && it.credentialSchema!!.id == claim.type) ||
-                                    (!isSchema(claim.type!!) && it.type.last() == claim.type)
-                        }
-                        .map { it.type.last() }
-                }.map { IssuableCredential.fromTemplateId(it) }
+                credentials = credentialDetails.map { IssuableCredential.fromTemplateId(it.credential_type) }
             )
         }
     }
