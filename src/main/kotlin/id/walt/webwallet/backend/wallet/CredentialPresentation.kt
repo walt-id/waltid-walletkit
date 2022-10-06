@@ -101,11 +101,9 @@ object CredentialPresentationManager {
         session.sessionInfo.presentableCredentials = getPresentableCredentials(session)
         session.sessionInfo.availableIssuers = null
         if (session.sessionInfo.presentableCredentials!!.isEmpty()) {
-            val requiredSchemaIds =
-                session.sessionInfo.presentationDefinition.input_descriptors.let { getRequiredSchemaIds(it) } ?: setOf()
-            if (requiredSchemaIds.isNotEmpty()) {
+            if (session.sessionInfo.presentationDefinition.input_descriptors.isNotEmpty()) {
                 // credentials are required, but no suitable ones are found
-                session.sessionInfo.availableIssuers = CredentialIssuanceManager.findIssuersFor(requiredSchemaIds)
+                session.sessionInfo.availableIssuers = CredentialIssuanceManager.findIssuersFor(session.sessionInfo.presentationDefinition)
             }
         }
 
@@ -132,36 +130,5 @@ object CredentialPresentationManager {
         val siopResponse = OIDC4VPService.getSIOPResponseFor(session.req, did, listOf(vp))
 
         return siopResponse
-    }
-
-    fun fulfillPassiveIssuance(
-        sessionId: String,
-        selectedCredentials: List<PresentableCredential>,
-        userInfo: UserInfo
-    ): CredentialIssuanceSession {
-        val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
-        val siopResponse = fulfillPresentation(sessionId, selectedCredentials)
-
-        val body = OIDC4VPService.postSIOPResponse(session.req, siopResponse)
-        val credentials = Klaxon().parseArray<VerifiableCredential>(body)?.also { creds ->
-            creds.forEach { cred ->
-                Custodian.getService().storeCredential(cred.id!!, cred)
-            }
-        }
-
-        return CredentialIssuanceSession(
-            UUID.randomUUID().toString(),
-            issuanceRequest = CredentialIssuanceRequest(
-                did = session.sessionInfo.did!!,
-                issuerId = "",
-                credentialTypes = listOf(),
-                walletRedirectUri = ""
-            ),
-            nonce = session.req.getCustomParameter("nonce")?.firstOrNull() ?: "",
-            user = userInfo,
-            credentials = credentials
-        ).also {
-            CredentialIssuanceManager.putSession(it)
-        }
     }
 }

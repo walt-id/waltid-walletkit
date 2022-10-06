@@ -1,6 +1,6 @@
 package id.walt.issuer.backend
 
-import com.beust.klaxon.Klaxon
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.oauth2.sdk.*
 import com.nimbusds.oauth2.sdk.http.ServletUtils
 import com.nimbusds.oauth2.sdk.id.Issuer
@@ -10,14 +10,11 @@ import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.model.dif.CredentialManifest
-import id.walt.model.dif.OutputDescriptor
-import id.walt.model.oidc.CredentialResponse
-import id.walt.model.oidc.klaxon
-import id.walt.services.oidc.OIDCUtils
+import id.walt.crypto.LdSignatureType
+import id.walt.model.oidc.*
+import id.walt.services.oidc.OIDC4CIService
 import id.walt.vclib.credentials.VerifiablePresentation
 import id.walt.vclib.model.AbstractVerifiableCredential
-import id.walt.vclib.model.Proof
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.verifier.backend.VerifierController
@@ -26,10 +23,7 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.Context
-import io.javalin.http.ForbiddenResponse
-import io.javalin.http.HttpCode
+import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
@@ -96,15 +90,6 @@ object IssuerController {
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
-                    post("nonce", documented(
-                        document().operation {
-                            it.summary("get presentation nonce")
-                                .addTagsItem("Issuer")
-                                .operationId("nonce")
-                        }
-                            .json<NonceResponse>("200"),
-                        IssuerController::nonce
-                    ))
                     post("par", documented(
                         document().operation {
                             it.summary("pushed authorization request")
@@ -117,6 +102,7 @@ object IssuerController {
                             .formParam<String>("scope")
                             .formParam<String>("claims")
                             .formParam<String>("state")
+                            .formParam<String>("op_state")
                             .json<PushedAuthorizationSuccessResponse>("201"),
                         IssuerController::par
                     ))
@@ -133,7 +119,9 @@ object IssuerController {
                         }
                             .formParam<String>("grant_type")
                             .formParam<String>("code")
+                            .formParam<String>("pre-authorized_code")
                             .formParam<String>("redirect_uri")
+                            .formParam<String>("user_pin")
                             .formParam<String>("code_verifier")
                             .json<OIDCTokenResponse>("200"),
                         IssuerController::token
@@ -143,10 +131,7 @@ object IssuerController {
                             it.summary("Credential endpoint").operationId("credential").addTagsItem("Issuer")
                         }
                             .header<String>("Authorization")
-                            .formParam<String>("format")
-                            .formParam<String>("type")
-                            .formParam<String>("did")
-                            .formParam<Proof>("proof")
+                            .body<CredentialRequest>()
                             .json<CredentialResponse>("200"),
                         IssuerController::credential
                     ))
@@ -201,49 +186,56 @@ object IssuerController {
     fun oidcProviderMeta(ctx: Context) {
         ctx.json(OIDCProviderMetadata(
             Issuer(IssuerConfig.config.issuerApiUrl),
-            listOf(SubjectType.PAIRWISE, SubjectType.PUBLIC),
-            URI("http://blank")
+            listOf(SubjectType.PUBLIC),
+            URI("${IssuerConfig.config.issuerApiUrl}/oidc")
         ).apply {
             authorizationEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/fulfillPAR")
             pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par")
             tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token")
             setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/credential")
-            setCustomParameter("nonce_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/nonce")
-            setCustomParameter("credential_manifests", listOf(
-                CredentialManifest(
-                    issuer = id.walt.model.dif.Issuer(IssuerManager.issuerDid, IssuerConfig.config.issuerClientName),
-                    outputDescriptors = VcTypeRegistry.getTypesWithTemplate().values
-                        .filter {
-                            it.isPrimary &&
-                                    AbstractVerifiableCredential::class.java.isAssignableFrom(it.vc.java) &&
-                                    !it.metadata.template?.invoke()?.credentialSchema?.id.isNullOrEmpty()
-                        }
-                        .map {
-                            OutputDescriptor(
-                                it.metadata.type.last(),
-                                it.metadata.template!!.invoke().credentialSchema!!.id,
-                                it.metadata.type.last()
+            setCustomParameter("credential_issuer", CredentialIssuer(listOf(
+                CredentialIssuerDisplay(IssuerConfig.config.issuerApiUrl)
+            )))
+            setCustomParameter("credentials_supported", VcTypeRegistry.getTypesWithTemplate().values
+                .filter {
+                    it.isPrimary &&
+                            AbstractVerifiableCredential::class.java.isAssignableFrom(it.vc.java) &&
+                            !it.metadata.template?.invoke()?.credentialSchema?.id.isNullOrEmpty()
+                }
+                .associateBy({cred -> cred.metadata.type.last()}) {cred -> CredentialMetadata(
+                        formats = mapOf(
+                            "ldp_vc" to CredentialFormat(
+                                types = cred.metadata.type,
+                                cryptographic_binding_methods_supported = listOf("did"),
+                                cryptographic_suites_supported = LdSignatureType.values().map { it.name }
+                            ),
+                            "jwt_vc" to CredentialFormat(
+                                types = cred.metadata.type,
+                                cryptographic_binding_methods_supported = listOf("did"),
+                                cryptographic_suites_supported = listOf(JWSAlgorithm.ES256K, JWSAlgorithm.EdDSA, JWSAlgorithm.RS256, JWSAlgorithm.PS256).map { it.name }
                             )
-                        }
-                )).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
+                        ),
+                        display = listOf(
+                            CredentialDisplay(
+                                name = cred.metadata.type.last()
+                            )
+                        )
+                    )
+                }
             )
         }.toJSONObject()
         )
     }
 
-    fun nonce(ctx: Context) {
-        ctx.json(IssuerManager.newNonce())
-    }
-
     fun par(ctx: Context) {
         val req = AuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
-        val claims = OIDCUtils.getVCClaims(req)
-        if (claims == null || claims.credentials == null) {
+        val authDetails = OIDC4CIService.getCredentialAuthorizationDetails(req)
+        if (authDetails.isEmpty()) {
             ctx.status(HttpCode.BAD_REQUEST)
-                .json(PushedAuthorizationErrorResponse(ErrorObject("400", "No credential claims given", 400)))
+                .json(PushedAuthorizationErrorResponse(ErrorObject("400", "No credential authorization details given", 400)))
             return
         }
-        val session = IssuerManager.initializeIssuanceSession(claims.credentials!!, req)
+        val session = IssuerManager.initializeIssuanceSession(authDetails, req)
         ctx.status(HttpCode.CREATED).json(
             PushedAuthorizationSuccessResponse(
                 URI("urn:ietf:params:oauth:request_uri:${session.id}"),
@@ -265,12 +257,16 @@ object IssuerController {
     }
 
     fun token(ctx: Context) {
-        val code = ctx.formParam("code")
-        if (code == null) {
-            ctx.status(HttpCode.BAD_REQUEST).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
-            return
+        val tokenReq = TokenRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
+        val code = if(tokenReq.authorizationGrant.type == GrantType.AUTHORIZATION_CODE) {
+            (tokenReq.authorizationGrant as AuthorizationCodeGrant).authorizationCode
+        } else if(tokenReq.authorizationGrant.type == PreAuthorizedCodeGrant.GRANT_TYPE) {
+            (tokenReq.authorizationGrant as PreAuthorizedCodeGrant).code
+        } else {
+            throw BadRequestResponse("Unsupported grant type")
         }
-        val session = IssuerManager.getIssuanceSession(code)
+
+        val session = IssuerManager.getIssuanceSession(code.value)
         if (session == null) {
             ctx.status(HttpCode.NOT_FOUND).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
             return
@@ -287,29 +283,23 @@ object IssuerController {
     }
 
     fun credential(ctx: Context) {
-        val format = ctx.formParam("format") ?: "ldp_vc"
-        val type = ctx.formParam("type")
-        val did = ctx.formParam("did")
-        val proof = ctx.formParam("proof")?.let { klaxon.parse<Proof>(it) }
-        // TODO: verify proof
-
         val session = ctx.header("Authorization")?.substringAfterLast("Bearer ")
             ?.let { IssuerManager.getIssuanceSession(it) }
             ?: throw ForbiddenResponse("Invalid or unknown access token")
 
-        if (did.isNullOrEmpty() || type.isNullOrEmpty() || (session.did != null && session.did != did)) {
-            throw BadRequestResponse("No type or did given, or invalid did for this session")
-        }
-        val credential = IssuerManager.fulfillIssuanceSession(session, type, did, format)
+        val credentialRequest = klaxon.parse<CredentialRequest>(ctx.body()) ?: throw BadRequestResponse("Could not parse credential request body")
+
+        val credential = IssuerManager.fulfillIssuanceSession(session, credentialRequest)
         if (credential.isNullOrEmpty()) {
             ctx.status(HttpCode.NOT_FOUND).result("No issuable credential with the given type found")
             return
         }
-        ctx.json(
-            CredentialResponse(
-                format,
-                Base64.getUrlEncoder().encodeToString(credential.toByteArray(StandardCharsets.UTF_8))
-            )
+        val credObj = credential.toCredential()
+        ctx.contentType(ContentType.JSON).result(
+            klaxon.toJsonString(CredentialResponse(
+                if(credObj.jwt != null) "jwt_vc" else "ldp_vc",
+                credential.toCredential()
+            ))
         )
     }
 }

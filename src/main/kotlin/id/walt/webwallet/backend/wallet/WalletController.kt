@@ -337,10 +337,7 @@ object WalletController {
     }
 
     fun initPassiveIssuance(ctx: Context) {
-        val req = OIDC4VPService.parseOIDC4VPRequestUriFromHttpCtx(ctx)
-        val session = CredentialPresentationManager.initCredentialPresentation(req, passiveIssuance = true)
-        ctx.status(HttpCode.FOUND)
-            .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest/?sessionId=${session.id}")
+        throw TODO("re-implement issuer initiated issuance")
     }
 
     fun continuePresentation(ctx: Context) {
@@ -367,15 +364,7 @@ object WalletController {
     }
 
     fun fulfillPassiveIssuance(ctx: Context) {
-        val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
-        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) }
-            ?: throw BadRequestResponse("No selected credentials given")
-        val issuanceSession = CredentialPresentationManager.fulfillPassiveIssuance(
-            sessionId,
-            selectedCredentials,
-            JWTService.getUserInfo(ctx)!!
-        )
-        ctx.result(issuanceSession.id)
+        throw TODO("re-implement issuer initiated issuance")
     }
 
     fun listIssuers(ctx: Context) {
@@ -383,7 +372,10 @@ object WalletController {
     }
 
     fun issuerMeta(ctx: Context) {
-        val metadata = ctx.queryParam("issuerId")?.let { WalletConfig.config.issuers[it] }?.ciSvc?.metadata
+        val metadata = ctx.queryParam("issuerId")?.let {
+            CredentialIssuanceManager.getIssuerWithMetadata(it)
+        }?.oidc_provider_metadata
+
         if (metadata != null)
             ctx.json(metadata.toJSONObject())
         else
