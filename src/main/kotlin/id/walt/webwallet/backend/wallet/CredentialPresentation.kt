@@ -24,7 +24,6 @@ import java.util.concurrent.*
 data class CredentialPresentationSessionInfo(
     val id: String,
     val presentationDefinition: PresentationDefinition,
-    val isPassiveIssuanceSession: Boolean,
     val redirectUri: String,
     var did: String? = null,
     var presentableCredentials: List<PresentableCredential>? = null,
@@ -65,7 +64,7 @@ object CredentialPresentationManager {
     val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS)
         .build<String, CredentialPresentationSession>()
 
-    fun initCredentialPresentation(siopReq: AuthorizationRequest, passiveIssuance: Boolean): CredentialPresentationSession {
+    fun initCredentialPresentation(siopReq: AuthorizationRequest): CredentialPresentationSession {
         val id = UUID.randomUUID().toString()
         return CredentialPresentationSession(
             id = id,
@@ -73,7 +72,6 @@ object CredentialPresentationManager {
             sessionInfo = CredentialPresentationSessionInfo(
                 id,
                 presentationDefinition = OIDC4VPService.getPresentationDefinition(siopReq),
-                isPassiveIssuanceSession = passiveIssuance,
                 redirectUri = siopReq.redirectionURI.toString()
             )
         ).also {
@@ -130,5 +128,9 @@ object CredentialPresentationManager {
         val siopResponse = OIDC4VPService.getSIOPResponseFor(session.req, did, listOf(vp))
 
         return siopResponse
+    }
+
+    fun getPresentationSession(id: String): CredentialPresentationSession? {
+        return sessionCache.getIfPresent(id)
     }
 }
