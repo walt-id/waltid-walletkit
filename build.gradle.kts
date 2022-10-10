@@ -20,6 +20,10 @@ repositories {
 }
 
 dependencies {
+    // SSIKIT
+    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT-OIDC4VCI")
+    implementation("id.walt:waltid-ssikit-vclib:1.23.5")
+
     implementation("io.javalin:javalin-bundle:4.6.4")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.6")
@@ -27,9 +31,6 @@ dependencies {
     // CLI
     implementation("com.github.ajalt.clikt:clikt-jvm:3.5.0")
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
-    // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT-OIDC4VCI")
-    implementation("id.walt:waltid-ssikit-vclib:1.23.5")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")

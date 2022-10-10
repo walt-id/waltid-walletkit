@@ -93,7 +93,7 @@ class SIOPv2Test : BaseApiTest() {
             wallets = mapOf(
                 "walt.id" to WalletConfiguration(
                     "walt.id", "$url",
-                    "api/wallet/siopv2/initPresentation", "api/wallet/siopv2/initPassiveIssuance" , "walt.id web wallet"
+                    "api/siop/initiatePresentation", "api/siop/initiateIssuance" , "walt.id web wallet"
                 )
             )
         )
@@ -135,7 +135,7 @@ class SIOPv2Test : BaseApiTest() {
             }
         }
         // wallet ui gets presentation session details
-        val presentationSessionInfo = client.get("$url/api/wallet/siopv2/continuePresentation?sessionId=$sessionId&did=$did") {
+        val presentationSessionInfo = client.get("$url/api/wallet/presentation/continue?sessionId=$sessionId&did=$did") {
             header("Authorization", "Bearer ${userInfo.token}")
         }.bodyAsText().let {
             klaxon.parse<CredentialPresentationSessionInfo>(it)
@@ -147,7 +147,7 @@ class SIOPv2Test : BaseApiTest() {
         presentationSessionInfo.redirectUri shouldBe verificationReq.redirectionURI.toString()
 
         // wallet ui confirms presentation request
-        val presentationResponse = client.post("$url/api/wallet/siopv2/fulfillPresentation?sessionId=$sessionId") {
+        val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
             setBody(klaxon.parseArray<Map<String, Any>?>(klaxon.toJsonString(presentationSessionInfo.presentableCredentials!!)))

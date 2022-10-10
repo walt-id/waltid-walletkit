@@ -1,5 +1,7 @@
 package id.walt.issuer.backend
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
@@ -9,7 +11,6 @@ import com.nimbusds.openid.connect.sdk.Nonce
 import id.walt.crypto.KeyAlgorithm
 import id.walt.model.DidMethod
 import id.walt.model.dif.PresentationDefinition
-import id.walt.model.oidc.CredentialClaim
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.ecosystems.essif.EssifClient
@@ -31,12 +32,15 @@ import id.walt.auditor.SignaturePolicy
 import id.walt.model.DidUrl
 import id.walt.model.oidc.CredentialAuthorizationDetails
 import id.walt.model.oidc.CredentialRequest
+import id.walt.model.oidc.IssuanceInitiationRequest
 import id.walt.services.jwt.JwtService
 import id.walt.services.oidc.OIDC4VPService
 import id.walt.verifier.backend.WalletConfiguration
+import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.http.BadRequestResponse
+import javalinjwt.JWTProvider
 import java.net.URI
 import java.time.Duration
 import java.util.*
@@ -56,13 +60,22 @@ object IssuerManager {
     vcStore = HKVVcStoreService()
   )
   val EXPIRATION_TIME: Duration = Duration.ofMinutes(5)
-  val reqCache =
-    CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, IssuanceRequest>()
   val nonceCache =
     CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, Boolean>()
   val sessionCache =
     CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, IssuanceSession>()
   lateinit var issuerDid: String;
+
+  val authCodeSecret = System.getenv("WALTID_ISSUER_AUTH_CODE_SECRET") ?: UUID.randomUUID().toString()
+  val algorithm: Algorithm = Algorithm.HMAC256(authCodeSecret)
+
+  val authCodeProvider = JWTProvider(
+    algorithm,
+    { session: IssuanceSession, alg: Algorithm? ->
+      JWT.create().withSubject(session.id).withClaim("pre-authorized", session.isPreAuthorized).sign(alg)
+    },
+    JWT.require(algorithm).build()
+  )
 
   init {
     WalletContextManager.runWith(issuerContext) {
@@ -83,46 +96,6 @@ object IssuerManager {
       )
         .map { IssuableCredential.fromTemplateId(it) }
     )
-  }
-
-  fun newSIOPIssuanceRequest(user: String, selectedIssuables: Issuables, walletUrl: URI): AuthorizationRequest {
-    val nonce = UUID.randomUUID().toString()
-    val redirectUri = URI.create("${IssuerConfig.config.issuerApiUrl}/credentials/issuance/fulfill")
-    val req = OIDC4VPService.createOIDC4VPRequest(
-      walletUrl,
-      redirect_uri = redirectUri,
-      nonce = Nonce(nonce),
-      response_mode = ResponseMode("post"),
-      presentation_definition = PresentationDefinition(id = "1", listOf()),
-      state = State(nonce)
-    )
-    reqCache.put(nonce, IssuanceRequest(user, nonce, selectedIssuables))
-    return req
-  }
-
-  fun fulfillIssuanceRequest(nonce: String, vp_token: VerifiablePresentation): List<String> {
-    val issuanceReq = reqCache.getIfPresent(nonce);
-    if (issuanceReq == null) {
-      return listOf()
-    }
-
-    return WalletContextManager.runWith(issuerContext) {
-      if (vp_token.challenge == nonce &&
-        Auditor.getService().verify(vp_token, listOf(SignaturePolicy())).valid
-      ) {
-        issuanceReq.selectedIssuables.credentials.map {
-          Signatory.getService().issue(it.type,
-            ProofConfig(
-              issuerDid = issuerDid,
-              proofType = ProofType.LD_PROOF,
-              subjectDid = vp_token.subject
-            ),
-            dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
-        }
-      } else {
-        listOf()
-      }
-    }
   }
 
   private fun prompt(prompt: String, default: String?): String? {
@@ -172,15 +145,38 @@ object IssuerManager {
     return nonceCache.asMap().keys
   }
 
-  fun initializeIssuanceSession(credentialDetails: List<CredentialAuthorizationDetails>, authRequest: AuthorizationRequest): IssuanceSession {
+  fun newIssuanceInitiationRequest(user: String, selectedIssuables: Issuables, preAuthorized: Boolean, userPin: String? = null): IssuanceInitiationRequest {
+    val issuerUri = URI.create("${IssuerConfig.config.issuerApiUrl}/oidc/")
+    val session = initializeIssuanceSession(
+      credentialDetails = selectedIssuables.credentials.map {issuable ->
+        CredentialAuthorizationDetails(issuable.type)
+      },
+      preAuthorized = preAuthorized,
+      authRequest = null,
+      userPin = userPin
+    )
+    updateIssuanceSession(session, selectedIssuables)
+
+    return IssuanceInitiationRequest(
+      issuer_url = issuerUri.toString(),
+      credential_types = selectedIssuables.credentials.map { it.type },
+      pre_authorized_code = if(preAuthorized) generateAuthorizationCodeFor(session) else null,
+      user_pin_required = userPin != null,
+      op_state = if(!preAuthorized) session.id else null
+      )
+  }
+
+  fun initializeIssuanceSession(credentialDetails: List<CredentialAuthorizationDetails>, preAuthorized: Boolean, authRequest: AuthorizationRequest?, userPin: String? = null): IssuanceSession {
     val id = UUID.randomUUID().toString()
     //TODO: validata/verify PAR request, claims, etc
     val session = IssuanceSession(
       id,
       credentialDetails,
-      authRequest,
       UUID.randomUUID().toString(),
-      Issuables.fromCredentialAuthorizationDetails(credentialDetails)
+      isPreAuthorized = preAuthorized,
+      authRequest,
+      Issuables.fromCredentialAuthorizationDetails(credentialDetails),
+      userPin = userPin
     )
     sessionCache.put(id, session)
     return session
@@ -190,10 +186,17 @@ object IssuerManager {
     return sessionCache.getIfPresent(id)
   }
 
-  fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables?): String {
+  fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables?) {
     session.issuables = issuables
     sessionCache.put(session.id, session)
-    return session.id
+  }
+
+  fun generateAuthorizationCodeFor(session: IssuanceSession): String {
+    return authCodeProvider.generateToken(session)
+  }
+
+  fun validateAuthorizationCode(code: String): String {
+    return authCodeProvider.validateToken(code).map { it.subject }.orElseThrow { BadRequestResponse("Invalid authorization code given") }
   }
 
   fun fulfillIssuanceSession(session: IssuanceSession, credentialRequest: CredentialRequest): String? {

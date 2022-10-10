@@ -7,8 +7,10 @@ import id.walt.model.oidc.CredentialClaim
 data class IssuanceSession (
 val id: String,
 val credentialDetails: List<CredentialAuthorizationDetails>,
-val authRequest: AuthorizationRequest,
 val nonce: String,
+val isPreAuthorized: Boolean,
+var authRequest: AuthorizationRequest?,
 var issuables: Issuables?,
-var did: String? = null
-    )
+var did: String? = null,
+val userPin: String? = null
+)
