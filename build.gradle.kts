@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT-OIDC4VCI")
+    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT")
     implementation("id.walt:waltid-ssikit-vclib:1.23.5")
 
     implementation("io.javalin:javalin-bundle:4.6.4")
