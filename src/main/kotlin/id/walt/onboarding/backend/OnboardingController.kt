@@ -172,14 +172,15 @@ object OnboardingController {
             val sessionID = parURI.substringAfterLast("urn:ietf:params:oauth:request_uri:")
             val session = IssuerManager.getIssuanceSession(sessionID)
                 ?: throw BadRequestResponse("No session found for given sessionId, or session expired")
+            val authRequest = session.authRequest ?: throw BadRequestResponse("No authorization request found for this session")
             // TODO: verify VP from auth request claims
-            val vcclaims = OIDCUtils.getVCClaims(session.authRequest)
+            val vcclaims = OIDCUtils.getVCClaims(authRequest)
             val credClaim =
                 vcclaims.credentials?.filter { cred -> cred.type == PARICIPANT_CREDENTIAL_SCHEMA_ID }?.firstOrNull()
                     ?: throw BadRequestResponse("No participant credential claim found in authorization request")
             val vp_token =
                 credClaim.vp_token
-                    ?: session.authRequest.customParameters["vp_token"]?.flatMap {
+                    ?: authRequest.customParameters["vp_token"]?.flatMap {
                         OIDCUtils.fromVpToken(it) ?: listOf()
                     } ?: listOf()
             val vp = vp_token.firstOrNull() ?: throw BadRequestResponse("No VP token found on authorization request")
@@ -242,6 +243,7 @@ object OnboardingController {
         }
         val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
             ?: throw BadRequestResponse("Session expired or not found")
+        val authRequest = session.authRequest ?: throw BadRequestResponse("No authorization request found for this session")
         if (userInfo.did != session.did) {
             throw BadRequestResponse("Session DID not matching authorized DID")
         }
@@ -262,12 +264,12 @@ object OnboardingController {
             )
         )
         ctx.result(
-            "${session.authRequest.redirectionURI}?code=${
+            "${authRequest.redirectionURI}?code=${
                 IssuerManager.updateIssuanceSession(
                     session,
                     selectedIssuables
                 )
-            }&state=${session.authRequest.state.value}"
+            }&state=${authRequest.state.value}"
         )
     }
 }
