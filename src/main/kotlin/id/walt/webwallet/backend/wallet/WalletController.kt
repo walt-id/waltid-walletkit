@@ -1,7 +1,13 @@
 package id.walt.webwallet.backend.wallet
 
 import com.beust.klaxon.Klaxon
+import com.nimbusds.oauth2.sdk.ResponseType
+import com.nimbusds.oauth2.sdk.Scope
+import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.oauth2.sdk.util.URLUtils
+import com.nimbusds.openid.connect.sdk.OIDCScopeValue
+import com.nimbusds.openid.connect.sdk.SubjectType
+import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
@@ -24,7 +30,10 @@ import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.*
+import io.javalin.http.BadRequestResponse
+import io.javalin.http.ContentType
+import io.javalin.http.Context
+import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
@@ -223,6 +232,15 @@ object WalletController {
         }
       }
       path("siop") {
+        get(".well-known/openid-configuration", documented(
+          document().operation {
+            it.summary("get OIDC provider meta data")
+              .addTagsItem("SIOP")
+              .operationId("oidcProviderMeta")
+          }
+            .json<OIDCProviderMetadata>("200"),
+          WalletController::oidcProviderMeta
+        ))
         // called from EXTERNAL verifier
         get("initiatePresentation", documented(
           document().operation {
@@ -270,6 +288,22 @@ object WalletController {
         ), UserRole.UNAUTHORIZED)
       }
     }
+
+  fun oidcProviderMeta(ctx: Context) {
+    ctx.json(
+      OIDCProviderMetadata(
+      Issuer(WalletConfig.config.walletUiUrl),
+      listOf(SubjectType.PAIRWISE),
+      URI.create("")
+    ).apply {
+        authorizationEndpointURI = URI("${WalletConfig.config.walletApiUrl}/siop/initiatePresentation")
+        setCustomParameter("initiate_issuance_endpoint", "${WalletConfig.config.walletApiUrl}/siop/initiateIssuance")
+        scopes = Scope(OIDCScopeValue.OPENID)
+        responseTypes = listOf(ResponseType.IDTOKEN, ResponseType("vp_token"))
+
+    }.toJSONObject()
+    )
+  }
 
   fun listDids(ctx: Context) {
     ctx.json(DidService.listDids())
