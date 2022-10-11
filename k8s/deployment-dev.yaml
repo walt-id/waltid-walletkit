@@ -295,6 +295,13 @@ spec:
                 name: walletkit
                 port:
                   number: 80
+          - path: /v1/nftkit/nft/
+            pathType: Prefix
+            backend:
+              service:
+                name: nftkit
+                port:
+                  number: 80
           - path: /
             pathType: Prefix
             backend:
