@@ -10,8 +10,8 @@
     "walt.id": {
       "id": "walt.id",
       "url": "http://localhost:3000",
-      "presentPath": "api/wallet/siopv2/initPresentation/",
-      "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
+      "presentPath": "api/siop/initiatePresentation/",
+      "receivePath" : "api/siop/initiateIssuance/",
       "description": "walt.id web wallet"
     }
   }
