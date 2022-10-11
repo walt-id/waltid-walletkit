@@ -12,8 +12,8 @@ data:
         "walt.id": {
           "id": "walt.id",
           "url": "https://wallet.walt.id",
-          "presentPath": "api/wallet/siopv2/initPresentation/",
-          "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
+          "presentPath": "api/siop/initiatePresentation/",
+          "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
         }
       }
@@ -26,8 +26,8 @@ data:
         "walt.id": {
           "id": "walt.id",
           "url": "https://wallet.walt.id",
-          "presentPath": "api/wallet/siopv2/initPresentation/",
-          "receivePath" : "api/wallet/siopv2/initPassiveIssuance/",
+          "presentPath": "api/siop/initiatePresentation/",
+          "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
         }
       }
