@@ -1,6 +1,7 @@
 package id.walt.webwallet.backend.wallet
 
 import com.beust.klaxon.Klaxon
+import com.nimbusds.oauth2.sdk.util.URLUtils
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
@@ -183,6 +184,15 @@ object WalletController {
               .queryParam<String>("sessionId")
               .json<CredentialIssuanceSession>("200"),
             WalletController::getIssuanceSessionInfo
+          ), UserRole.AUTHORIZED)
+          post("startIssuerInitiatedIssuance", documented(
+            document().operation{
+              it.summary("Start an issuer-initiated issuance session from an OIDC URL, that could be scanned from a QR code (cross device)").addTagsItem("Issuance")
+                .operationId("continueIssuerInitiatedIssuance")
+            }
+              .body<CrossDeviceIssuanceInitiationRequest>()
+              .result<String>("200"),
+            WalletController::startIssuerInitiatedIssuance
           ), UserRole.AUTHORIZED)
           get("continueIssuerInitiatedIssuance", documented(
             document().operation{
@@ -393,6 +403,13 @@ object WalletController {
     val issuance = ctx.bodyAsClass<CredentialIssuance4PresentationRequest>()
     val location = CredentialIssuanceManager.startIssuanceForPresentation(issuance, JWTService.getUserInfo(ctx)!!)
     ctx.result(location.toString())
+  }
+
+  fun startIssuerInitiatedIssuance(ctx: Context) {
+    val req = ctx.bodyAsClass<CrossDeviceIssuanceInitiationRequest>()
+    val issuanceInitiationReq = IssuanceInitiationRequest.fromQueryParams(URLUtils.parseParameters(URI.create(req.oidcUri).query))
+    val sessionId = CredentialIssuanceManager.startIssuerInitiatedIssuance(issuanceInitiationReq)
+    ctx.result(sessionId)
   }
 
   fun continueIssuerInitiatedIssuance(ctx: Context) {
