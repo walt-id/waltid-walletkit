@@ -27,6 +27,8 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
@@ -397,17 +399,27 @@ object WalletController {
     val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("Missing sessionId parameter")
     val did = ctx.queryParam("did") ?: throw BadRequestResponse("Missing did parameter")
     val userPin = ctx.queryParam("userPin")
-    val session = CredentialIssuanceManager.continueIssuerInitiatedIssuance(sessionId, did, JWTService.getUserInfo(ctx)!!, userPin)
-    val location = if(!session.isPreAuthorized) { // not pre-authorized, execute PAR request and provide user-agent address for authorization step
-      CredentialIssuanceManager.executeAuthorizationStep(session).toString()
-    } else { // pre-authorized issuance session, return UI address to success or error page
-      if (session.credentials != null) {
-        "/ReceiveCredential/?sessionId=${session.id}"
-      } else {
-        "/IssuanceError/"
-      }
+    try {
+      val session = CredentialIssuanceManager.continueIssuerInitiatedIssuance(
+        sessionId,
+        did,
+        JWTService.getUserInfo(ctx)!!,
+        userPin
+      )
+      val location =
+        if (!session.isPreAuthorized) { // not pre-authorized, execute PAR request and provide user-agent address for authorization step
+          CredentialIssuanceManager.executeAuthorizationStep(session).toString()
+        } else { // pre-authorized issuance session, return UI address to success or error page
+          if (session.credentials != null) {
+            "/ReceiveCredential/?sessionId=${session.id}"
+          } else {
+            "/IssuanceError/"
+          }
+        }
+      ctx.result(location)
+    } catch (exc: Exception) {
+      ctx.result("/IssuanceError/?reason=${URLEncoder.encode(exc.message, StandardCharsets.UTF_8)}")
     }
-    ctx.result(location)
   }
 
   fun finalizeIssuance(ctx: Context) {
