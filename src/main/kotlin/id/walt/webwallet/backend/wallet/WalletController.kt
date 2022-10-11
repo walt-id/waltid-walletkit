@@ -402,9 +402,9 @@ object WalletController {
       CredentialIssuanceManager.executeAuthorizationStep(session).toString()
     } else { // pre-authorized issuance session, return UI address to success or error page
       if (session.credentials != null) {
-        "${WalletConfig.config.walletUiUrl}/ReceiveCredential/?sessionId=${session.id}"
+        "/ReceiveCredential/?sessionId=${session.id}"
       } else {
-        "${WalletConfig.config.walletUiUrl}/IssuanceError/"
+        "/IssuanceError/"
       }
     }
     ctx.result(location)
