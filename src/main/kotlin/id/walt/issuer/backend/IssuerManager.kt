@@ -226,7 +226,7 @@ object IssuerManager {
   fun getXDeviceWallet() : WalletConfiguration {
     return WalletConfiguration(
       id = "x-device",
-      url = "openid:",
+      url = "openid-initiate-issuance:/",
       presentPath = "",
       receivePath = "",
       description = "cross device"

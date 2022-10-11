@@ -46,6 +46,10 @@ data class CredentialIssuance4PresentationRequest(
   val walletRedirectUri: String,
 )
 
+data class CrossDeviceIssuanceInitiationRequest (
+  val oidcUri: String
+)
+
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 data class CredentialIssuanceSession(
   val id: String,
