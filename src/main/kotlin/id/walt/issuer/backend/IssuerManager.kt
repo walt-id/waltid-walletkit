@@ -203,11 +203,11 @@ object IssuerManager {
     val proof = credentialRequest.proof ?: throw BadRequestResponse("No proof given")
     val parsedJwt = SignedJWT.parse(proof.jwt)
     if(parsedJwt.header.keyID?.let { DidUrl.isDidUrl(it) } == false) throw BadRequestResponse("Proof is not DID signed")
-    if(!JwtService.getService().verify(proof.jwt)) throw BadRequestResponse("Proof invalid")
 
-    val did = DidUrl.from(parsedJwt.header.keyID).did
 
     return WalletContextManager.runWith(issuerContext) {
+      if(!JwtService.getService().verify(proof.jwt)) throw BadRequestResponse("Proof invalid")
+      val did = DidUrl.from(parsedJwt.header.keyID).did
       session.issuables!!.credentialsByType[credentialRequest.type]?.let {
         Signatory.getService().issue(it.type,
           ProofConfig(
