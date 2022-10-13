@@ -2,8 +2,6 @@ package id.walt.onboarding.backend
 
 import id.walt.crypto.toHexString
 import java.security.MessageDigest
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.*
 import javax.naming.Context
 import javax.naming.directory.DirContext

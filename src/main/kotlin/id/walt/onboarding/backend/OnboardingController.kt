@@ -132,37 +132,38 @@ object OnboardingController {
         "https://raw.githubusercontent.com/walt-id/waltid-ssikit-vclib/master/src/test/resources/schemas/ParticipantCredential.json"
 
     private fun oidcProviderMeta(ctx: Context) {
-        ctx.json(OIDCProviderMetadata(
-            Issuer(IssuerConfig.config.onboardingApiUrl),
-            listOf(SubjectType.PAIRWISE, SubjectType.PUBLIC),
-            URI("http://blank")
-        ).apply {
-            authorizationEndpointURI = URI("${IssuerConfig.config.onboardingApiUrl}/oidc/fulfillPAR")
-            pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par") // keep issuer-api
-            tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token") // keep issuer-api
-            setCustomParameter(
-                "credential_endpoint",
-                "${IssuerConfig.config.issuerApiUrl}/oidc/credential"
-            ) // keep issuer-api
-            setCustomParameter("nonce_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/nonce") // keep issuer-api
-            setCustomParameter("credential_manifests", listOf(
-                CredentialManifest(
-                    issuer = id.walt.model.dif.Issuer(IssuerManager.issuerDid, IssuerConfig.config.issuerClientName),
-                    outputDescriptors = listOf(
-                        OutputDescriptor(
-                            "ParticipantCredential",
-                            PARICIPANT_CREDENTIAL_SCHEMA_ID,
-                            "ParticipantCredential"
-                        )
-                    ),
-                    presentationDefinition = PresentationDefinition(
-                        "1",
-                        listOf()
-                    ) // Request empty presentation to be sent along with issuance request
+        ctx.json(
+            OIDCProviderMetadata(
+                Issuer(IssuerConfig.config.onboardingApiUrl),
+                listOf(SubjectType.PAIRWISE, SubjectType.PUBLIC),
+                URI("http://blank")
+            ).apply {
+                authorizationEndpointURI = URI("${IssuerConfig.config.onboardingApiUrl}/oidc/fulfillPAR")
+                pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par") // keep issuer-api
+                tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token") // keep issuer-api
+                setCustomParameter(
+                    "credential_endpoint",
+                    "${IssuerConfig.config.issuerApiUrl}/oidc/credential"
+                ) // keep issuer-api
+                setCustomParameter("nonce_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/nonce") // keep issuer-api
+                setCustomParameter("credential_manifests", listOf(
+                    CredentialManifest(
+                        issuer = id.walt.model.dif.Issuer(IssuerManager.issuerDid, IssuerConfig.config.issuerClientName),
+                        outputDescriptors = listOf(
+                            OutputDescriptor(
+                                "ParticipantCredential",
+                                PARICIPANT_CREDENTIAL_SCHEMA_ID,
+                                "ParticipantCredential"
+                            )
+                        ),
+                        presentationDefinition = PresentationDefinition(
+                            "1",
+                            listOf()
+                        ) // Request empty presentation to be sent along with issuance request
+                    )
+                ).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
                 )
-            ).map { net.minidev.json.parser.JSONParser().parse(Klaxon().toJsonString(it)) }
-            )
-        }.toJSONObject()
+            }.toJSONObject()
         )
     }
 
