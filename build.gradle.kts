@@ -44,6 +44,9 @@ dependencies {
     implementation("io.ktor:ktor-client-core:2.1.1")
     implementation("io.ktor:ktor-client-cio:2.1.1")
 
+    // Cache
+    implementation("io.github.pavleprica:kotlin-cache:1.1.1")
+
     // Testing
     //testImplementation(kotlin("test-junit"))
     testImplementation("io.mockk:mockk:1.12.8")

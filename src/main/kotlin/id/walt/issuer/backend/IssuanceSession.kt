@@ -2,15 +2,14 @@ package id.walt.issuer.backend
 
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import id.walt.model.oidc.CredentialAuthorizationDetails
-import id.walt.model.oidc.CredentialClaim
 
-data class IssuanceSession (
-val id: String,
-val credentialDetails: List<CredentialAuthorizationDetails>,
-val nonce: String,
-val isPreAuthorized: Boolean,
-var authRequest: AuthorizationRequest?,
-var issuables: Issuables?,
-var did: String? = null,
-val userPin: String? = null
+data class IssuanceSession(
+    val id: String,
+    val credentialDetails: List<CredentialAuthorizationDetails>,
+    val nonce: String,
+    val isPreAuthorized: Boolean,
+    var authRequest: AuthorizationRequest?,
+    var issuables: Issuables?,
+    var did: String? = null,
+    val userPin: String? = null
 )

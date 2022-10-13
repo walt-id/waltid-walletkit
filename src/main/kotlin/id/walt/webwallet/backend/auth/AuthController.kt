@@ -38,7 +38,7 @@ object AuthController {
         val userInfo = ctx.bodyAsClass(UserInfo::class.java)
         // TODO: verify login credentials!!
         ContextManager.runWith(WalletContextManager.getUserContext(userInfo)) {
-            if(DidService.listDids().isEmpty()) {
+            if (DidService.listDids().isEmpty()) {
                 DidService.create(DidMethod.key)
             }
         }

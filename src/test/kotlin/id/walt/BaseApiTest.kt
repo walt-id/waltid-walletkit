@@ -1,6 +1,5 @@
 package id.walt
 
-import com.beust.klaxon.JsonObject
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -17,7 +16,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 
 
@@ -62,7 +60,7 @@ abstract class BaseApiTest : AnnotationSpec() {
             routes {
                 loadRoutes()
             }
-        }.start("127.0.0.1", port)
+        }.start("0.0.0.0", port)
 
     }
 
@@ -78,10 +76,11 @@ abstract class BaseApiTest : AnnotationSpec() {
             contentType(ContentType.Application.Json)
             setBody(
                 mapOf(
-                "id" to email,
-                "email" to email,
-                "password" to "1234"
-            ))
+                    "id" to email,
+                    "email" to email,
+                    "password" to "1234"
+                )
+            )
         }.body<UserInfo>()
         return@runBlocking userInfo
     }
@@ -89,10 +88,12 @@ abstract class BaseApiTest : AnnotationSpec() {
     fun authenticateDid(): UserInfo = runBlocking {
         val userInfo = client.post("$url/api/auth/login") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf(
-                "id" to did,
-                "did" to did
-            ))
+            setBody(
+                mapOf(
+                    "id" to did,
+                    "did" to did
+                )
+            )
         }.body<UserInfo>()
         return@runBlocking userInfo
     }

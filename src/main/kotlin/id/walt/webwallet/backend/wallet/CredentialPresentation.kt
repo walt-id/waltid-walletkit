@@ -1,7 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
 import com.beust.klaxon.Json
-import com.beust.klaxon.Klaxon
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import id.walt.custodian.Custodian
@@ -13,10 +12,8 @@ import id.walt.model.oidc.klaxon
 import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.oidc.OIDCUtils
 import id.walt.vclib.credentials.VerifiablePresentation
-import id.walt.vclib.model.VerifiableCredential
 import id.walt.vclib.model.toCredential
 import id.walt.vclib.templates.VcTemplateManager
-import id.walt.webwallet.backend.auth.UserInfo
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.*
@@ -101,7 +98,8 @@ object CredentialPresentationManager {
         if (session.sessionInfo.presentableCredentials!!.isEmpty()) {
             if (session.sessionInfo.presentationDefinition.input_descriptors.isNotEmpty()) {
                 // credentials are required, but no suitable ones are found
-                session.sessionInfo.availableIssuers = CredentialIssuanceManager.findIssuersFor(session.sessionInfo.presentationDefinition)
+                session.sessionInfo.availableIssuers =
+                    CredentialIssuanceManager.findIssuersFor(session.sessionInfo.presentationDefinition)
             }
         }
 
