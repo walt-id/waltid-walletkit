@@ -225,9 +225,9 @@ object CredentialIssuanceManager {
         val issuer = issuerCache[session.issuerId]
         val user = session.user ?: throw BadRequestResponse("Session has not been confirmed by user")
         val did = session.did ?: throw BadRequestResponse("No DID assigned to session")
-
+        val redirectUriString = if(!session.isPreAuthorized) redirectURI.toString() else null
         val tokenResponse =
-            OIDC4CIService.getAccessToken(issuer, code, redirectURI.toString(), session.isPreAuthorized, userPin)
+            OIDC4CIService.getAccessToken(issuer, code, redirectUriString, session.isPreAuthorized, userPin)
         if (!tokenResponse.indicatesSuccess()) {
             return session
         }
