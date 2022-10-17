@@ -3,15 +3,20 @@ package id.walt.issuer.backend
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.google.common.cache.CacheBuilder
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jwt.SignedJWT
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
+import com.nimbusds.oauth2.sdk.GrantType
+import com.nimbusds.oauth2.sdk.PreAuthorizedCodeGrant
+import com.nimbusds.oauth2.sdk.id.Issuer
+import com.nimbusds.openid.connect.sdk.SubjectType
+import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.WALTID_DATA_ROOT
 import id.walt.crypto.KeyAlgorithm
+import id.walt.crypto.LdSignatureType
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
-import id.walt.model.oidc.CredentialAuthorizationDetails
-import id.walt.model.oidc.CredentialRequest
-import id.walt.model.oidc.IssuanceInitiationRequest
+import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.ecosystems.essif.EssifClient
@@ -27,6 +32,8 @@ import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
+import id.walt.vclib.model.AbstractVerifiableCredential
+import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -232,6 +239,58 @@ object IssuerManager {
             presentPath = "",
             receivePath = "",
             description = "cross device"
+        )
+    }
+
+    fun getOidcProviderMetadata() = OIDCProviderMetadata(
+        Issuer(IssuerConfig.config.issuerApiUrl),
+        listOf(SubjectType.PUBLIC),
+        URI("${IssuerConfig.config.issuerApiUrl}/oidc")
+    ).apply {
+        authorizationEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/fulfillPAR")
+        pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par")
+        tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token")
+        grantTypes = listOf(GrantType.AUTHORIZATION_CODE, PreAuthorizedCodeGrant.GRANT_TYPE)
+        setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/credential")
+        setCustomParameter(
+            "credential_issuer", CredentialIssuer(
+                listOf(
+                    CredentialIssuerDisplay(IssuerConfig.config.issuerApiUrl)
+                )
+            )
+        )
+        setCustomParameter("credentials_supported", VcTypeRegistry.getTypesWithTemplate().values
+            .filter {
+                it.isPrimary &&
+                    AbstractVerifiableCredential::class.java.isAssignableFrom(it.vc.java) &&
+                    !it.metadata.template?.invoke()?.credentialSchema?.id.isNullOrEmpty()
+            }
+            .associateBy({ cred -> cred.metadata.type.last() }) { cred ->
+                CredentialMetadata(
+                    formats = mapOf(
+                        "ldp_vc" to CredentialFormat(
+                            types = cred.metadata.type,
+                            cryptographic_binding_methods_supported = listOf("did"),
+                            cryptographic_suites_supported = LdSignatureType.values().map { it.name }
+                        ),
+                        "jwt_vc" to CredentialFormat(
+                            types = cred.metadata.type,
+                            cryptographic_binding_methods_supported = listOf("did"),
+                            cryptographic_suites_supported = listOf(
+                                JWSAlgorithm.ES256K,
+                                JWSAlgorithm.EdDSA,
+                                JWSAlgorithm.RS256,
+                                JWSAlgorithm.PS256
+                            ).map { it.name }
+                        )
+                    ),
+                    display = listOf(
+                        CredentialDisplay(
+                            name = cred.metadata.type.last()
+                        )
+                    )
+                )
+            }
         )
     }
 }

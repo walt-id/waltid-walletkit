@@ -171,58 +171,7 @@ object IssuerController {
     }
 
     fun oidcProviderMeta(ctx: Context) {
-        ctx.json(
-            OIDCProviderMetadata(
-                Issuer(IssuerConfig.config.issuerApiUrl),
-                listOf(SubjectType.PUBLIC),
-                URI("${IssuerConfig.config.issuerApiUrl}/oidc")
-            ).apply {
-                authorizationEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/fulfillPAR")
-                pushedAuthorizationRequestEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/par")
-                tokenEndpointURI = URI("${IssuerConfig.config.issuerApiUrl}/oidc/token")
-                setCustomParameter("credential_endpoint", "${IssuerConfig.config.issuerApiUrl}/oidc/credential")
-                setCustomParameter(
-                    "credential_issuer", CredentialIssuer(
-                        listOf(
-                            CredentialIssuerDisplay(IssuerConfig.config.issuerApiUrl)
-                        )
-                    )
-                )
-                setCustomParameter("credentials_supported", VcTypeRegistry.getTypesWithTemplate().values
-                    .filter {
-                        it.isPrimary &&
-                                AbstractVerifiableCredential::class.java.isAssignableFrom(it.vc.java) &&
-                                !it.metadata.template?.invoke()?.credentialSchema?.id.isNullOrEmpty()
-                    }
-                    .associateBy({ cred -> cred.metadata.type.last() }) { cred ->
-                        CredentialMetadata(
-                            formats = mapOf(
-                                "ldp_vc" to CredentialFormat(
-                                    types = cred.metadata.type,
-                                    cryptographic_binding_methods_supported = listOf("did"),
-                                    cryptographic_suites_supported = LdSignatureType.values().map { it.name }
-                                ),
-                                "jwt_vc" to CredentialFormat(
-                                    types = cred.metadata.type,
-                                    cryptographic_binding_methods_supported = listOf("did"),
-                                    cryptographic_suites_supported = listOf(
-                                        JWSAlgorithm.ES256K,
-                                        JWSAlgorithm.EdDSA,
-                                        JWSAlgorithm.RS256,
-                                        JWSAlgorithm.PS256
-                                    ).map { it.name }
-                                )
-                            ),
-                            display = listOf(
-                                CredentialDisplay(
-                                    name = cred.metadata.type.last()
-                                )
-                            )
-                        )
-                    }
-                )
-            }.toJSONObject()
-        )
+        ctx.json(IssuerManager.getOidcProviderMetadata().toJSONObject())
     }
 
     fun par(ctx: Context) {
