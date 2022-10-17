@@ -147,15 +147,17 @@ class SIOPv2Test : BaseApiTest() {
         }
         presentationSessionInfo!!.id shouldBe sessionId
         presentationSessionInfo.did shouldBe did
-        presentationSessionInfo.presentableCredentials?.size shouldBe 1
-        presentationSessionInfo.presentableCredentials!!.first().credentialId shouldBe vc.id
+        presentationSessionInfo.presentableCredentials shouldNotBe null
+        val presentableCredentials = presentationSessionInfo.presentableCredentials!!.filter { c -> c.credentialId == vc.id }
+        presentableCredentials.size shouldBe 1
+        presentableCredentials.first().credentialId shouldBe vc.id
         presentationSessionInfo.redirectUri shouldBe verificationReq.redirectionURI.toString()
 
         // wallet ui confirms presentation request
         val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
-            setBody(klaxon.parseArray<Map<String, Any>?>(klaxon.toJsonString(presentationSessionInfo.presentableCredentials!!)))
+            setBody(klaxon.parseArray<Map<String, Any>?>(klaxon.toJsonString(presentableCredentials)))
         }.bodyAsText().let { klaxon.parse<PresentationResponse>(it) }
         
         presentationResponse!!.id_token shouldBe null

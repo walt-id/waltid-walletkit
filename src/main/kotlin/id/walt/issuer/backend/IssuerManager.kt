@@ -214,7 +214,7 @@ object IssuerManager {
         if (parsedJwt.header.keyID?.let { DidUrl.isDidUrl(it) } == false) throw BadRequestResponse("Proof is not DID signed")
 
 
-        return WalletContextManager.runWith(issuerContext) {
+        return ContextManager.runWith(issuerContext) {
             if (!JwtService.getService().verify(proof.jwt)) throw BadRequestResponse("Proof invalid")
             val did = DidUrl.from(parsedJwt.header.keyID).did
             session.issuables!!.credentialsByType[credentialRequest.type]?.let {
