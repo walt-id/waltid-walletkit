@@ -191,7 +191,7 @@ class SIOPv2Test : BaseApiTest() {
 
     @Test
     fun testPreAuthzIssuanceFlow() {
-        val preAuthReq = IssuerManager.newIssuanceInitiationRequest("testuser", Issuables(
+        val preAuthReq = IssuerManager.newIssuanceInitiationRequest(Issuables(
             credentials = listOf(IssuableCredential("", "VerifiableId", null))
         ), preAuthorized = true)
         val userInfo = UserInfo("testuser")
