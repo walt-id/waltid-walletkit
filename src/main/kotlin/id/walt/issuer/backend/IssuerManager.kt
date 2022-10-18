@@ -81,7 +81,7 @@ object IssuerManager {
         }
     }
 
-    fun listIssuableCredentialsFor(user: String): Issuables {
+    fun listIssuableCredentials(): Issuables {
         return Issuables(
             credentials = listOf(
                 "VerifiableId",
@@ -144,7 +144,6 @@ object IssuerManager {
     }
 
     fun newIssuanceInitiationRequest(
-        user: String,
         selectedIssuables: Issuables,
         preAuthorized: Boolean,
         userPin: String? = null

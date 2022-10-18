@@ -51,7 +51,7 @@ object IssuerController {
                         }
                             .queryParam<String>("sessionId")
                             .json<Issuables>("200"),
-                        IssuerController::listIssuableCredentials), UserRole.AUTHORIZED)
+                        IssuerController::listIssuableCredentials))
                     path("issuance") {
                         post("request", documented(
                             document().operation {
@@ -66,7 +66,7 @@ object IssuerController {
                                 .body<Issuables>()
                                 .result<String>("200"),
                             IssuerController::requestIssuance
-                        ), UserRole.AUTHORIZED)
+                        ))
                     }
                 }
                 path("oidc") {
@@ -128,25 +128,14 @@ object IssuerController {
             }
 
     fun listIssuableCredentials(ctx: Context) {
-        val userInfo = JWTService.getUserInfo(ctx)
-        if (userInfo == null) {
-            ctx.status(HttpCode.UNAUTHORIZED)
-            return
-        }
         val sessionId = ctx.queryParam("sessionId")
         if (sessionId == null)
-            ctx.json(IssuerManager.listIssuableCredentialsFor(userInfo.id))
+            ctx.json(IssuerManager.listIssuableCredentials())
         else
             ctx.json(IssuerManager.getIssuanceSession(sessionId)?.issuables ?: Issuables(credentials = listOf()))
     }
 
     fun requestIssuance(ctx: Context) {
-        val userInfo = JWTService.getUserInfo(ctx)
-        if (userInfo == null) {
-            ctx.status(HttpCode.UNAUTHORIZED)
-            return
-        }
-
         val wallet = ctx.queryParam("walletId")?.let { IssuerConfig.config.wallets.getOrDefault(it, null) }
             ?: IssuerManager.getXDeviceWallet()
         val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
@@ -165,7 +154,7 @@ object IssuerController {
             val userPin = ctx.queryParam("userPin")?.ifBlank { null }
             val isPreAuthorized = ctx.queryParam("isPreAuthorized")?.toBoolean() ?: false
             val initiationRequest =
-                IssuerManager.newIssuanceInitiationRequest(userInfo.id, selectedIssuables, isPreAuthorized, userPin)
+                IssuerManager.newIssuanceInitiationRequest(selectedIssuables, isPreAuthorized, userPin)
             ctx.result("${wallet.url}/${wallet.receivePath}?${initiationRequest.toQueryString()}")
         }
     }
