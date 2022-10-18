@@ -276,6 +276,7 @@ object IssuerManager {
                             types = cred.metadata.type,
                             cryptographic_binding_methods_supported = listOf("did"),
                             cryptographic_suites_supported = listOf(
+                                JWSAlgorithm.ES256,
                                 JWSAlgorithm.ES256K,
                                 JWSAlgorithm.EdDSA,
                                 JWSAlgorithm.RS256,
