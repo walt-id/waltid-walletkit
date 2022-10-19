@@ -9,8 +9,7 @@ import com.nimbusds.oauth2.sdk.util.URIUtils
 import com.nimbusds.oauth2.sdk.util.URLUtils
 import id.walt.BaseApiTest
 import id.walt.custodian.Custodian
-import id.walt.issuer.backend.IssuerConfig
-import id.walt.issuer.backend.IssuerController
+import id.walt.issuer.backend.*
 import id.walt.model.DidMethod
 import id.walt.model.oidc.klaxon
 import id.walt.onboarding.backend.OnboardingController
@@ -40,9 +39,11 @@ import id.walt.webwallet.backend.rest.RestAPI
 import io.javalin.apibuilder.ApiBuilder
 import io.kotest.common.runBlocking
 import io.kotest.core.spec.style.AnnotationSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.nulls.beNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldHave
 import io.kotest.matchers.shouldNot
 import io.kotest.matchers.shouldNotBe
 import io.ktor.client.*
@@ -101,6 +102,10 @@ class SIOPv2Test : BaseApiTest() {
             walletUiUrl = "$url",
             walletApiUrl = "$url/api"
         )
+        every { IssuerConfig.config } returns IssuerConfig(
+            issuerUiUrl = "$url",
+            issuerApiUrl = "$url/issuer-api"
+        )
         every { UserContextLoader.load(any()) } returns UserContext("testuser",
             HKVKeyStoreService(),
             HKVVcStoreService(),
@@ -142,15 +147,17 @@ class SIOPv2Test : BaseApiTest() {
         }
         presentationSessionInfo!!.id shouldBe sessionId
         presentationSessionInfo.did shouldBe did
-        presentationSessionInfo.presentableCredentials?.size shouldBe 1
-        presentationSessionInfo.presentableCredentials!!.first().credentialId shouldBe vc.id
+        presentationSessionInfo.presentableCredentials shouldNotBe null
+        val presentableCredentials = presentationSessionInfo.presentableCredentials!!.filter { c -> c.credentialId == vc.id }
+        presentableCredentials.size shouldBe 1
+        presentableCredentials.first().credentialId shouldBe vc.id
         presentationSessionInfo.redirectUri shouldBe verificationReq.redirectionURI.toString()
 
         // wallet ui confirms presentation request
         val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
-            setBody(klaxon.parseArray<Map<String, Any>?>(klaxon.toJsonString(presentationSessionInfo.presentableCredentials!!)))
+            setBody(klaxon.parseArray<Map<String, Any>?>(klaxon.toJsonString(presentableCredentials)))
         }.bodyAsText().let { klaxon.parse<PresentationResponse>(it) }
         
         presentationResponse!!.id_token shouldBe null
@@ -180,5 +187,21 @@ class SIOPv2Test : BaseApiTest() {
         verificationResult.vps[0].vp.holder shouldBe did
         verificationResult.vps[0].vp.verifiableCredential shouldHaveSize 1
         verificationResult.vps[0].vp.verifiableCredential[0].id shouldBe vc.id
+    }
+
+    @Test
+    fun testPreAuthzIssuanceFlow() {
+        val preAuthReq = IssuerManager.newIssuanceInitiationRequest(Issuables(
+            credentials = listOf(IssuableCredential("", "VerifiableId", null))
+        ), preAuthorized = true)
+        val userInfo = UserInfo("testuser")
+        val session = ContextManager.runWith(UserContextLoader.load(userInfo.id)) {
+            val subjectDid = DidService.create(DidMethod.key)
+            val sessionId = CredentialIssuanceManager.startIssuerInitiatedIssuance(preAuthReq)
+            CredentialIssuanceManager.continueIssuerInitiatedIssuance(sessionId, subjectDid, userInfo, null)
+        }
+        session.credentials shouldNotBe null
+        session.credentials!!.size shouldBe 1
+        session.credentials!!.first().type shouldContain "VerifiableId"
     }
 }
