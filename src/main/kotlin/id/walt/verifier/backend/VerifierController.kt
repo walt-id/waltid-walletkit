@@ -13,11 +13,15 @@ import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import mu.KotlinLogging
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 object VerifierController {
+
+    private val log = KotlinLogging.logger { }
+
     val routes
         get() =
             path("") {
@@ -185,10 +189,8 @@ object VerifierController {
     val recentlyVerifiedResponses = customTimeBasedCache<String, String>(java.time.Duration.ofSeconds(300))
 
     fun hasRecentlyVerified(ctx: Context) {
-        println("Checking")
         val accessToken = ctx.queryParam("state").toString()
         val opt = recentlyVerifiedResponses[accessToken]
-        println("ACCESS TOKEN - $opt")
 
         if (opt.isPresent) {
             ctx.status(200).result(opt.get())
@@ -198,20 +200,22 @@ object VerifierController {
     }
 
     fun verifySIOPResponse(ctx: Context) {
+        log.debug { "Verifying SIOP response..." }
         val verifierUiUrl = ctx.queryParam("verifierUiUrl") ?: VerifierConfig.config.verifierUiUrl
         val siopResponse =
             SIOPv2Response.fromFormParams(ctx.formParamMap().map { kv -> Pair(kv.key, kv.value.first()) }.toMap())
 
         val result = VerifierManager.getService().verifyResponse(siopResponse)
+        log.debug { "SIOP requests response: $result" }
 
         val accessToken = siopResponse.state!!
 
         val url = VerifierManager.getService().getVerificationRedirectionUri(result, verifierUiUrl).toString()
 
-        println("HAVE VERIFIED: $verifierUiUrl")
+        log.debug { "The UI URL $verifierUiUrl was verified." }
         recentlyVerifiedResponses[accessToken] = url
-        println("NOW $accessToken WILL VISIT $url")
-        println("RESPONSE: $result")
+        log.debug { "Now $accessToken will be redirected to $url!" }
+        log.debug { "Response is: $result" }
 
         ctx.status(HttpCode.FOUND).header("Location", url)
     }
