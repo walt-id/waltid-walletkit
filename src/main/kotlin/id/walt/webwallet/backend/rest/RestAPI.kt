@@ -54,7 +54,15 @@ object RestAPI {
             enableDevLogging()
             enableCorsForAllOrigins()
             requestLogger { ctx, ms ->
-                log.debug { "Received req.: ${ctx.url()} - Time: ${ms}ms => ${ctx.body()}" }
+                if (ctx.url().endsWith("isVerified")) return@requestLogger
+
+                log.debug {
+                    StringBuilder("HTTP: ${ctx.method()} ${ctx.fullUrl()} - ${ctx.status()} in ${ms}ms")
+                        .apply {
+                            if (ctx.body().isNotEmpty()) append("\nRequest: ${ctx.body()}")
+                            if (!ctx.resultString().isNullOrEmpty()) append("\nResponse: ${ctx.resultString()}")
+                        }.toString()
+                }
             }
             accessManager(accessManager)
             registerPlugin(RouteOverviewPlugin("/api-routes"))
