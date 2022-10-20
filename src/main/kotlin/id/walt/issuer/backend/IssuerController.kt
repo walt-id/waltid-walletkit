@@ -79,6 +79,15 @@ object IssuerController {
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
+                    get(".well-known/openid-credential-issuer", documented(
+                        document().operation {
+                            it.summary("get OIDC provider meta data")
+                                .addTagsItem("Issuer")
+                                .operationId("oidcProviderMeta")
+                        }
+                            .json<OIDCProviderMetadata>("200"),
+                        IssuerController::oidcProviderMeta
+                    ))
                     post("par", documented(
                         document().operation {
                             it.summary("pushed authorization request")
