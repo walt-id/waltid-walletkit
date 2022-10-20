@@ -139,6 +139,13 @@ spec:
     - host: jff.walt.id
       http:
         paths:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: walletkit
+                port:
+                  number: 80
           - path: /issuer-api/
             pathType: Prefix
             backend:
