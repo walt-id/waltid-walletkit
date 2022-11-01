@@ -8,6 +8,7 @@ import com.nimbusds.oauth2.sdk.id.State
 import com.nimbusds.openid.connect.sdk.Nonce
 import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
+import id.walt.issuer.backend.IssuerConfig
 import id.walt.model.dif.*
 import id.walt.model.oidc.SIOPv2Response
 import id.walt.servicematrix.BaseService
@@ -155,10 +156,16 @@ abstract class VerifierManager : BaseService() {
 
     open fun getVerificationRedirectionUri(
         verificationResult: SIOPResponseVerificationResult,
-        uiUrl: String? = VerifierConfig.config.verifierUiUrl
+        uiUrl: String? = VerifierConfig.config.verifierUiUrl,
+        uiUrl1: String? = IssuerConfig.config.issuerUiUrl
     ): URI {
+        return URI.create("$uiUrl1")
+
+        /*
         return URI.create("$uiUrl/success/?access_token=${verificationResult.state}")
-        /*if(verificationResult.isValid)
+
+
+        if(verificationResult.isValid)
           return URI.create("$uiUrl/success/?access_token=${verificationResult.state}")
         else
           return URI.create("$uiUrl/error/?access_token=${verificationResult.state ?: ""}")
