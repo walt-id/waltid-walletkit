@@ -41,6 +41,7 @@ import io.javalin.http.BadRequestResponse
 import javalinjwt.JWTProvider
 import java.net.URI
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.*
 
@@ -216,6 +217,7 @@ object IssuerManager {
         return ContextManager.runWith(issuerContext) {
             if (!JwtService.getService().verify(proof.jwt)) throw BadRequestResponse("Proof invalid")
             val did = DidUrl.from(parsedJwt.header.keyID).did
+            val now = Instant.now()
             session.issuables!!.credentialsByType[credentialRequest.type]?.let {
                 Signatory.getService().issue(it.type,
                     ProofConfig(
@@ -224,7 +226,9 @@ object IssuerManager {
                             "jwt_vc" -> ProofType.JWT
                             else -> ProofType.LD_PROOF
                         },
-                        subjectDid = did
+                        subjectDid = did,
+                        issueDate = now,
+                        validDate = now
                     ),
                     dataProvider = it.credentialData?.let { cd -> MergingDataProvider(cd) })
             }
