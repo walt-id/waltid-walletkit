@@ -22,7 +22,7 @@ repositories {
 dependencies {
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT")
-    implementation("id.walt:waltid-ssikit-vclib:1.24.1")
+    implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
     implementation("io.javalin:javalin-bundle:4.6.4")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
