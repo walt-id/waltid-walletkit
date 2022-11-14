@@ -43,7 +43,13 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.4")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
+    // Ktor
+    implementation("io.ktor:ktor-client-jackson:2.1.2")
+    implementation("io.ktor:ktor-client-content-negotiation:2.1.2")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.3")
+    implementation("io.ktor:ktor-client-core:2.1.2")
+    implementation("io.ktor:ktor-client-cio:2.1.2")
+    implementation("io.ktor:ktor-client-logging:2.1.2")
 
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
