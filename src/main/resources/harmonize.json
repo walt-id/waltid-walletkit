@@ -1,6 +1,6 @@
 {
-  "GATEWAY_URL": "api-url",
-  "OAUTH_URL": "oauth-url",
+  "GATEWAY_URL": "url",
+  "OAUTH_URL": "url",
   "OAUTH_CLIENT_ID": "client-id",
   "OAUTH_CLIENT_SECRET": "null",
   "USER_ID": "user-id"
