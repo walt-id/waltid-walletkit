@@ -50,6 +50,7 @@ dependencies {
     implementation("io.ktor:ktor-client-core:2.1.2")
     implementation("io.ktor:ktor-client-cio:2.1.2")
     implementation("io.ktor:ktor-client-logging:2.1.2")
+    implementation("io.ktor:ktor-client-auth:2.1.2")
 
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
