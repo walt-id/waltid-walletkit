@@ -124,13 +124,13 @@ object WalletController {
                     // called by wallet UI
                     get("continue", documented(
                         document().operation {
-                            it.summary("Continue presentation requested by verifer")
+                            it.summary("Continue presentation requested by verifer, returns CredentialPresentationSession")
                                 .operationId("continuePresentation")
                                 .addTagsItem("Presentation")
                         }
                             .queryParam<String>("sessionId")
                             .queryParam<String>("did")
-                            .json<CredentialPresentationSession>("200"),
+                            .result<String>("200", "application/json", applyUpdates = null),
                         WalletController::continuePresentation
                     ), UserRole.AUTHORIZED)
                     // called by wallet UI
@@ -406,8 +406,8 @@ object WalletController {
         ctx.contentType(ContentType.APPLICATION_JSON).result(
             klaxon.toJsonString(
                 CredentialPresentationManager.continueCredentialPresentationFor(
-                    sessionId,
-                    did
+                    sessionId = sessionId,
+                    did = did
                 ).sessionInfo
             )
         )

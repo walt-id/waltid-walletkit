@@ -3,7 +3,7 @@ package id.walt.webwallet.backend.wallet
 import id.walt.WALTID_DATA_ROOT
 import id.walt.model.Did
 import id.walt.model.DidMethod
-import id.walt.model.DidWeb
+import id.walt.model.did.DidWeb
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
 import id.walt.services.hkvstore.FileSystemHKVStore

@@ -153,9 +153,9 @@ object CredentialIssuanceManager {
         }
 
         return OIDC4CIService.executePushedAuthorizationRequest(
-            issuer,
-            redirectURI,
-            credentialDetails,
+            issuer = issuer,
+            redirectUri = redirectURI,
+            credentialDetails = credentialDetails,
             nonce = session.nonce,
             state = session.id,
             wallet_issuer = WalletConfig.config.walletApiUrl,
