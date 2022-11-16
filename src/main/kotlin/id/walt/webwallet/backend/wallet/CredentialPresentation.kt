@@ -77,9 +77,10 @@ object CredentialPresentationManager {
     }
 
     private fun getPresentableCredentials(session: CredentialPresentationSession): List<PresentableCredential> {
-        return OIDCUtils.findCredentialsFor(session.sessionInfo.presentationDefinition, session.sessionInfo.did).flatMap { kv ->
-            kv.value.map { credId -> PresentableCredential(credId, kv.key) }
-        }.toList()
+        return OIDCUtils.findCredentialsFor(session.sessionInfo.presentationDefinition, session.sessionInfo.did)
+            .flatMap { kv ->
+                kv.value.map { credId -> PresentableCredential(credId, kv.key) }
+            }.toList()
     }
 
     private fun getRequiredSchemaIds(input_descriptors: List<InputDescriptor>): Set<String> {

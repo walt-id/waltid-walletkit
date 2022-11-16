@@ -1,26 +1,21 @@
 package id.walt.issuer.backend
 
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.oauth2.sdk.*
 import com.nimbusds.oauth2.sdk.http.ServletUtils
-import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.nimbusds.oauth2.sdk.token.RefreshToken
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
-import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.crypto.LdSignatureType
-import id.walt.model.oidc.*
+import id.walt.model.oidc.CredentialRequest
+import id.walt.model.oidc.CredentialResponse
+import id.walt.model.oidc.klaxon
 import id.walt.services.oidc.OIDC4CIService
-import id.walt.vclib.model.AbstractVerifiableCredential
 import id.walt.vclib.model.toCredential
-import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
-import id.walt.webwallet.backend.auth.UserRole
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
@@ -152,7 +147,7 @@ object IssuerController {
         val selectedIssuables = ctx.bodyAsClass<Issuables>()
         if (selectedIssuables.credentials.isEmpty()) {
             ctx.status(HttpCode.BAD_REQUEST).result("No issuable credential selected")
-            return;
+            return
         }
 
         if (session != null) {
@@ -218,12 +213,10 @@ object IssuerController {
 
     fun token(ctx: Context) {
         val tokenReq = TokenRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
-        val code = if (tokenReq.authorizationGrant.type == GrantType.AUTHORIZATION_CODE) {
-            (tokenReq.authorizationGrant as AuthorizationCodeGrant).authorizationCode
-        } else if (tokenReq.authorizationGrant.type == PreAuthorizedCodeGrant.GRANT_TYPE) {
-            (tokenReq.authorizationGrant as PreAuthorizedCodeGrant).code
-        } else {
-            throw BadRequestResponse("Unsupported grant type")
+        val code = when (tokenReq.authorizationGrant.type) {
+            GrantType.AUTHORIZATION_CODE -> (tokenReq.authorizationGrant as AuthorizationCodeGrant).authorizationCode
+            PreAuthorizedCodeGrant.GRANT_TYPE -> (tokenReq.authorizationGrant as PreAuthorizedCodeGrant).code
+            else -> throw BadRequestResponse("Unsupported grant type")
         }
         val sessionId = IssuerManager.validateAuthorizationCode(code.value)
         val session = IssuerManager.getIssuanceSession(sessionId)
