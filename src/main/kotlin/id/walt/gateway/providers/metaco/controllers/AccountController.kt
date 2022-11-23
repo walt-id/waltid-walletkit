@@ -3,31 +3,45 @@ package id.walt.gateway.providers.metaco.controllers
 import id.walt.gateway.dto.AccountParameter
 import id.walt.gateway.dto.BalanceData
 import id.walt.gateway.dto.TransactionData
-import id.walt.gateway.providers.metaco.AuthService
-import id.walt.gateway.providers.metaco.MetacoClient
-import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
+import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
+import id.walt.gateway.providers.metaco.mockapi.TransactionUseCaseImpl
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TransactionUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
 object AccountController {
-    private val accountUseCase: AccountUseCase
-    private val transactionUseCase: TransactionUseCase
+    private val accountUseCase: AccountUseCase = AccountUseCaseImpl()
+    private val transactionUseCase: TransactionUseCase = TransactionUseCaseImpl()
 
     fun profile(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        ctx.json(accountUseCase.profile(AccountParameter("", accountId)))
+        accountUseCase.profile(AccountParameter("", accountId))
+            .onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
     }
 
     fun balance(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        ctx.json(accountUseCase.balance(AccountParameter("", accountId)))
+        accountUseCase.balance(AccountParameter("", accountId))
+            .onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
     }
 
     fun transactions(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        ctx.json(accountUseCase.transactions(AccountParameter("", accountId)))
+        accountUseCase.transactions(AccountParameter("", accountId))
+            .onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
     }
 
     fun profileDoc() = document().operation {

@@ -1,7 +1,7 @@
 package id.walt.gateway.providers.metaco.restapi.order
 
-import id.walt.gateway.providers.metaco.AuthService
 import id.walt.gateway.providers.metaco.repositories.OrderRepository
+import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
 import id.walt.gateway.providers.metaco.restapi.CommonHttp
 import id.walt.gateway.providers.metaco.restapi.order.model.Order
