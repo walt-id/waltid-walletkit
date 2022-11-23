@@ -8,7 +8,7 @@ import io.javalin.plugin.openapi.dsl.documented
 object TransactionRouter: Router {
     override fun routes() {
         ApiBuilder.path("transactions") {
-            ApiBuilder.get("{transactionId}", documented(TransactionController.detailDocs(), TransactionController::detail))
+            ApiBuilder.post("sell", documented(TransactionController.sellDocs(), TransactionController::sell))
         }
     }
 }

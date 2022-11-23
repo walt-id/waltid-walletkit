@@ -1,7 +1,6 @@
-package id.walt.webwallet.backend.clients.metaco.services
+package id.walt.gateway.providers.metaco.restapi
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.metaco.harmonize.sig.Signature
+import id.walt.gateway.providers.metaco.ProviderConfig
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -17,12 +16,6 @@ import kotlinx.serialization.Serializable
 import java.util.*
 
 class AuthService {
-    private val userId = "user-id"
-    private val rootDomainId = "domain-id"
-    private val pubKey = "pub-key"
-    private val privKey = "priv-key"
-    private val signServiceUrl = "sign-service"
-    private val authServiceUrl = "auth-service"
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -37,28 +30,21 @@ class AuthService {
     fun authorize() = generateToken(signPayload(UUID.randomUUID().toString()))
 
     private fun signPayload(payload: String) = runBlocking {
-        val response = client.post(signServiceUrl) {
+        client.post(ProviderConfig.signServiceUrl) {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("payload" to payload, "privateKey" to privKey))
+            setBody(mapOf("payload" to payload, "privateKey" to ProviderConfig.privateKey))
         }.body<SignChallengeResponse>()
-        Signature(
-            mapOf(
-                "canonicalPayload" to response.canonicalPayload,
-                "hash" to response.hash,
-                "signature" to response.signature
-            )
-        )
     }
 
-    private fun generateToken(signature: Signature) = runBlocking {
+    private fun generateToken(signature: SignChallengeResponse) = runBlocking {
         client.submitForm(
-            url = authServiceUrl,
+            url = ProviderConfig.oauthUrl,
             formParameters = Parameters.build {
-                append("grant_type", "grant-type")
-                append("client_id", "client-id")
+                append("grant_type", ProviderConfig.grantType)
+                append("client_id", ProviderConfig.oauthClientId)
                 append("challenge", signature.canonicalPayload)
                 append("signature", signature.signature)
-                append("public_key", pubKey)
+                append("public_key", ProviderConfig.publicKey)
             }).body<TokenResponse>()
     }
 

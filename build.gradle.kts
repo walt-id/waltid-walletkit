@@ -25,7 +25,7 @@ dependencies {
     implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
     // Metaco
-    implementation("com.metaco:sdk:2.1.0")
+//    implementation("com.metaco:sdk:2.1.0")
 
     implementation("io.javalin:javalin-bundle:4.6.4")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
