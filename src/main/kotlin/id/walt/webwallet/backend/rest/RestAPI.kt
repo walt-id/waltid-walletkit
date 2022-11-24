@@ -4,6 +4,7 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import com.beust.klaxon.Klaxon
+import id.walt.gateway.GatewayRouter
 import id.walt.issuer.backend.IssuerController
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.verifier.backend.VerifierController
@@ -36,6 +37,7 @@ object RestAPI {
             AuthController.routes
             WalletController.routes
             DidWebRegistryController.routes
+            GatewayRouter.routes()
         }
         ApiBuilder.path("verifier-api") {
             VerifierController.routes
