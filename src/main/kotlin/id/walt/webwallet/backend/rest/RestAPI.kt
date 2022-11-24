@@ -21,6 +21,7 @@ import io.javalin.plugin.openapi.OpenApiOptions
 import io.javalin.plugin.openapi.OpenApiPlugin
 import io.javalin.plugin.openapi.ui.ReDocOptions
 import io.javalin.plugin.openapi.ui.SwaggerOptions
+import io.ktor.http.*
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
@@ -61,6 +62,8 @@ object RestAPI {
                         .apply {
                             if (ctx.body().isNotEmpty()) append("\nRequest: ${ctx.body()}")
                             if (!ctx.resultString().isNullOrEmpty()) append("\nResponse: ${ctx.resultString()}")
+
+                            if (!ctx.res.getHeader(HttpHeaders.Location).isNullOrEmpty()) append("\nLocation: ${ctx.res.getHeader(HttpHeaders.Location)}")
                         }.toString()
                 }
             }

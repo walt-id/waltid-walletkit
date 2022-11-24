@@ -130,59 +130,66 @@ object VerifierController {
         ctx.json(VerifierConfig.config.wallets.values)
     }
 
-    fun presentCredential(ctx: Context) {
-        val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets.get(it) }
-            ?: throw BadRequestResponse("Unknown or missing walletId")
-        val schemaUris = ctx.queryParams("schemaUri")
-        val vcTypes = ctx.queryParams("vcType")
+    private fun getPresentationCustomQueryParams(queryParamMap: Map<String, List<String>>): String {
+        val standardQueryParams = listOf("walletId", "schemaUri", "vcType", "verificationCallbackUrl")
+
+        val customQueryParams = queryParamMap
+            .filter { it.key !in standardQueryParams }
+            .flatMap { entry ->
+                entry.value.map { value -> "${entry.key}=${URLEncoder.encode(value, StandardCharsets.UTF_8)}" }
+            }.joinToString("&")
+
+       return customQueryParams
+    }
+
+    private fun Context.getSchemaOrVcType(): Triple<List<String>, List<String>, String?> {
+        val schemaUris = queryParams("schemaUri")
+        val vcTypes = queryParams("vcType")
         if (schemaUris.isEmpty() && vcTypes.isEmpty()) {
             throw BadRequestResponse("No schema URI(s) or VC type(s) given")
         }
-        val customQueryParams =
-            ctx.queryParamMap().keys.filter { k -> k != "walletId" && k != "schemaUri" && k != "vcType" }.flatMap { k ->
-                ctx.queryParams(k).map { v -> "$k=${URLEncoder.encode(v, StandardCharsets.UTF_8)}" }
-            }.joinToString("&")
-        val req = if (schemaUris.isNotEmpty()) {
-            VerifierManager.getService().newRequestBySchemaUris(
-                URI.create("${wallet.url}/${wallet.presentPath}"),
-                schemaUris.toSet(),
-                redirectCustomUrlQuery = customQueryParams
-            )
-        } else {
-            VerifierManager.getService().newRequestByVcTypes(
-                URI.create("${wallet.url}/${wallet.presentPath}"),
-                vcTypes.toSet(),
-                redirectCustomUrlQuery = customQueryParams
-            )
-        }
+        val verificationCallbackUrl: String? = queryParam("verificationCallbackUrl")
+
+        return Triple(schemaUris, vcTypes, verificationCallbackUrl)
+    }
+
+    val verifierManager = VerifierManager.getService()
+
+    fun presentCredential(ctx: Context) {
+        val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets[it] }
+            ?: throw BadRequestResponse("Unknown or missing walletId")
+
+        val (schemaUris, vcTypes, verificationCallbackUrl) = ctx.getSchemaOrVcType()
+        log.debug { "Found requested callback: $verificationCallbackUrl" }
+
+        val customQueryParams = getPresentationCustomQueryParams(ctx.queryParamMap())
+
+        val req = verifierManager.newRequestBySchemaOrVc(
+            walletUrl = URI.create("${wallet.url}/${wallet.presentPath}"),
+            schemaUris = schemaUris.toSet(),
+            vcTypes = vcTypes.toSet(),
+            redirectCustomUrlQuery = customQueryParams,
+            responseMode = ResponseMode.FORM_POST,
+            verificationCallbackUrl = verificationCallbackUrl
+        )
+
         ctx.status(HttpCode.FOUND).header("Location", req.toURI().toString())
     }
 
     fun presentCredentialXDevice(ctx: Context) {
-        val schemaUris = ctx.queryParams("schemaUri")
-        val vcTypes = ctx.queryParams("vcType")
-        if (schemaUris.isEmpty() && vcTypes.isEmpty()) {
-            throw BadRequestResponse("No schema URI(s) or VC type(s) given")
-        }
-        val customQueryParams =
-            ctx.queryParamMap().keys.filter { k -> k != "walletId" && k != "schemaUri" && k != "vcType" }.flatMap { k ->
-                ctx.queryParams(k).map { v -> "$k=${URLEncoder.encode(v, StandardCharsets.UTF_8)}" }
-            }.joinToString("&")
-        val req = if (schemaUris.isNotEmpty()) {
-            VerifierManager.getService().newRequestBySchemaUris(
-                URI.create("openid:///"),
-                schemaUris.toSet(),
-                redirectCustomUrlQuery = customQueryParams,
-                responseMode = ResponseMode("post")
-            )
-        } else {
-            VerifierManager.getService().newRequestByVcTypes(
-                URI.create("openid:///"),
-                vcTypes.toSet(),
-                redirectCustomUrlQuery = customQueryParams,
-                responseMode = ResponseMode("post")
-            )
-        }
+        val (schemaUris, vcTypes, verificationCallbackUrl) = ctx.getSchemaOrVcType()
+
+        val customQueryParams = getPresentationCustomQueryParams(ctx.queryParamMap())
+
+        val req = verifierManager.newRequestBySchemaOrVc(
+            walletUrl = URI.create("openid:///"),
+            schemaUris = schemaUris.toSet(),
+            vcTypes = vcTypes.toSet(),
+            redirectCustomUrlQuery = customQueryParams,
+            responseMode = ResponseMode("post"),
+            verificationCallbackUrl = verificationCallbackUrl
+        )
+
         ctx.json(PresentationRequestInfo(req.state.value, req.toURI().toString()))
     }
 
@@ -192,10 +199,9 @@ object VerifierController {
         val accessToken = ctx.queryParam("state").toString()
         val opt = recentlyVerifiedResponses[accessToken]
 
-        if (opt.isPresent) {
-            ctx.status(200).result(opt.get())
-        } else if (opt.isEmpty) {
-            ctx.status(404)
+        when {
+            opt.isPresent -> ctx.status(200).result(opt.get())
+            opt.isEmpty -> ctx.status(404)
         }
     }
 
@@ -205,17 +211,27 @@ object VerifierController {
         val siopResponse =
             SIOPv2Response.fromFormParams(ctx.formParamMap().map { kv -> Pair(kv.key, kv.value.first()) }.toMap())
 
-        val result = VerifierManager.getService().verifyResponse(siopResponse)
-        log.debug { "SIOP requests response: $result" }
+        val result = verifierManager.verifyResponse(siopResponse)
+        val siopVerificationResult = result.first
+        val callbackRequestedRedirectUrl = result.second
 
         val accessToken = siopResponse.state!!
 
-        val url = VerifierManager.getService().getVerificationRedirectionUri(result, verifierUiUrl).toString()
+        log.debug { "$accessToken: SIOP requests response: $siopVerificationResult" }
+        log.debug { "$accessToken: The UI URL $verifierUiUrl has run through the verification process." }
+        log.debug { "$accessToken: Callback?: $callbackRequestedRedirectUrl" }
 
-        log.debug { "The UI URL $verifierUiUrl was verified." }
-        recentlyVerifiedResponses[accessToken] = url
+        val url = if (callbackRequestedRedirectUrl != null) {
+            callbackRequestedRedirectUrl
+        } else {
+            val url = verifierManager.getVerificationRedirectionUri(siopVerificationResult, verifierUiUrl).toString()
+
+            log.debug { "Setting recentlyVerifiedResponses for \"$accessToken\" to redirect to \"$url\"" }
+            recentlyVerifiedResponses[accessToken] = url
+
+            url
+        }
         log.debug { "Now $accessToken will be redirected to $url!" }
-        log.debug { "Response is: $result" }
 
         ctx.status(HttpCode.FOUND).header("Location", url)
     }
