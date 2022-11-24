@@ -10,19 +10,20 @@ data class VerifierConfig(
     @ExternalHostnameUrl val verifierUiUrl: String = "http://localhost:4000",
     @ExternalHostnameUrl val verifierApiUrl: String = "http://localhost:8080/verifier-api",
     val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations(),
-    val additionalPolicies: List<PolicyRequest>? = null
+    val additionalPolicies: List<PolicyRequest>? = null,
+    val allowedWebhookHosts: List<String>? = null
 ) {
     companion object {
         val CONFIG_FILE = "${id.walt.WALTID_DATA_ROOT}/config/verifier-config.json"
-        lateinit var config: VerifierConfig
+        var config: VerifierConfig
 
         init {
             val cf = File(CONFIG_FILE)
-            if (cf.exists()) {
-                config = Klaxon().fieldConverter(ExternalHostnameUrl::class, externalHostnameUrlValueConverter)
+            config = if (cf.exists()) {
+                Klaxon().fieldConverter(ExternalHostnameUrl::class, externalHostnameUrlValueConverter)
                     .parse<VerifierConfig>(cf) ?: VerifierConfig()
             } else {
-                config = VerifierConfig()
+                VerifierConfig()
             }
         }
     }
