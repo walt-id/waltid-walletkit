@@ -3,7 +3,7 @@ package id.walt.gateway.providers.metaco.restapi.transfer
 import id.walt.gateway.providers.metaco.repositories.TransferRepository
 import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
-import id.walt.gateway.providers.metaco.restapi.CommonHttp
+import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.TransferList
 
