@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi
+package id.walt.gateway
 
 import com.beust.klaxon.Klaxon
 import io.ktor.client.*
@@ -13,18 +13,25 @@ object CommonHttp {
         endpoint: String,
         body: Map<String, String> = emptyMap()
     ) = runBlocking {
-//        val response = client.get("$baseUrl$endpoint") {
-        val response = client.get(endpoint) {
+        val response = get(client, endpoint, body)
+        Klaxon().parse<T>(response)!!
+    }
+
+    fun get(
+        client: HttpClient,
+        endpoint: String,
+        body: Map<String, String> = emptyMap()
+    ) = runBlocking {
+        client.get(endpoint) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }.bodyAsText()
-        Klaxon().parse<T>(response)!!
     }
 
     fun buildUrl(vararg paths: String) = paths.joinToString {
         val item = if (it.startsWith("/")) it.substring(1) else it
         if (item.endsWith("/")) item else item.plus("/")
-    }
+    }.removeSuffix("/")
 
     fun buildQueryList(params: Map<String, String>) = params.map {
         "&${it.key}=${it.value}"
