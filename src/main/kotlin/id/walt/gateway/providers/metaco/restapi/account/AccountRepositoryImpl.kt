@@ -3,7 +3,7 @@ package id.walt.gateway.providers.metaco.restapi.account
 import id.walt.gateway.providers.metaco.repositories.AccountRepository
 import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
-import id.walt.gateway.providers.metaco.restapi.CommonHttp
+import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.account.model.AccountList
 

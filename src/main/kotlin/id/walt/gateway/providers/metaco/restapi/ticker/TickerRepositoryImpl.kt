@@ -3,7 +3,7 @@ package id.walt.gateway.providers.metaco.restapi.ticker
 import id.walt.gateway.providers.metaco.repositories.TickerRepository
 import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
-import id.walt.gateway.providers.metaco.restapi.CommonHttp
+import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 import id.walt.gateway.providers.metaco.restapi.ticker.model.TickerList
 
