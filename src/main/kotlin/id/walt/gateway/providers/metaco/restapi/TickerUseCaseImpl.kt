@@ -25,7 +25,8 @@ class TickerUseCaseImpl(
                         ValueWithChange(it.price, it.change)
                     }, onFailure = {
                         ValueWithChange()
-                    })
+                    }),
+                decimals = it.data.decimals
             )
         }
     }

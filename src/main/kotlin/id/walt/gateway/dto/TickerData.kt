@@ -7,4 +7,5 @@ data class TickerData(
     val name: String,
     val price: ValueWithChange = ValueWithChange(),
     val imageUrl: String? = null,
+    val decimals: Long,
 )
