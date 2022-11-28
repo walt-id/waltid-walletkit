@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Data(
-    val decimals: Int,
+    val decimals: Long,
     val id: String,
     val kind: String,
     @Json(serializeNull = false)

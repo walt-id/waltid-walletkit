@@ -9,4 +9,6 @@ object Common {
     }.joinToString("")
 
     fun getRandomDouble(from: Double, to: Double) = Random.nextDouble(from, to)
+
+    fun getRandomLong(from: Long = 1, to: Long) = Random.nextLong(from, to)
 }
