@@ -23,12 +23,12 @@ object CommonHttp {
         body: Map<String, String> = emptyMap()
     ) = runBlocking {
         client.get(endpoint) {
-            contentType(ContentType.Application.Json)
-            setBody(body)
+//            contentType(ContentType.Application.Json)
+//            setBody(body)
         }.bodyAsText()
     }
 
-    fun buildUrl(vararg paths: String) = paths.joinToString {
+    fun buildUrl(vararg paths: String) = paths.joinToString("") {
         val item = if (it.startsWith("/")) it.substring(1) else it
         if (item.endsWith("/")) item else item.plus("/")
     }.removeSuffix("/")

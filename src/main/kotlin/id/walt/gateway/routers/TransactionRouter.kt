@@ -1,7 +1,6 @@
-package id.walt.gateway.providers.metaco.routers
+package id.walt.gateway.routers
 
-import id.walt.gateway.Router
-import id.walt.gateway.providers.metaco.controllers.TransactionController
+import id.walt.gateway.controllers.TransactionController
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.plugin.openapi.dsl.documented
 
