@@ -20,9 +20,9 @@ class SimplePriceParser(
         val change24h = Regex(String.format(change24hRegex, parameters.currency)).find(coin)
 
         CoinData(
-            price = price?.groups?.get(2)?.value ?: "",
-            marketCap = marketCap?.groups?.get(2)?.value ?: "",
-            change = change24h?.groups?.get(2)?.value ?: ""
+            price = price?.groups?.get(2)?.value?.toDoubleOrNull() ?: Double.NaN,
+            marketCap = marketCap?.groups?.get(2)?.value?.toDoubleOrNull() ?: Double.NaN,
+            change = change24h?.groups?.get(2)?.value?.toDoubleOrNull() ?: Double.NaN
         )
     }
 }

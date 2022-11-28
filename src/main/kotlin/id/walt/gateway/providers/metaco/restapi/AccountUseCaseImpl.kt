@@ -1,12 +1,10 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.dto.*
-import id.walt.gateway.providers.metaco.repositories.AccountRepository
-import id.walt.gateway.providers.metaco.repositories.BalanceRepository
-import id.walt.gateway.providers.metaco.repositories.TransactionRepository
-import id.walt.gateway.providers.metaco.repositories.TransferRepository
+import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.CoinUseCase
+import id.walt.gateway.usecases.TickerUseCase
 
 class AccountUseCaseImpl(
     private val accountRepository: AccountRepository,
@@ -14,13 +12,25 @@ class AccountUseCaseImpl(
     private val transactionRepository: TransactionRepository,
     private val transferRepository: TransferRepository,
     private val coinUseCase: CoinUseCase,
+    private val tickerUseCase: TickerUseCase,
 ) : AccountUseCase {
-    override fun profile(parameter: AccountParameter): Result<ProfileData> {
-        TODO("Not yet implemented")
+    override fun profile(parameter: AccountParameter): Result<List<ProfileData>> = runCatching {
+        accountRepository.findAll(parameter.domainId, parameter.criteria).items.map {
+            ProfileData(id = it.data.id, alias = it.data.alias)
+        }
     }
 
-    override fun balance(parameter: AccountParameter): Result<List<BalanceData>> {
-        TODO("Not yet implemented")
+    override fun balance(parameter: AccountParameter): Result<List<BalanceData>> = runCatching {
+        profile(parameter).fold(onSuccess = {
+            it.flatMap {
+                balanceRepository.findAll(parameter.domainId, it.id, parameter.criteria).items.map {
+                    BalanceData(
+                        amount = it.totalAmount,
+                        ticker = tickerUseCase.get(TickerParameter(it.tickerId)).getOrThrow()
+                    )
+                }
+            }
+        }, onFailure = { throw it })
     }
 
     override fun transactions(parameter: AccountParameter): Result<List<TransactionData>> {
