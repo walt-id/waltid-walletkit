@@ -1,6 +1,5 @@
-package id.walt.gateway.providers.metaco.routers
+package id.walt.gateway.routers
 
-import id.walt.gateway.Router
 import io.javalin.apibuilder.ApiBuilder
 
 object MetacoRouter : Router {

@@ -4,7 +4,7 @@ import id.walt.gateway.dto.CoinData
 import id.walt.gateway.dto.CoinParameter
 import id.walt.gateway.providers.coingecko.CoinRepository
 import id.walt.gateway.providers.coingecko.ResponseParser
-import id.walt.gateway.providers.coingecko.SimpleCoinUseCase
+import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
 import io.kotest.data.row
@@ -38,13 +38,14 @@ class UseCaseTest : StringSpec({
         ) { param, result ->
             // given
             every { repository.findById(any(), any()) } returns data
-            every { parser.parse(data) } returns result
+            every { parser.parse(any(), any(), any()) } returns result
 
             // when
-            val response = SimpleCoinUseCase(repository, parser).metadata(param)
+            val response = SimpleCoinUseCaseImpl(repository, parser).metadata(param)
 
             // then
-            response shouldBe result
+            response.isSuccess shouldBe true
+            response.getOrNull() shouldBe result
         }
     }
 })

@@ -4,7 +4,7 @@ import id.walt.gateway.dto.CoinParameter
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 
 object CoinMapper {
-    fun Ticker.map(): CoinParameter {
+    fun Ticker.map(currency: String): CoinParameter {
         return when (this.data.name.lowercase()) {
             "bitcoin" -> "bitcoin"
             "ethereum" -> "ethereum"
@@ -13,7 +13,8 @@ object CoinMapper {
             "dexalot token" -> "dexalot"
             "bitcoin testnet" -> "t-bitcoin"
             "tezos" -> "tezos"
-            else -> throw IllegalArgumentException("Missing coin mapping for ticker name.")
-        }.let { CoinParameter(it, "eur") } //TODO: currency is hard-coded -> fix it
+            else -> ""
+//            else -> throw IllegalArgumentException("Missing coin mapping for ticker name.")
+        }.let { CoinParameter(it, currency) }
     }
 }

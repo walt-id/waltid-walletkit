@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi
 
+import id.walt.gateway.providers.metaco.ProviderConfig
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.auth.*
@@ -11,7 +12,7 @@ import io.ktor.serialization.kotlinx.json.*
 abstract class BaseRestRepository(
     open val authService: AuthService
 ) {
-    protected val baseUrl = "base-url"
+    protected val baseUrl = ProviderConfig.gatewayUrl
     private val bearerTokenStorage = mutableListOf<BearerTokens>()
 
     protected val client = HttpClient(CIO) {

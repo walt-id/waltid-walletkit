@@ -6,9 +6,9 @@ object ProviderConfig {
     val oauthClientId: String = System.getenv("OAUTH_CLIENT_ID")
     val oauthClientSecret: String = System.getenv("OAUTH_CLIENT_SECRET")
     val userId: String = System.getenv("USER_ID")
-    val domainId: String = System.getenv("HARMONIZE_DOMAIN_ID")
-    val publicKey: String = System.getenv("HARMONIZE_PUBLIC_KEY")
-    val privateKey: String = System.getenv("HARMONIZE_PRIVATE_KEY")
+    val domainId: String = System.getenv("DOMAIN_ID")
+    val publicKey: String = System.getenv("PUBLIC_KEY")
+    val privateKey: String = System.getenv("PRIVATE_KEY")
     val grantType: String = System.getenv("GRANT_TYPE")
     val signServiceUrl: String = System.getenv("SIGN_SERVICE_URL")
 }
