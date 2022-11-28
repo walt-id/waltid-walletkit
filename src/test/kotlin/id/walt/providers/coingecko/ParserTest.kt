@@ -1,7 +1,7 @@
 package id.walt.providers.coingecko
 
-import id.walt.gateway.dto.TokenData
-import id.walt.gateway.dto.TokenParameter
+import id.walt.gateway.dto.CoinData
+import id.walt.gateway.dto.CoinParameter
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.data.forAll
@@ -24,8 +24,8 @@ class ParserTest : StringSpec({
 
     "simple parser should return the result data" {
         forAll(
-            row(TokenParameter("bitcoin", "eur"), TokenData("15901.82", "305246870774.20654", "0.36233145138594613")),
-            row(TokenParameter("matic-network", "eur"), TokenData("0.810057", "7177541018.584296", "-0.5512113103483903")),
+            row(CoinParameter("bitcoin", "eur"), CoinData("15901.82", "305246870774.20654", "0.36233145138594613")),
+            row(CoinParameter("matic-network", "eur"), CoinData("0.810057", "7177541018.584296", "-0.5512113103483903")),
         ) { param, result ->
             SimplePriceParser(param).parse(data) shouldBe result
         }
