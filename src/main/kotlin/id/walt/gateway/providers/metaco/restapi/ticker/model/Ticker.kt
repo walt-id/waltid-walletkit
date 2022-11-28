@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Ticker(
     @Json(serializeNull = false)
-    val data: Data?,
+    val data: Data,
     val decimals: Int,
     val id: String,
     val kind: String,

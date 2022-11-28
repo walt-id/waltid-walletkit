@@ -9,7 +9,6 @@ class SimpleCoinUseCase(
     private val parser: ResponseParser<CoinData>,
 ) : CoinUseCase {
 
-    override fun metadata(parameter: CoinParameter): CoinData = let {
-        parser.parse(repository.findById(parameter.id, parameter.currency))
-    }
+    override fun metadata(parameter: CoinParameter): Result<CoinData> =
+        runCatching { parser.parse(repository.findById(parameter.id, parameter.currency)) }
 }

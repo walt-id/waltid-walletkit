@@ -7,7 +7,7 @@ import java.util.*
 
 class AccountUseCaseImpl : AccountUseCase {
 
-    override fun profile(parameter: AccountParameter) = Result.success(getProfile(parameter.accountId))
+    override fun profile(parameter: AccountParameter) = Result.success(listOf(getProfile(parameter.accountId)))
 
     override fun balance(parameter: AccountParameter) = Result.success((1..7).map { getBalance() })
 
@@ -22,18 +22,17 @@ class AccountUseCaseImpl : AccountUseCase {
     )
 
     private fun getBalance() = BalanceData(
-        amount = Common.getRandomString(3, true),
-        price = getPrice(),
+        amount = Common.getRandomDouble(.1, 1000.0).toString(),
         ticker = getTickerData(),
     )
 
     private fun getTickerData() = TickerData(
         name = Common.getRandomString(4),
-        price = ValueWithChange(Common.getRandomString(2, true), Common.getRandomString(1, true)),
+        price = getPrice(),
         imageUrl = Common.getRandomString(15),
     )
 
-    private fun getPrice() = ValueWithChange(Common.getRandomString(4, true), Common.getRandomString(1, true))
+    private fun getPrice() = ValueWithChange(Common.getRandomDouble(.1, 1000.0), Common.getRandomDouble(.1, 1000.0))
 
     private fun getTransaction(id: String) = TransactionData(
         id = id,
