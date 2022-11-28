@@ -21,9 +21,7 @@ class CoinRepositoryImpl : CoinRepository {
     }
 
     private fun findById(vararg ids: String, currency: String) =
-        CommonHttp.get<String>(client, String.format(endpoint, ids.joinToString(","), currency))
+        CommonHttp.get(client, String.format(endpoint, ids.joinToString(","), currency))
 
-    override fun findById(id: String, currency: String) = let {
-        CommonHttp.get(client, String.format(endpoint, id, currency))
-    }
+    override fun findById(id: String, currency: String) = this.findById(ids = arrayOf(id), currency)
 }

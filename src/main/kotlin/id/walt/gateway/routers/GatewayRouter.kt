@@ -1,6 +1,4 @@
-package id.walt.gateway
-
-import id.walt.gateway.providers.metaco.routers.MetacoRouter
+package id.walt.gateway.routers
 
 object GatewayRouter: Router {
     override fun routes() {

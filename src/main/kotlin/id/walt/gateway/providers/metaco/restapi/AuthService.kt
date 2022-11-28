@@ -17,6 +17,7 @@ import java.util.*
 
 class AuthService {
 
+    val privateKey = "-----BEGIN EC PRIVATE KEY-----\nMHcCAQEEIG6fOGmAtQW5kcc7ryXk6QrZoRmNIJXfOnt+DHg/cK7KoAoGCCqGSM49\nAwEHoUQDQgAEwtXaA48uEFNgvaCALuNdLCUbtvYManPqTes/M/ToArigmY75T1ul\nVbJCu0xl88VOkHSI9pkiuLgOl9fTdpx8Ig==\n-----END EC PRIVATE KEY-----"
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json()
@@ -32,7 +33,7 @@ class AuthService {
     private fun signPayload(payload: String) = runBlocking {
         client.post(ProviderConfig.signServiceUrl) {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("payload" to payload, "privateKey" to ProviderConfig.privateKey))
+            setBody(mapOf("payload" to payload, "privateKey" to privateKey))
         }.body<SignChallengeResponse>()
     }
 

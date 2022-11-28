@@ -22,12 +22,14 @@ class ParserTest : StringSpec({
             "  }\n" +
             "}"
 
+    val parser = SimplePriceParser()
+
     "simple parser should return the result data" {
         forAll(
             row(CoinParameter("bitcoin", "eur"), CoinData(15901.82, 305246870774.20654, 0.36233145138594613)),
             row(CoinParameter("matic-network", "eur"), CoinData(0.810057, 7177541018.584296, -0.5512113103483903)),
         ) { param, result ->
-            SimplePriceParser(param).parse(data) shouldBe result
+            parser.parse(param.id, param.currency, data) shouldBe result
         }
     }
 })

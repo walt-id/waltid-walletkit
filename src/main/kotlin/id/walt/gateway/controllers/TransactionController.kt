@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.controllers
+package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.SellData
 import id.walt.gateway.dto.SellParameter
