@@ -22,7 +22,7 @@ class AccountUseCaseImpl : AccountUseCase {
     )
 
     private fun getBalance() = BalanceData(
-        amount = Common.getRandomDouble(.1, 1000.0).toString(),
+        amount = Common.getRandomLong(1000, 1000000).toString(),
         ticker = getTickerData(),
     )
 
@@ -30,6 +30,7 @@ class AccountUseCaseImpl : AccountUseCase {
         name = Common.getRandomString(4),
         price = getPrice(),
         imageUrl = Common.getRandomString(15),
+        decimals = Common.getRandomLong(1000, 10000),
     )
 
     private fun getPrice() = ValueWithChange(Common.getRandomDouble(.1, 1000.0), Common.getRandomDouble(.1, 1000.0))
