@@ -14,8 +14,6 @@ data class Data(
     val lock: String,
     @Json(serializeNull = false)
     val metadata: String?,
-    @Json(serializeNull = false)
-    val name: String?,
-    @Json(serializeNull = false)
-    val symbol: String?
+    val name: String,
+    val symbol: String
 )

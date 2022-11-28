@@ -6,5 +6,9 @@ import kotlinx.serialization.Serializable
 data class BalanceData(
     val amount: String,
     val ticker: TickerData,
-    val price: ValueWithChange = ValueWithChange()
-)
+) {
+    val price: ValueWithChange = amount.toDoubleOrNull()?.let {
+        ValueWithChange(it * ticker.price.value, it * ticker.price.change)
+    } ?: ValueWithChange()
+
+}
