@@ -6,5 +6,6 @@ import kotlinx.serialization.Serializable
 data class ValueWithChange(
     val value: Double = Double.NaN,
     val change: Double = Double.NaN,
+    val currency: String = "*",
     val reference: String = "24h",
 )

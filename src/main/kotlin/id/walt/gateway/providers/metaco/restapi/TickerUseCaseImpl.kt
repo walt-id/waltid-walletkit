@@ -20,13 +20,14 @@ class TickerUseCaseImpl(
             TickerData(
                 imageUrl = logoUseCase.get(AssetParameter(it.data.name.lowercase(), it.data.symbol.lowercase())).data,
                 name = it.data.name,
-                price = coinUseCase.metadata(it.map("eur")).fold( //TODO: currency is hard-coded -> fix it
+                price = coinUseCase.metadata(it.map(parameter.currency)).fold(
                     onSuccess = {
-                        ValueWithChange(it.price, it.change)
+                        ValueWithChange(it.price, it.change, parameter.currency)
                     }, onFailure = {
                         ValueWithChange()
                     }),
-                decimals = it.data.decimals
+                decimals = it.data.decimals,
+                symbol = it.data.symbol,
             )
         }
     }
