@@ -10,6 +10,7 @@ class AccountUseCaseImpl : AccountUseCase {
     override fun profile(parameter: AccountParameter) = Result.success(listOf(getProfile(parameter.accountId)))
 
     override fun balance(parameter: AccountParameter) = Result.success(AccountBalance((1..7).map { getBalance() }))
+    override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
     override fun transactions(parameter: AccountParameter) =
         Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) })
@@ -22,15 +23,18 @@ class AccountUseCaseImpl : AccountUseCase {
     )
 
     private fun getBalance() = BalanceData(
-        amount = Common.getRandomLong(1000, 1000000).toString(),
+        amount = Common.getRandomLong(999, 999999999).toString(),
         ticker = getTickerData(),
     )
 
     private fun getTickerData() = TickerData(
-        name = Common.getRandomString(4),
+        id = UUID.randomUUID().toString(),
+        name = Common.getRandomString(12),
+        kind = "Native",
+        chain = Common.getRandomString(10),
         price = getPrice(),
         imageUrl = Common.getRandomString(15),
-        decimals = Common.getRandomLong(1000, 10000),
+        decimals = Common.getRandomLong(12, 18),
         symbol = Common.getRandomString(4),
     )
 

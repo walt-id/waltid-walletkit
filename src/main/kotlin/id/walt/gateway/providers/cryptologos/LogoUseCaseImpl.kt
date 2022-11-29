@@ -9,5 +9,11 @@ class LogoUseCaseImpl : LogoUseCase {
     private val baseUrl = "https://cryptologos.cc/logos/%s-%s-logo.png"
 
     override fun get(parameter: AssetParameter): LogoData =
-        LogoData(URLEncoder.encode(String.format(baseUrl, parameter.chain, parameter.identifier), "utf-8"))
+        LogoData(
+            String.format(
+                baseUrl,
+                URLEncoder.encode(parameter.chain.lowercase(), "utf-8"),
+                URLEncoder.encode(parameter.identifier.lowercase(), "utf-8")
+            )
+        )
 }
