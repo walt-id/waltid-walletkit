@@ -8,7 +8,7 @@ data class BalanceData(
     val ticker: TickerData,
 ) {
     val price: ValueWithChange = amount.toDoubleOrNull()?.let {
-        ValueWithChange(it * ticker.price.value, it * ticker.price.change)
+        ValueWithChange(it * ticker.price.value, it * ticker.price.change, ticker.price.currency)
     } ?: ValueWithChange()
 
 }
