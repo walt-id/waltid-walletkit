@@ -3,6 +3,7 @@ package id.walt.gateway.providers.metaco.restapi
 import id.walt.gateway.dto.*
 import id.walt.gateway.providers.metaco.repositories.AccountRepository
 import id.walt.gateway.providers.metaco.repositories.BalanceRepository
+import id.walt.gateway.providers.metaco.repositories.TransactionRepository
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TickerUseCase
 
@@ -10,6 +11,7 @@ class AccountUseCaseImpl(
     private val accountRepository: AccountRepository,
     private val balanceRepository: BalanceRepository,
     private val tickerUseCase: TickerUseCase,
+//    private val transactionRepository: TransactionRepository,
 ) : AccountUseCase {
     override fun profile(parameter: AccountParameter): Result<List<ProfileData>> = runCatching {
         accountRepository.findAll(parameter.domainId, parameter.criteria).items.map {
@@ -31,6 +33,19 @@ class AccountUseCaseImpl(
     }
 
     override fun transactions(parameter: AccountParameter): Result<List<TransactionData>> {
+//        runCatching {
+//        profile(parameter).fold(onSuccess = {
+//            it.flatMap {
+//                transactionRepository.findAll(parameter.domainId, mapOf("accountId" to it.id)).items.map {
+//                    TransactionData(
+//                        id = it.id,
+//                        amount = it.
+//                    )
+//                }
+//            }
+//        }, onFailure = {
+//            throw it
+//        })
         TODO("Not yet implemented")
     }
 

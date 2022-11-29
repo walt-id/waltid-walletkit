@@ -31,6 +31,7 @@ class AccountUseCaseImpl : AccountUseCase {
         price = getPrice(),
         imageUrl = Common.getRandomString(15),
         decimals = Common.getRandomLong(1000, 10000),
+        symbol = Common.getRandomString(4),
     )
 
     private fun getPrice() = ValueWithChange(Common.getRandomDouble(.1, 1000.0), Common.getRandomDouble(.1, 1000.0))

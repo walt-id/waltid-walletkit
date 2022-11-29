@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TickerData(
     val name: String,
-    val price: ValueWithChange = ValueWithChange(),
+    val price: ValueWithChange,
     val imageUrl: String? = null,
     val decimals: Long,
+    val symbol: String
 )
