@@ -3,19 +3,10 @@ package id.walt.gateway.controllers
 import id.walt.gateway.dto.AccountParameter
 import id.walt.gateway.dto.BalanceData
 import id.walt.gateway.dto.TransactionData
-import id.walt.gateway.providers.coingecko.CoinRepositoryImpl
-import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
-import id.walt.gateway.providers.coingecko.SimplePriceParser
-import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
 import id.walt.gateway.providers.metaco.ProviderConfig
-
+import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.mockapi.TransactionUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.AuthService
-import id.walt.gateway.providers.metaco.restapi.TickerUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
-import id.walt.gateway.providers.metaco.restapi.balance.BalanceRepositoryImpl
-import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TransactionUseCase
 import io.javalin.http.Context
@@ -24,20 +15,21 @@ import io.javalin.plugin.openapi.dsl.document
 object AccountController {
     private val authService = AuthService()
     private val accountUseCase: AccountUseCase =
-        AccountUseCaseImpl(
-            AccountRepositoryImpl(authService),
-            BalanceRepositoryImpl(authService),
-            TickerUseCaseImpl(
-                TickerRepositoryImpl(authService),
-                SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
-                LogoUseCaseImpl()
-            )
-        )
+        AccountUseCaseImpl()
+//        AccountUseCaseImpl(
+//            AccountRepositoryImpl(authService),
+//            BalanceRepositoryImpl(authService),
+//            TickerUseCaseImpl(
+//                TickerRepositoryImpl(authService),
+//                SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
+//                LogoUseCaseImpl()
+//            )
+//        )
     private val transactionUseCase: TransactionUseCase = TransactionUseCaseImpl()
 
     fun profile(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        accountUseCase.profile(AccountParameter(ProviderConfig.domainId, accountId))
+        accountUseCase.profile(AccountParameter("ProviderConfig.domainId", accountId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -47,7 +39,7 @@ object AccountController {
 
     fun balance(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        accountUseCase.balance(AccountParameter(ProviderConfig.domainId, accountId))
+        accountUseCase.balance(AccountParameter("ProviderConfig.domainId", accountId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -57,7 +49,7 @@ object AccountController {
 
     fun transactions(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        accountUseCase.transactions(AccountParameter(ProviderConfig.domainId, accountId))
+        accountUseCase.transactions(AccountParameter("ProviderConfig.domainId", accountId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
