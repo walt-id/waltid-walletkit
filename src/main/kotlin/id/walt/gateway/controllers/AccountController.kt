@@ -1,9 +1,6 @@
 package id.walt.gateway.controllers
 
-import id.walt.gateway.dto.AccountBalance
-import id.walt.gateway.dto.AccountParameter
-import id.walt.gateway.dto.BalanceData
-import id.walt.gateway.dto.TransactionData
+import id.walt.gateway.dto.*
 import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.mockapi.TransactionUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.AuthService
@@ -18,11 +15,13 @@ object AccountController {
         AccountUseCaseImpl()
 //        AccountUseCaseImpl(
 //            AccountRepositoryImpl(authService),
-//            BalanceRepositoryImpl(authService),
-//            TickerUseCaseImpl(
-//                TickerRepositoryImpl(authService),
-//                SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
-//                LogoUseCaseImpl()
+//            BalanceUseCaseImpl(
+//                BalanceRepositoryImpl(authService),
+//                TickerUseCaseImpl(
+//                    TickerRepositoryImpl(authService),
+//                    SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
+//                    LogoUseCaseImpl()
+//                )
 //            )
 //        )
     private val transactionUseCase: TransactionUseCase = TransactionUseCaseImpl()
@@ -47,6 +46,17 @@ object AccountController {
             }
     }
 
+    fun tickerBalance(ctx: Context) {
+        val accountId = ctx.pathParam("accountId")
+        val tickerId = ctx.pathParam("tickerId")
+        accountUseCase.balance(BalanceParameter("ProviderConfig.domainId", accountId, tickerId))
+            .onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
+    }
+
     fun transactions(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
         accountUseCase.transactions(AccountParameter("ProviderConfig.domainId", accountId))
@@ -59,11 +69,15 @@ object AccountController {
 
     fun profileDoc() = document().operation {
         it.summary("Returns the account profile data").operationId("profile").addTagsItem("Account Management")
-    }.json<List<BalanceData>>("200") { it.description("The account profile data") }
+    }.json<List<ProfileData>>("200") { it.description("The account profile data") }
 
     fun balanceDoc() = document().operation {
         it.summary("Returns the account balance").operationId("balance").addTagsItem("Account Management")
     }.json<AccountBalance>("200") { it.description("The account balance") }
+
+    fun tickerBalanceDoc() = document().operation {
+        it.summary("Returns the account balance for ticker").operationId("tickerBalance").addTagsItem("Account Management")
+    }.json<BalanceData>("200") { it.description("The account balance for ticker") }
 
     fun transactionDoc() = document().operation {
         it.summary("Returns the account transactions").operationId("transactions").addTagsItem("Account Management")

@@ -2,14 +2,12 @@ package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.dto.*
 import id.walt.gateway.providers.metaco.repositories.AccountRepository
-import id.walt.gateway.providers.metaco.repositories.BalanceRepository
 import id.walt.gateway.usecases.AccountUseCase
-import id.walt.gateway.usecases.TickerUseCase
+import id.walt.gateway.usecases.BalanceUseCase
 
 class AccountUseCaseImpl(
     private val accountRepository: AccountRepository,
-    private val balanceRepository: BalanceRepository,
-    private val tickerUseCase: TickerUseCase,
+    private val balanceUseCase: BalanceUseCase,
 //    private val transactionRepository: TransactionRepository,
 ) : AccountUseCase {
     override fun profile(parameter: AccountParameter): Result<List<ProfileData>> = runCatching {
@@ -20,17 +18,14 @@ class AccountUseCaseImpl(
 
     override fun balance(parameter: AccountParameter): Result<AccountBalance> = runCatching {
         profile(parameter).fold(onSuccess = {
-            it.flatMap {
-                balanceRepository.findAll(parameter.domainId, it.id, parameter.criteria).items.map {
-                    BalanceData(
-                        amount = it.totalAmount,
-                        ticker = tickerUseCase.get(TickerParameter(it.tickerId)).getOrThrow()
-                    )
-                }
-            }
+            balanceUseCase.list(parameter).getOrElse { emptyList() }
         }, onFailure = { throw it }).let {
             AccountBalance(it)
         }
+    }
+
+    override fun balance(parameter: BalanceParameter): Result<BalanceData> = runCatching {
+        balanceUseCase.get(parameter).getOrThrow()
     }
 
     override fun transactions(parameter: AccountParameter): Result<List<TransactionData>> {

@@ -18,7 +18,10 @@ class TickerUseCaseImpl(
     override fun get(parameter: TickerParameter): Result<TickerData> = runCatching {
         tickerRepository.findById(parameter.id).let {
             TickerData(
-                imageUrl = logoUseCase.get(AssetParameter(it.data.name.lowercase(), it.data.symbol.lowercase())).data,
+                id = it.data.id,
+                kind = it.data.kind,
+                chain = it.data.ledgerId,
+                imageUrl = logoUseCase.get(AssetParameter(it.data.name, it.data.symbol)).data,
                 name = it.data.name,
                 price = coinUseCase.metadata(it.map(parameter.currency)).fold(
                     onSuccess = {
