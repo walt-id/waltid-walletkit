@@ -1,9 +1,9 @@
 package id.walt.gateway.controllers
 
+import id.walt.gateway.dto.AccountBalance
 import id.walt.gateway.dto.AccountParameter
 import id.walt.gateway.dto.BalanceData
 import id.walt.gateway.dto.TransactionData
-import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.mockapi.TransactionUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.AuthService
@@ -63,7 +63,7 @@ object AccountController {
 
     fun balanceDoc() = document().operation {
         it.summary("Returns the account balance").operationId("balance").addTagsItem("Account Management")
-    }.json<List<BalanceData>>("200") { it.description("The account balance") }
+    }.json<AccountBalance>("200") { it.description("The account balance") }
 
     fun transactionDoc() = document().operation {
         it.summary("Returns the account transactions").operationId("transactions").addTagsItem("Account Management")
