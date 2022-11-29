@@ -34,7 +34,8 @@ class AccountUseCaseImpl : AccountUseCase {
         symbol = Common.getRandomString(4),
     )
 
-    private fun getPrice() = ValueWithChange(Common.getRandomDouble(.1, 1000.0), Common.getRandomDouble(.1, 1000.0))
+    private fun getPrice() =
+        ValueWithChange(Common.getRandomDouble(.1, 1000.0), Common.getRandomDouble(.1, 1000.0), currency = "eur")
 
     private fun getTransaction(id: String) = TransactionData(
         id = id,
