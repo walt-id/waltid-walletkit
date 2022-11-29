@@ -9,7 +9,7 @@ class AccountUseCaseImpl : AccountUseCase {
 
     override fun profile(parameter: AccountParameter) = Result.success(listOf(getProfile(parameter.accountId)))
 
-    override fun balance(parameter: AccountParameter) = Result.success((1..7).map { getBalance() })
+    override fun balance(parameter: AccountParameter) = Result.success(AccountBalance((1..7).map { getBalance() }))
 
     override fun transactions(parameter: AccountParameter) =
         Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) })

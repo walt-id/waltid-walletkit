@@ -3,7 +3,6 @@ package id.walt.gateway.providers.metaco.restapi
 import id.walt.gateway.dto.*
 import id.walt.gateway.providers.metaco.repositories.AccountRepository
 import id.walt.gateway.providers.metaco.repositories.BalanceRepository
-import id.walt.gateway.providers.metaco.repositories.TransactionRepository
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TickerUseCase
 
@@ -19,7 +18,7 @@ class AccountUseCaseImpl(
         }
     }
 
-    override fun balance(parameter: AccountParameter): Result<List<BalanceData>> = runCatching {
+    override fun balance(parameter: AccountParameter): Result<AccountBalance> = runCatching {
         profile(parameter).fold(onSuccess = {
             it.flatMap {
                 balanceRepository.findAll(parameter.domainId, it.id, parameter.criteria).items.map {
@@ -29,7 +28,9 @@ class AccountUseCaseImpl(
                     )
                 }
             }
-        }, onFailure = { throw it })
+        }, onFailure = { throw it }).let {
+            AccountBalance(it)
+        }
     }
 
     override fun transactions(parameter: AccountParameter): Result<List<TransactionData>> {
