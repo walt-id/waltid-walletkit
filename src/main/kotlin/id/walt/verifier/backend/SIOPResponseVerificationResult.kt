@@ -1,10 +1,11 @@
 package id.walt.verifier.backend
 
 import id.walt.auditor.VerificationResult
-import id.walt.vclib.credentials.VerifiablePresentation
+import id.walt.common.SingleVC
+import id.walt.credentials.w3c.VerifiablePresentation
 
 data class VPVerificationResult(
-    val vp: VerifiablePresentation,
+    @SingleVC val vp: VerifiablePresentation,
     val verification_result: VerificationResult
 )
 

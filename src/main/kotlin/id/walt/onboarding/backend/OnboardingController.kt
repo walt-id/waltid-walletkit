@@ -193,7 +193,7 @@ object OnboardingController {
                 if (!verificationResult.valid) {
                     throw BadRequestResponse("Invalid VP token given, signature (${verificationResult.policyResults["SignaturePolicy"]}) and/or challenge (${verificationResult.policyResults["ChallengePolicy"]}) could not be verified")
                 }
-                vp.subject
+                vp.subjectId
             }
 
             if (subject?.let { DidUrl.from(it).method } != DidMethod.web.name) throw BadRequestResponse("did:web is required for onboarding!")

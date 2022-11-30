@@ -3,20 +3,19 @@ package id.walt.webwallet.backend.wallet
 import com.beust.klaxon.Json
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
+import id.walt.common.klaxonWithConverters
+import id.walt.credentials.w3c.templates.VcTemplateManager
+import id.walt.credentials.w3c.toVerifiablePresentation
 import id.walt.custodian.Custodian
 import id.walt.model.dif.InputDescriptor
 import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.OIDCProvider
 import id.walt.model.oidc.SIOPv2Response
-import id.walt.model.oidc.klaxon
 import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.oidc.OIDCUtils
-import id.walt.vclib.credentials.VerifiablePresentation
-import id.walt.vclib.model.toCredential
-import id.walt.vclib.templates.VcTemplateManager
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 
 data class CredentialPresentationSessionInfo(
     val id: String,
@@ -48,7 +47,7 @@ data class PresentationResponse(
         fun fromSiopResponse(siopResp: SIOPv2Response): PresentationResponse {
             return PresentationResponse(
                 OIDCUtils.toVpToken(siopResp.vp_token),
-                klaxon.toJsonString(siopResp.presentation_submission),
+                klaxonWithConverters.toJsonString(siopResp.presentation_submission),
                 siopResp.id_token,
                 siopResp.state
             )
@@ -84,7 +83,7 @@ object CredentialPresentationManager {
     }
 
     private fun getRequiredSchemaIds(input_descriptors: List<InputDescriptor>): Set<String> {
-        return VcTemplateManager.getTemplateList().map { tmplId -> VcTemplateManager.loadTemplate(tmplId) }
+        return VcTemplateManager.listTemplates().map { tmpl -> VcTemplateManager.getTemplate(tmpl.name, true).template!! }
             .filter { templ -> input_descriptors.any { indesc -> OIDCUtils.matchesInputDescriptor(templ, indesc) } }
             .map { templ -> templ.credentialSchema?.id }
             .filterNotNull()
@@ -122,7 +121,7 @@ object CredentialPresentationManager {
             null,
             challenge = session.req.getCustomParameter("nonce")?.firstOrNull(),
             expirationDate = null
-        ).toCredential() as VerifiablePresentation
+        ).toVerifiablePresentation()
 
         val siopResponse = OIDC4VPService.getSIOPResponseFor(session.req, did, listOf(vp))
 

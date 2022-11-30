@@ -6,6 +6,8 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
+import id.walt.credentials.w3c.VerifiableCredential
+import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
@@ -14,8 +16,6 @@ import id.walt.model.oidc.*
 import id.walt.services.context.ContextManager
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.services.oidc.OIDCUtils
-import id.walt.vclib.model.VerifiableCredential
-import id.walt.vclib.templates.VcTemplateManager
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 data class CredentialIssuanceRequest(
@@ -290,8 +290,8 @@ object CredentialIssuanceManager {
     }
 
     private fun findMatchingVCTemplates(presentationDefinition: PresentationDefinition): List<VerifiableCredential> {
-        return VcTemplateManager.getTemplateList()
-            .map { VcTemplateManager.loadTemplate(it) }
+        return VcTemplateManager.listTemplates()
+            .map { VcTemplateManager.getTemplate(it.name, true).template!! }
             .filter { tmpl ->
                 presentationDefinition.input_descriptors.any { inputDescriptor ->
                     OIDCUtils.matchesInputDescriptor(tmpl, inputDescriptor)
