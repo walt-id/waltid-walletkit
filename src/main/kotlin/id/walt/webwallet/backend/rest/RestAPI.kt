@@ -4,6 +4,7 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import com.beust.klaxon.Klaxon
+import id.walt.gateway.routers.GatewayRouter
 import id.walt.issuer.backend.IssuerController
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.verifier.backend.VerifierController
@@ -21,6 +22,7 @@ import io.javalin.plugin.openapi.OpenApiOptions
 import io.javalin.plugin.openapi.OpenApiPlugin
 import io.javalin.plugin.openapi.ui.ReDocOptions
 import io.javalin.plugin.openapi.ui.SwaggerOptions
+import io.ktor.http.*
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
@@ -35,6 +37,7 @@ object RestAPI {
             AuthController.routes
             WalletController.routes
             DidWebRegistryController.routes
+            GatewayRouter.routes()
         }
         ApiBuilder.path("verifier-api") {
             VerifierController.routes
@@ -61,6 +64,8 @@ object RestAPI {
                         .apply {
                             if (ctx.body().isNotEmpty()) append("\nRequest: ${ctx.body()}")
                             if (!ctx.resultString().isNullOrEmpty()) append("\nResponse: ${ctx.resultString()}")
+
+                            if (!ctx.res.getHeader(HttpHeaders.Location).isNullOrEmpty()) append("\nLocation: ${ctx.res.getHeader(HttpHeaders.Location)}")
                         }.toString()
                 }
             }

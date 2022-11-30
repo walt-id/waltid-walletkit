@@ -1,6 +1,7 @@
 package id.walt.verifier.backend
 
 import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Klaxon
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
@@ -22,7 +23,16 @@ import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.UserContext
+import io.github.pavleprica.kotlin.cache.time.based.longTimeBasedCache
 import io.javalin.http.BadRequestResponse
+import io.javalin.http.UnauthorizedResponse
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
 import java.net.URI
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -33,6 +43,8 @@ abstract class VerifierManager : BaseService() {
         CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPResponseVerificationResult>()
 
     abstract val verifierContext: Context
+
+    private val log = KotlinLogging.logger { }
 
     open fun newRequest(
         walletUrl: URI,
@@ -53,7 +65,53 @@ abstract class VerifierManager : BaseService() {
             state = State(requestId)
         )
         reqCache.put(requestId, req)
+
         return req
+    }
+
+    private fun isWebhookAllowed(requestedWebhookUrl: String): Boolean {
+        val allowedWebhooks = VerifierConfig.config.allowedWebhookHosts
+
+        if (allowedWebhooks == null) {
+            log.debug { "No allowedWebhookHosts attribute in verifier config, but webhook was requested." }
+            return false
+        }
+
+        return allowedWebhooks.any { allowedUrl -> requestedWebhookUrl.startsWith(allowedUrl) }
+    }
+
+    fun newRequestBySchemaOrVc(
+        walletUrl: URI,
+        schemaUris: Set<String>,
+        vcTypes: Set<String>,
+        state: String? = null,
+        redirectCustomUrlQuery: String = "",
+        responseMode: ResponseMode = ResponseMode.FORM_POST,
+        verificationCallbackUrl: String? = null
+    ): AuthorizationRequest {
+        val request = when {
+            schemaUris.isNotEmpty() -> newRequestBySchemaUris(
+                walletUrl,
+                schemaUris,
+                state,
+                redirectCustomUrlQuery,
+                responseMode
+            )
+
+            else -> newRequestByVcTypes(walletUrl, vcTypes, state, redirectCustomUrlQuery, responseMode)
+        }
+
+        if (verificationCallbackUrl != null) {
+            log.debug { "Callback is set: $verificationCallbackUrl" }
+            if (isWebhookAllowed(verificationCallbackUrl)) {
+                log.debug { "Registered webhook for ${request.state.value}: $verificationCallbackUrl" }
+                verificationCallbacks[request.state.value] = verificationCallbackUrl
+            } else {
+                throw UnauthorizedResponse("This web hook is not allowed.")
+            }
+        }
+
+        return request
     }
 
     open fun newRequestBySchemaUris(
@@ -105,7 +163,7 @@ abstract class VerifierManager : BaseService() {
         )
     }
 
-    open fun getVerififactionPoliciesFor(req: AuthorizationRequest): List<VerificationPolicy> {
+    open fun getVerificationPoliciesFor(req: AuthorizationRequest): List<VerificationPolicy> {
         return listOf(
             SignaturePolicy(),
             ChallengePolicy(req.getCustomParameter("nonce")!!.first(), applyToVC = false, applyToVP = true),
@@ -116,6 +174,18 @@ abstract class VerifierManager : BaseService() {
         )
     }
 
+    private val verificationCallbackHttpClient = HttpClient(CIO) {
+        //install(ContentNegotiation) {
+        //jackson()
+        //}
+        install(Logging) {
+            level = LogLevel.ALL
+        }
+        followRedirects = false
+    }
+
+    val verificationCallbacks = longTimeBasedCache<String, String>()
+
     /*
     - find cached request
     - parse and verify id_token
@@ -123,26 +193,51 @@ abstract class VerifierManager : BaseService() {
     -  - compare nonce (verification policy)
     -  - compare token_claim => token_ref => vp (verification policy)
      */
-    open fun verifyResponse(siopResponse: SIOPv2Response): SIOPResponseVerificationResult {
+    open fun verifyResponse(siopResponse: SIOPv2Response): Pair<SIOPResponseVerificationResult, String?> {
         val state = siopResponse.state ?: throw BadRequestResponse("No state set on SIOP response")
         val req = reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
         reqCache.invalidate(state)
         val vps = siopResponse.vp_token
 
-        var result = SIOPResponseVerificationResult(
-            state,
+        val result = SIOPResponseVerificationResult(
+            state = state,
             subject = vps.firstOrNull { !it.holder.isNullOrEmpty() }?.holder,
-            vps.map { vp ->
+            vps = vps.map { vp ->
                 VPVerificationResult(
                     vp = vp,
                     verification_result = ContextManager.runWith(verifierContext) {
                         Auditor.getService().verify(
-                            vp, getVerififactionPoliciesFor(req)
+                            vp, getVerificationPoliciesFor(req)
                         )
                     }
                 )
-            }, null
+            }, auth_token = null
         )
+
+        // Verification callback
+        val callbackRequestedRedirectUrl = if (verificationCallbacks[state].isPresent) {
+            val callbackUrl = verificationCallbacks[state].get()
+            log.debug { "Sending callback post to: \"$callbackUrl\" for state \"$state\"" }
+            val response = runBlocking {
+                verificationCallbackHttpClient.post(callbackUrl) {
+                    contentType(ContentType.Application.Json)
+                    setBody(Klaxon().toJsonString(result))
+                }
+            }
+            log.debug { "Callback response: $response" }
+
+            when (response.status) {
+                in setOf(HttpStatusCode.OK, HttpStatusCode.Accepted, HttpStatusCode.NoContent) -> {
+                    verificationCallbacks.remove(state)
+                    null
+                }
+                in setOf(
+                    HttpStatusCode.MovedPermanently, HttpStatusCode.PermanentRedirect,
+                    HttpStatusCode.Found, HttpStatusCode.SeeOther, HttpStatusCode.TemporaryRedirect
+                ) -> response.headers[HttpHeaders.Location]
+                else -> null
+            }
+        } else null
 
         if (result.isValid) {
             result.auth_token = JWTService.toJWT(UserInfo(result.subject!!))
@@ -150,7 +245,7 @@ abstract class VerifierManager : BaseService() {
 
         respCache.put(result.state, result)
 
-        return result
+        return Pair(result, callbackRequestedRedirectUrl)
     }
 
     open fun getVerificationRedirectionUri(
