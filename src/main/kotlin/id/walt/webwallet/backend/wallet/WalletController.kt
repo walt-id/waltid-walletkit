@@ -42,8 +42,6 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.*
 
-data class GaiaXCredentialRequest(val credentialData: Map<String, Any>? = null)
-
 object WalletController {
     val routes
         get() = path("") {
@@ -531,7 +529,6 @@ object WalletController {
                 Custodian.getService().storeCredential(this.id ?: UUID.randomUUID().toString(), this)
                 this
             }.encode()
-//            GaiaxService.getService().generateGaiaxComplianceCredential(this)
         }
         ctx.result(compliance)
     }

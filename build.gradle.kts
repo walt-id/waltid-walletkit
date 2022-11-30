@@ -24,6 +24,9 @@ dependencies {
     implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT2")
     //implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
+    // Metaco
+//    implementation("com.metaco:sdk:2.1.0")
+
     implementation("io.javalin:javalin-bundle:4.6.4")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.6")
@@ -36,31 +39,35 @@ dependencies {
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
 
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.1")
-    implementation("org.slf4j:slf4j-simple:2.0.0")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.0")
+    implementation("org.slf4j:slf4j-api:2.0.4")
+    implementation("org.slf4j:slf4j-simple:2.0.4")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.1")
-    implementation("io.ktor:ktor-client-core:2.1.1")
-    implementation("io.ktor:ktor-client-cio:2.1.1")
+    // Ktor
+    implementation("io.ktor:ktor-client-jackson:2.1.2")
+    implementation("io.ktor:ktor-client-content-negotiation:2.1.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.3")
+    implementation("io.ktor:ktor-client-core:2.1.2")
+    implementation("io.ktor:ktor-client-cio:2.1.2")
+    implementation("io.ktor:ktor-client-logging:2.1.2")
+    implementation("io.ktor:ktor-client-auth:2.1.2")
 
     // Cache
-    implementation("io.github.pavleprica:kotlin-cache:1.1.1")
+    implementation("io.github.pavleprica:kotlin-cache:1.2.0")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
-    testImplementation("io.mockk:mockk:1.12.8")
+    testImplementation("io.mockk:mockk:1.13.2")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
-    testImplementation("io.kotest:kotest-assertions-core:5.4.2")
-    testImplementation("io.kotest:kotest-assertions-json:5.4.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
+    testImplementation("io.kotest:kotest-assertions-core:5.5.4")
+    testImplementation("io.kotest:kotest-assertions-json:5.5.4")
 
     // HTTP
-    testImplementation("io.ktor:ktor-client-core:2.1.1")
-    testImplementation("io.ktor:ktor-client-cio:2.1.1")
-    testImplementation("io.ktor:ktor-client-logging:2.1.1")
-    testImplementation("io.github.rybalkinsd:kohttp:0.12.0")
-    testImplementation("io.ktor:ktor-client-content-negotiation:2.1.1")
+    implementation("io.ktor:ktor-client-core:2.1.3")
+    implementation("io.ktor:ktor-client-content-negotiation:2.1.3")
+    implementation("io.ktor:ktor-client-cio:2.1.3")
+    implementation("io.ktor:ktor-client-logging:2.1.3")
 }
 
 tasks.withType<KotlinCompile> {
