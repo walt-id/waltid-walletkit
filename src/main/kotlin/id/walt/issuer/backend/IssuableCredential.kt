@@ -1,10 +1,10 @@
 package id.walt.issuer.backend
 
+import id.walt.credentials.w3c.JsonConverter
 import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.model.oidc.CredentialAuthorizationDetails
 
 data class IssuableCredential(
-    val schemaId: String,
     val type: String,
     val credentialData: Map<String, Any>? = null
 ) {
@@ -12,12 +12,11 @@ data class IssuableCredential(
         fun fromTemplateId(templateId: String): IssuableCredential {
             val tmpl = VcTemplateManager.getTemplate(templateId, true).template!!
             return IssuableCredential(
-                tmpl.credentialSchema!!.id,
                 tmpl.type.last(),
                 mapOf(
                     Pair(
                         "credentialSubject",
-                        tmpl.credentialSubject!!
+                        JsonConverter.fromJsonElement(tmpl.credentialSubject!!.toJsonObject()) as Map<*, *>
                     )
                 )
             )
@@ -30,8 +29,6 @@ data class Issuables(
 ) {
     val credentialsByType
         get() = credentials.associateBy { it.type }
-    val credentialsBySchemaId
-        get() = credentials.associateBy { it.schemaId }
 
     companion object {
         fun fromCredentialAuthorizationDetails(credentialDetails: List<CredentialAuthorizationDetails>): Issuables {

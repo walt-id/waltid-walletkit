@@ -6,6 +6,8 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
+import id.walt.common.VCList
+import id.walt.common.VCObjectList
 import id.walt.credentials.w3c.VerifiableCredential
 import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.custodian.Custodian
@@ -66,7 +68,7 @@ data class CredentialIssuanceSession(
     @JsonIgnore var tokenNonce: String? = null,
     @JsonIgnore var preAuthzCode: String? = null,
     @JsonIgnore var opState: String? = null,
-    var credentials: List<VerifiableCredential>? = null
+    @VCObjectList var credentials: List<VerifiableCredential>? = null
 ) {
     companion object {
         fun fromIssuanceRequest(credentialIssuanceRequest: CredentialIssuanceRequest): CredentialIssuanceSession {
