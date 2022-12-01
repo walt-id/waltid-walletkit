@@ -479,6 +479,7 @@ object WalletController {
             ctx.result(location)
         } catch (exc: Exception) {
             ctx.result("/IssuanceError/?reason=${URLEncoder.encode(exc.message, StandardCharsets.UTF_8)}")
+            exc.printStackTrace()
         }
     }
 
