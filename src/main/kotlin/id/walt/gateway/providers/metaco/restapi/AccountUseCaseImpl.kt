@@ -45,7 +45,7 @@ class AccountUseCaseImpl(
         TODO("Not yet implemented")
     }
 
-    override fun transaction(parameter: TransactionParameter): Result<TransactionData> {
+    override fun transaction(parameter: TransactionParameter): Result<TransactionTransferData> {
         TODO("Not yet implemented")
     }
 }

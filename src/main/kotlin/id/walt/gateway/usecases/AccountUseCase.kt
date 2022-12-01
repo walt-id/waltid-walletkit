@@ -7,5 +7,5 @@ interface AccountUseCase {
     fun balance(parameter: AccountParameter): Result<AccountBalance>
     fun balance(parameter: BalanceParameter): Result<BalanceData>
     fun transactions(parameter: AccountParameter): Result<List<TransactionData>>
-    fun transaction(parameter: TransactionParameter): Result<TransactionData>
+    fun transaction(parameter: TransactionParameter): Result<TransactionTransferData>
 }
