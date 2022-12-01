@@ -254,7 +254,6 @@ object OnboardingController {
         val selectedIssuables = Issuables(
             credentials = listOf(
                 IssuableCredential(
-                    schemaId = PARICIPANT_CREDENTIAL_SCHEMA_ID,
                     type = "ParticipantCredential",
                     credentialData = mapOf(
                         "credentialSubject" to mapOf(
