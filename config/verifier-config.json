@@ -16,7 +16,7 @@
       "url": "http://localhost:3000",
       "presentPath": "api/siop/initiatePresentation/",
       "receivePath" : "api/siop/initiateIssuance/",
-      "description": "local wallet"
+      "description": "local web wallet"
     }
   },
   "allowedWebhookHosts": [ "http://localhost" ]

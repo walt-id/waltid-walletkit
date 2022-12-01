@@ -9,6 +9,13 @@
       "presentPath": "api/siop/initiatePresentation/",
       "receivePath" : "api/siop/initiateIssuance/",
       "description": "walt.id web wallet"
+    },
+    "local": {
+      "id": "local",
+      "url": "http://localhost:3000",
+      "presentPath": "api/siop/initiatePresentation/",
+      "receivePath" : "api/siop/initiateIssuance/",
+      "description": "local web wallet"
     }
   }
 }
