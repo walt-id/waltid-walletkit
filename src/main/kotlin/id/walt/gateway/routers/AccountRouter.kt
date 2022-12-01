@@ -10,7 +10,8 @@ object AccountRouter: Router {
             ApiBuilder.get("{accountId}", documented(AccountController.profileDoc(), AccountController::profile))
             ApiBuilder.get("{accountId}/balance", documented(AccountController.balanceDoc(), AccountController::balance))
             ApiBuilder.get("{accountId}/balance/{tickerId}", documented(AccountController.tickerBalanceDoc(), AccountController::tickerBalance))
-            ApiBuilder.get("{accountId}/transactions", documented(AccountController.transactionDoc(), AccountController::transactions))
+            ApiBuilder.get("{accountId}/transactions", documented(AccountController.transactionsDoc(), AccountController::transactions))
+            ApiBuilder.get("{accountId}/transactions/{transactionId}", documented(AccountController.transactionDoc(), AccountController::transaction))
         }
     }
 }

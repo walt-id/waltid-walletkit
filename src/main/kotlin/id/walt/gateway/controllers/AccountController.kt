@@ -67,6 +67,20 @@ object AccountController {
             }
     }
 
+    fun transaction(ctx: Context) {
+        val accountId = ctx.pathParam("accountId")
+        val transactionId = ctx.pathParam("transactionId")
+        accountUseCase.transaction(
+            TransactionParameter(
+                "ProviderConfig.domainId", transactionId, mapOf("accountId" to accountId)
+            )
+        ).onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
+    }
+
     fun profileDoc() = document().operation {
         it.summary("Returns the account profile data").operationId("profile").addTagsItem("Account Management")
     }.json<List<ProfileData>>("200") { it.description("The account profile data") }
@@ -79,9 +93,13 @@ object AccountController {
         it.summary("Returns the account balance for ticker").operationId("tickerBalance").addTagsItem("Account Management")
     }.json<BalanceData>("200") { it.description("The account balance for ticker") }
 
-    fun transactionDoc() = document().operation {
+    fun transactionsDoc() = document().operation {
         it.summary("Returns the account transactions").operationId("transactions").addTagsItem("Account Management")
     }.json<List<TransactionData>>("200") { it.description("The account transactions") }
+
+    fun transactionDoc() = document().operation {
+        it.summary("Returns the transaction transfers").operationId("transaction").addTagsItem("Account Management")
+    }.json<TransactionTransferData>("200") { it.description("The transaction transfers") }
 
 //    fun balanceDoc() =
 //        document().operation {

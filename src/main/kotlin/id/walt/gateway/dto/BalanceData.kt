@@ -1,5 +1,6 @@
 package id.walt.gateway.dto
 
+import id.walt.gateway.Common
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -7,8 +8,10 @@ data class BalanceData(
     val amount: String,
     val ticker: TickerData,
 ) {
-    val price: ValueWithChange = amount.toDoubleOrNull()?.let {
-        ValueWithChange(it * ticker.price.value, it * ticker.price.change, ticker.price.currency)
-    } ?: ValueWithChange()
+    val price: ValueWithChange = ValueWithChange(
+        Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
+        Common.computeAmount(amount, ticker.decimals) * ticker.price.change,
+        ticker.price.currency
+    )
 
 }

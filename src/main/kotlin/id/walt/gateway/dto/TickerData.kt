@@ -10,6 +10,6 @@ data class TickerData(
     val chain: String,
     val price: ValueWithChange,
     val imageUrl: String? = null,
-    val decimals: Long,
+    val decimals: Int,
     val symbol: String
 )
