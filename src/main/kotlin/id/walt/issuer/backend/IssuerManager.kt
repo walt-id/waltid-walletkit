@@ -12,6 +12,7 @@ import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.WALTID_DATA_ROOT
+import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.crypto.KeyAlgorithm
 import id.walt.crypto.LdSignatureType
 import id.walt.model.DidMethod
@@ -32,8 +33,6 @@ import id.walt.signatory.ProofConfig
 import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
-import id.walt.vclib.model.AbstractVerifiableCredential
-import id.walt.vclib.registry.VcTypeRegistry
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -43,7 +42,7 @@ import java.net.URI
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 
 const val URL_PATTERN = "^https?:\\/\\/(?!-.)[^\\s\\/\$.?#].[^\\s]*\$"
 fun isSchema(typeOrSchema: String): Boolean {
@@ -262,22 +261,17 @@ object IssuerManager {
                 )
             )
         )
-        setCustomParameter("credentials_supported", VcTypeRegistry.getTypesWithTemplate().values
-            .filter {
-                it.isPrimary &&
-                    AbstractVerifiableCredential::class.java.isAssignableFrom(it.vc.java) &&
-                    !it.metadata.template?.invoke()?.credentialSchema?.id.isNullOrEmpty()
-            }
-            .associateBy({ cred -> cred.metadata.type.last() }) { cred ->
+        setCustomParameter("credentials_supported", VcTemplateManager.listTemplates().map { VcTemplateManager.getTemplate(it.name, true) }
+            .associateBy({ tmpl -> tmpl.template!!.type.last() }) { cred ->
                 CredentialMetadata(
                     formats = mapOf(
                         "ldp_vc" to CredentialFormat(
-                            types = cred.metadata.type,
+                            types = cred.template!!.type,
                             cryptographic_binding_methods_supported = listOf("did"),
                             cryptographic_suites_supported = LdSignatureType.values().map { it.name }
                         ),
                         "jwt_vc" to CredentialFormat(
-                            types = cred.metadata.type,
+                            types = cred.template!!.type,
                             cryptographic_binding_methods_supported = listOf("did"),
                             cryptographic_suites_supported = listOf(
                                 JWSAlgorithm.ES256,
@@ -290,7 +284,7 @@ object IssuerManager {
                     ),
                     display = listOf(
                         CredentialDisplay(
-                            name = cred.metadata.type.last()
+                            name = cred.template!!.type.last()
                         )
                     )
                 )

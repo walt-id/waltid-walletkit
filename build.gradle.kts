@@ -22,7 +22,7 @@ repositories {
 dependencies {
     // SSIKIT
     implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT2")
-    implementation("id.walt:waltid-ssikit-vclib:1.24.2")
+    //implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
     // Metaco
 //    implementation("com.metaco:sdk:2.1.0")

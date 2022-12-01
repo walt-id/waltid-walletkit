@@ -109,7 +109,7 @@ object VerifierController {
                                 .operationId("completeAuthentication")
                         }
                             .queryParam<String>("access_token")
-                            .json<SIOPResponseVerificationResult>("200"),
+                            .json<Map<String, Any>>("200"),
                         VerifierController::completeAuthentication
                     ))
                 }

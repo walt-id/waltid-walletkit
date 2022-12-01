@@ -1,9 +1,7 @@
 package id.walt.issuer.backend
 
+import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.model.oidc.CredentialAuthorizationDetails
-import id.walt.vclib.model.AbstractVerifiableCredential
-import id.walt.vclib.model.CredentialSubject
-import id.walt.vclib.templates.VcTemplateManager
 
 data class IssuableCredential(
     val schemaId: String,
@@ -12,14 +10,14 @@ data class IssuableCredential(
 ) {
     companion object {
         fun fromTemplateId(templateId: String): IssuableCredential {
-            val tmpl = VcTemplateManager.loadTemplate(templateId)
+            val tmpl = VcTemplateManager.getTemplate(templateId, true).template!!
             return IssuableCredential(
                 tmpl.credentialSchema!!.id,
                 tmpl.type.last(),
                 mapOf(
                     Pair(
                         "credentialSubject",
-                        (tmpl as AbstractVerifiableCredential<out CredentialSubject>).credentialSubject!!
+                        tmpl.credentialSubject!!
                     )
                 )
             )

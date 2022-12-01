@@ -7,11 +7,11 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
+import id.walt.common.klaxonWithConverters
+import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.model.oidc.CredentialRequest
 import id.walt.model.oidc.CredentialResponse
-import id.walt.model.oidc.klaxon
 import id.walt.services.oidc.OIDC4CIService
-import id.walt.vclib.model.toCredential
 import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
@@ -248,19 +248,19 @@ object IssuerController {
             ?: throw ForbiddenResponse("Invalid or unknown access token")
 
         val credentialRequest =
-            klaxon.parse<CredentialRequest>(ctx.body()) ?: throw BadRequestResponse("Could not parse credential request body")
+            klaxonWithConverters.parse<CredentialRequest>(ctx.body()) ?: throw BadRequestResponse("Could not parse credential request body")
 
         val credential = IssuerManager.fulfillIssuanceSession(session, credentialRequest)
         if (credential.isNullOrEmpty()) {
             ctx.status(HttpCode.NOT_FOUND).result("No issuable credential with the given type found")
             return
         }
-        val credObj = credential.toCredential()
+        val credObj = credential.toVerifiableCredential()
         ctx.contentType(ContentType.JSON).result(
-            klaxon.toJsonString(
+            klaxonWithConverters.toJsonString(
                 CredentialResponse(
                     if (credObj.jwt != null) "jwt_vc" else "ldp_vc",
-                    credential.toCredential()
+                    credential.toVerifiableCredential()
                 )
             )
         )
