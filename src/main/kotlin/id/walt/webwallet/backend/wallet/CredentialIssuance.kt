@@ -21,13 +21,14 @@ import id.walt.webwallet.backend.config.WalletConfig
 import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.InternalServerErrorResponse
+import mu.KotlinLogging
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
 data class CredentialIssuanceRequest(
@@ -98,17 +99,22 @@ data class CredentialIssuanceSession(
 }
 
 object CredentialIssuanceManager {
+
+    private val log = KotlinLogging.logger {  }
+
     val EXPIRATION_TIME = Duration.ofMinutes(5)
     val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS)
         .build<String, CredentialIssuanceSession>()
     val issuerCache: LoadingCache<String, OIDCProviderWithMetadata> = CacheBuilder.newBuilder().maximumSize(256)
         .build(
-            CacheLoader.from { issuerId ->
-                (   // find issuer from config
-                        WalletConfig.config.issuers[issuerId!!] ?:
-                        // else, assume issuerId is a valid issuer url
-                        OIDCProvider(issuerId, issuerId)
+            CacheLoader.from { issuerId -> // find issuer from config
+                log.debug { "Loading issuer: $issuerId, got: ${WalletConfig.config.issuers[issuerId!!]}" }
+                (WalletConfig.config.issuers[issuerId!!]
+                    ?: OIDCProvider(issuerId, issuerId) // else, assume issuerId is a valid issuer url
                         ).let {
+
+                        log.debug { "Retrieving metadata endpoint for issuer: ${OIDC4CIService.getMetadataEndpoint(it)}" }
+
                         OIDC4CIService.getWithProviderMetadata(it)
                     }
             }
@@ -225,7 +231,7 @@ object CredentialIssuanceManager {
         val issuer = issuerCache[session.issuerId]
         val user = session.user ?: throw BadRequestResponse("Session has not been confirmed by user")
         val did = session.did ?: throw BadRequestResponse("No DID assigned to session")
-        val redirectUriString = if(!session.isPreAuthorized) redirectURI.toString() else null
+        val redirectUriString = if (!session.isPreAuthorized) redirectURI.toString() else null
         val tokenResponse =
             OIDC4CIService.getAccessToken(issuer, code, redirectUriString, session.isPreAuthorized, userPin)
         if (!tokenResponse.indicatesSuccess()) {

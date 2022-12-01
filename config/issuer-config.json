@@ -1,6 +1,6 @@
 {
-  "issuerUiUrl": "http://localhost:8000",
-  "issuerApiUrl": "http://localhost:8000/issuer-api",
+  "issuerUiUrl": "http://localhost:3000",
+  "issuerApiUrl": "http://localhost:8080/issuer-api",
   "wallets": {
     "walt.id": {
       "id": "walt.id",
@@ -8,6 +8,13 @@
       "presentPath": "api/siop/initiatePresentation/",
       "receivePath" : "api/siop/initiateIssuance/",
       "description": "walt.id web wallet"
+    },
+    "local": {
+      "id": "local",
+      "url": "http://localhost:3000",
+      "presentPath": "api/siop/initiatePresentation/",
+      "receivePath" : "api/siop/initiateIssuance/",
+      "description": "local web wallet"
     }
   }
 }
