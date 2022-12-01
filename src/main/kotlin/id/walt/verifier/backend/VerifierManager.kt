@@ -35,7 +35,7 @@ import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.net.URI
 import java.util.*
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 
 abstract class VerifierManager : BaseService() {
     val reqCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, AuthorizationRequest>()

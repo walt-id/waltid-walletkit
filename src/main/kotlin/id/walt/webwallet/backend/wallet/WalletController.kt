@@ -8,11 +8,12 @@ import com.nimbusds.oauth2.sdk.util.URLUtils
 import com.nimbusds.openid.connect.sdk.OIDCScopeValue
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
+import id.walt.common.klaxonWithConverters
+import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
 import id.walt.model.oidc.IssuanceInitiationRequest
-import id.walt.model.oidc.klaxon
 import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
@@ -24,8 +25,6 @@ import id.walt.services.oidc.OIDC4VPService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
-import id.walt.vclib.credentials.gaiax.n.LegalPerson
-import id.walt.vclib.model.toCredential
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
@@ -402,7 +401,7 @@ object WalletController {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
         val did = ctx.queryParam("did") ?: throw BadRequestResponse("did not specified")
         ctx.contentType(ContentType.APPLICATION_JSON).result(
-            klaxon.toJsonString(
+            klaxonWithConverters.toJsonString(
                 CredentialPresentationManager.continueCredentialPresentationFor(
                     sessionId = sessionId,
                     did = did
@@ -413,7 +412,7 @@ object WalletController {
 
     fun fulfillPresentation(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
-        val selectedCredentials = ctx.body().let { klaxon.parseArray<PresentableCredential>(it) }
+        val selectedCredentials = ctx.body().let { klaxonWithConverters.parseArray<PresentableCredential>(it) }
             ?: throw BadRequestResponse("No selected credentials given")
 
         ctx.json(
@@ -506,19 +505,19 @@ object WalletController {
             ctx.status(HttpCode.BAD_REQUEST).result("Invalid or expired session id given")
             return
         }
-        ctx.contentType(ContentType.JSON).result(klaxon.toJsonString(issuanceSession))
+        ctx.contentType(ContentType.JSON).result(klaxonWithConverters.toJsonString(issuanceSession))
     }
 
     fun onboardGaiaX(ctx: Context) {
-        val credential = Klaxon().parse<LegalPerson>(ctx.body())
+        val credential = ctx.body().toVerifiableCredential()
         val did = ctx.pathParam("did")
         val compliance = issueSelfSignedCredential(
             "LegalPerson",
             did,
             did,
-            credential?.copy(proof = null)?.toMap()
+            credential.apply { proof = null }.toJsonObject()
         ).run {
-            this.toCredential().let {
+            this.toVerifiableCredential().let {
                 Custodian.getService().storeCredential(it.id ?: UUID.randomUUID().toString(), it)
             }
             // TODO: this is just for demo purpose, generate credential from compliance service
@@ -526,7 +525,7 @@ object WalletController {
                 "ParticipantCredential",
                 did,
                 did,
-            ).toCredential().run {
+            ).toVerifiableCredential().run {
                 Custodian.getService().storeCredential(this.id ?: UUID.randomUUID().toString(), this)
                 this
             }.encode()
