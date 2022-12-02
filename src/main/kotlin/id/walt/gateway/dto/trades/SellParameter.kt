@@ -1,9 +1,9 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.trades
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class BuyParameter(
-    val from: String,
+data class SellParameter(
+    val to: String,
     val amount: String,
 )
