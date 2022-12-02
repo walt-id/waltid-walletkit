@@ -2,10 +2,10 @@ package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.*
 import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
-import id.walt.gateway.providers.metaco.mockapi.TransactionUseCaseImpl
+import id.walt.gateway.providers.metaco.mockapi.TradeUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.usecases.AccountUseCase
-import id.walt.gateway.usecases.TransactionUseCase
+import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
@@ -24,7 +24,7 @@ object AccountController {
 //                )
 //            )
 //        )
-    private val transactionUseCase: TransactionUseCase = TransactionUseCaseImpl()
+    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
 
     fun profile(ctx: Context) {
         val accountId = ctx.pathParam("accountId")

@@ -1,9 +1,9 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.trades
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TransferParameter(
+data class SendParameter(
     val to: String,
     val amount: String,
 )

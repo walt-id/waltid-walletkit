@@ -1,8 +1,8 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.trades
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class BuyData(
+data class SellData(
     val status: String,
 )
