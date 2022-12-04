@@ -68,10 +68,13 @@ fun main(args: Array<String>) {
                 ),
                 VcTemplatesCommand().subcommands(
                     VcTemplatesListCommand(),
-                    VcTemplatesExportCommand()
+                    VcTemplatesImportCommand(),
+                    VcTemplatesExportCommand(),
+                    VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
-            )
+            ),
+            ServeCommand()
         )
     ).main(args)
 }
