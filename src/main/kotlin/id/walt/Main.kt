@@ -94,7 +94,8 @@ fun main(args: Array<String>): Unit = runBlocking {
                     VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
-            )
+            ),
+            ServeCommand()
         )
     ).main(args)
 }
