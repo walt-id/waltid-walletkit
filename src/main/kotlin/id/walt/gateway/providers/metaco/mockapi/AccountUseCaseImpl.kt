@@ -21,6 +21,7 @@ class AccountUseCaseImpl : AccountUseCase {
     private fun getProfile(id: String) = ProfileData(
         id = UUID.randomUUID().toString(),
         alias = Common.getRandomString(7, 1),
+        addresses = listOf("0x${Common.getRandomString(40, 2)}"),
         ticker = listOf("tGOLD", "eth")[Common.getRandomInt(from = 0, to = 2)]
     )
 
