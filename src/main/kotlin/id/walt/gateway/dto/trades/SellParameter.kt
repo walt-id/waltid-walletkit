@@ -6,4 +6,6 @@ import kotlinx.serialization.Serializable
 data class SellParameter(
     val to: String,
     val amount: String,
+    val ticker: String,
+    val maxFee: String,
 )

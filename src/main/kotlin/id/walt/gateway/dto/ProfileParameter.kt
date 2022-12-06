@@ -3,8 +3,6 @@ package id.walt.gateway.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ProfileData(
+data class ProfileParameter(
     val id: String,
-    val ticker: String,
-    val alias: String? = null,
 )

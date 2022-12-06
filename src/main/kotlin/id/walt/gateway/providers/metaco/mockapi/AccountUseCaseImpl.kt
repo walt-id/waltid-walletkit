@@ -8,7 +8,7 @@ import java.util.*
 
 class AccountUseCaseImpl : AccountUseCase {
 
-    override fun profile(parameter: AccountParameter) = Result.success(listOf(getProfile(parameter.accountId)))
+    override fun profile(parameter: AccountParameter) = Result.success((0..1).map { getProfile(parameter.accountId) })
 
     override fun balance(parameter: AccountParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
@@ -19,8 +19,9 @@ class AccountUseCaseImpl : AccountUseCase {
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
     private fun getProfile(id: String) = ProfileData(
-        id = id,
+        id = UUID.randomUUID().toString(),
         alias = Common.getRandomString(7, 1),
+        ticker = listOf("tGOLD", "eth")[Common.getRandomInt(from = 0, to = 2)]
     )
 
     private fun getBalance() = BalanceData(

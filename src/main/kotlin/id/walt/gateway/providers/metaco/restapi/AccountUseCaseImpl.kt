@@ -12,7 +12,7 @@ class AccountUseCaseImpl(
 ) : AccountUseCase {
     override fun profile(parameter: AccountParameter): Result<List<ProfileData>> = runCatching {
         accountRepository.findAll(parameter.domainId, parameter.criteria).items.map {
-            ProfileData(id = it.data.id, alias = it.data.alias)
+            ProfileData(id = it.data.id, alias = it.data.alias, ticker = "TODO")
         }
     }
 

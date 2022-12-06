@@ -7,7 +7,7 @@ import io.javalin.plugin.openapi.dsl.documented
 object AccountRouter: Router {
     override fun routes() {
         ApiBuilder.path("accounts") {
-            ApiBuilder.get("{accountId}", documented(AccountController.profileDoc(), AccountController::profile))
+            ApiBuilder.post("login", documented(AccountController.profileDoc(), AccountController::profile))
             ApiBuilder.get("{accountId}/balance", documented(AccountController.balanceDoc(), AccountController::balance))
             ApiBuilder.get("{accountId}/balance/{tickerId}", documented(AccountController.tickerBalanceDoc(), AccountController::tickerBalance))
             ApiBuilder.get("{accountId}/transactions", documented(AccountController.transactionsDoc(), AccountController::transactions))
