@@ -27,8 +27,8 @@ object AccountController {
     private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
 
     fun profile(ctx: Context) {
-        val accountId = ctx.pathParam("accountId")
-        accountUseCase.profile(AccountParameter("ProviderConfig.domainId", accountId))
+        val account = ctx.bodyAsClass<ProfileParameter>()
+        accountUseCase.profile(AccountParameter("ProviderConfig.domainId", account.id))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -83,6 +83,8 @@ object AccountController {
 
     fun profileDoc() = document().operation {
         it.summary("Returns the account profile data").operationId("profile").addTagsItem("Account Management")
+    }.body<ProfileParameter>{
+        it.description("Profile parameter.")
     }.json<List<ProfileData>>("200") { it.description("The account profile data") }
 
     fun balanceDoc() = document().operation {
@@ -100,14 +102,5 @@ object AccountController {
     fun transactionDoc() = document().operation {
         it.summary("Returns the transaction transfers").operationId("transaction").addTagsItem("Account Management")
     }.json<TransactionTransferData>("200") { it.description("The transaction transfers") }
-
-//    fun balanceDoc() =
-//        document().operation {
-//            it.summary("Returns the account balance").operationId("balance")
-//                .addTagsItem("Account Management")
-//        }.body<Account> {
-//            it.description("Account to be onboarded.")
-//        }.json<Boolean>("200") { it.description("The list of available tokens to be claimed.") }
-
 
 }
