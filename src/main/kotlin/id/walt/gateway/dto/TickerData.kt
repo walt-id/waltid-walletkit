@@ -11,5 +11,6 @@ data class TickerData(
     val price: ValueWithChange,
     val imageUrl: String? = null,
     val decimals: Int,
-    val symbol: String
+    val symbol: String,
+    val maxFee: Int,
 )

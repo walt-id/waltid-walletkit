@@ -7,6 +7,7 @@ object MetacoRouter : Router {
         ApiBuilder.path("") {
             AccountRouter.routes()
             TransactionRouter.routes()
+            TickerRouter.routes()
         }
     }
 }

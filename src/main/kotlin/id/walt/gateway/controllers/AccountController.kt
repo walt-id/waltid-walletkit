@@ -24,7 +24,6 @@ object AccountController {
 //                )
 //            )
 //        )
-    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
 
     fun profile(ctx: Context) {
         val account = ctx.bodyAsClass<ProfileParameter>()
