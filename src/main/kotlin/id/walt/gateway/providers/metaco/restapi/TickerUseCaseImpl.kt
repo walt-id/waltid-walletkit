@@ -31,6 +31,7 @@ class TickerUseCaseImpl(
                     }),
                 decimals = it.data.decimals,
                 symbol = it.data.symbol,
+                maxFee = 1000,
             )
         }
     }
