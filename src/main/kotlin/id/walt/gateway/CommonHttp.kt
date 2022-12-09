@@ -2,6 +2,7 @@ package id.walt.gateway
 
 import com.beust.klaxon.Klaxon
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -11,20 +12,38 @@ object CommonHttp {
     inline fun <reified T> get(
         client: HttpClient,
         endpoint: String,
-        body: Map<String, String> = emptyMap()
     ) = runBlocking {
-        val response = get(client, endpoint, body)
+        val response = get(client, endpoint)
         Klaxon().parse<T>(response)!!
     }
 
     fun get(
         client: HttpClient,
         endpoint: String,
-        body: Map<String, String> = emptyMap()
     ) = runBlocking {
-        client.get(endpoint) {
+        client.get(endpoint).bodyAsText()
+    }
+
+    inline fun <reified T> post(
+        client: HttpClient,
+        endpoint: String,
+        body: Any,
+    ) = runBlocking {
+        val response = post(client, endpoint, body)
+        Klaxon().parse<T>(response)!!
+//        client.post(endpoint) {
 //            contentType(ContentType.Application.Json)
-//            setBody(body)
+//            setBody(Klaxon().toJsonString(body))
+//        }.body<T>()
+    }
+    fun post(
+        client: HttpClient,
+        endpoint: String,
+        body: Any
+    ) = runBlocking {
+        client.post(endpoint) {
+            contentType(ContentType.Application.Json)
+            setBody(Klaxon().toJsonString(body))
         }.bodyAsText()
     }
 

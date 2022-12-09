@@ -8,5 +8,5 @@ interface TradeUseCase {
     fun buy(parameter: BuyParameter): Result<BuyData>
     fun send(parameter: SendParameter): Result<SendData>
 
-    fun validate(parameter: TradePreviewParameter): Result<TradePreviewValidation>
+    fun validate(parameter: TradeValidationParameter): Result<TradeValidationData>
 }
