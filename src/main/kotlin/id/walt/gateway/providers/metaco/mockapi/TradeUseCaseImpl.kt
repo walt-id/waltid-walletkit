@@ -12,7 +12,7 @@ class TradeUseCaseImpl: TradeUseCase {
 
     override fun send(parameter: SendParameter): Result<SendData> = Result.success(getSendTrade())
 
-    override fun validate(parameter: TradePreviewParameter): Result<TradePreviewValidation> =
+    override fun validate(parameter: TradeValidationParameter): Result<TradeValidationData> =
         Result.success(getTradeValidation())
 
     private fun getSellTrade() = SellData(
@@ -28,7 +28,7 @@ class TradeUseCaseImpl: TradeUseCase {
     )
 
     private fun getTradeValidation() = (Common.getRandomInt(from = 0, to = 2) % 2 == 0).let {
-        TradePreviewValidation(
+        TradeValidationData(
             result = it,
             message = if (!it) messages[Common.getRandomInt(0, messages.size)] else "Validation passed successfully."
         )
