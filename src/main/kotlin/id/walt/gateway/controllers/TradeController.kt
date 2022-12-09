@@ -1,13 +1,16 @@
 package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.trades.*
-import id.walt.gateway.providers.metaco.mockapi.TradeUseCaseImpl
+import id.walt.gateway.providers.metaco.restapi.AuthService
+import id.walt.gateway.providers.metaco.restapi.TradeUseCaseImpl
+import id.walt.gateway.providers.metaco.restapi.intent.IntentRepositoryImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
 object TradeController {
-    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
+//    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
+    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl(IntentRepositoryImpl(AuthService()))
 
     fun sell(ctx: Context) {
         val parameters = ctx.bodyAsClass<SellParameter>()
@@ -40,8 +43,8 @@ object TradeController {
     }
 
     fun validate(ctx: Context) {
-        val parameters = ctx.bodyAsClass<TradePreviewParameter>()
-        tradeUseCase.validate(parameters)
+        val parameters = ctx.bodyAsClass<TradePreview>()
+        tradeUseCase.validate(TradeValidationParameter("8db116f5-7f52-4aa4-bee4-b9e085a99d4b", parameters))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -69,7 +72,7 @@ object TradeController {
 
     fun validateDocs() = document().operation {
         it.summary("Returns the trade validation details").operationId("validate").addTagsItem("Trade Management")
-    }.body<TradePreviewParameter> {
+    }.body<TradePreview> {
         it.description("Trade preview parameters")
-    }.json<TradePreviewValidation>("200") { it.description("The trade validation details") }
+    }.json<TradeValidationData>("200") { it.description("The trade validation details") }
 }
