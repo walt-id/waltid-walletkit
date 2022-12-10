@@ -1,11 +1,25 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model.intent.parameters
 
+import com.beust.klaxon.TypeAdapter
+import com.beust.klaxon.TypeFor
 import id.walt.gateway.providers.metaco.restapi.intent.model.intent.fee.FeeStrategy
 import kotlinx.serialization.Serializable
+import kotlin.reflect.KClass
 
 @Serializable
-abstract class Parameters {
+@TypeFor(field = "type", adapter = ParametersTypeAdapter::class)
+sealed class Parameters(
+    val type: String,
+) {
     abstract val feeStrategy: FeeStrategy
     abstract val maximumFee: String
-    abstract val type: String
+}
+
+class ParametersTypeAdapter : TypeAdapter<Parameters> {
+    override fun classFor(type: Any): KClass<out Parameters> =
+        when (type as String) {
+            "Ethereum" -> EthereumParameters::class
+            "Bitcoin" -> BitcoinParameters::class
+            else -> throw IllegalArgumentException("Unknown type: $type")
+        }
 }

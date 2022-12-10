@@ -10,6 +10,4 @@ data class EthereumParameters(
     val amount: String,
     override val feeStrategy: FeeStrategy,
     override val maximumFee: String,
-) : Parameters() {
-    override val type = "Ethereum"
-}
+) : Parameters("Ethereum")
