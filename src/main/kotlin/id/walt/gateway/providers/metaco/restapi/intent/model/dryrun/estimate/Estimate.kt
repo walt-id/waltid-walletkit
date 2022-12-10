@@ -11,28 +11,31 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlin.reflect.KClass
 
 //@Serializable(with = EstimateSerializer::class)
-@TypeFor(field = "type", adapter = EstimateTypeAdapter::class)
-abstract class Estimate {
-    abstract val hint: String?
-    abstract val reason: String?
-    abstract val type: String
-}
+//abstract class Estimate{
+//    abstract val type: String
+//}
 
-object EstimateSerializer : JsonContentPolymorphicSerializer<Estimate>(Estimate::class) {
-    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out Estimate> {
-        return when (element.jsonObject["type"]?.jsonPrimitive?.content) {
-            "Ethereum" -> EthereumEstimate.serializer()
-            "Bitcoin" -> BitcoinEstimate.serializer()
-            else -> throw Exception("Unknown Module: key 'type' not found or does not matches any module type")
-        }
-    }
-}
+//object EstimateSerializer : JsonContentPolymorphicSerializer<Estimate>(Estimate::class) {
+//    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<out Estimate> {
+//        return when (element.jsonObject["type"]?.jsonPrimitive?.content) {
+//            "Ethereum" -> EthereumEstimate.serializer()
+//            else -> throw Exception("Unknown type: ${element.jsonObject["type"]}")
+//        }
+//    }
+//}
+
+@Serializable
+@TypeFor(field = "type", adapter = EstimateTypeAdapter::class)
+abstract class Estimate(
+    val type: String
+)
 
 class EstimateTypeAdapter : TypeAdapter<Estimate> {
     override fun classFor(type: Any): KClass<out Estimate> =
         when (type as String) {
             "Ethereum" -> EthereumEstimate::class
             "Bitcoin" -> BitcoinEstimate::class
-            else -> throw IllegalArgumentException("Unknown estimate type $type")
+            "Failure" -> FailureEstimate::class
+            else -> throw IllegalArgumentException("Unknown type: $type")
         }
 }

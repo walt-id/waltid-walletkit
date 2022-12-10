@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent
 
+import com.beust.klaxon.Klaxon
 import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.repositories.IntentRepository
 import id.walt.gateway.providers.metaco.restapi.AuthService
@@ -17,10 +18,18 @@ class IntentRepositoryImpl(
         TODO("Not yet implemented")
     }
 
-    override fun validate(domainId: String, intent: NoSignatureIntent): ValidationResponse =
-        CommonHttp.post<ValidationResponse>(
+    override fun validate(domainId: String, intent: NoSignatureIntent): ValidationResponse = let {
+        //TODO: class polymorphism for ktor client serialization doesn't work
+//        CommonHttp.post<ValidationResponse>(
+//            client,
+//            String.format(CommonHttp.buildUrl(baseUrl, dryRunEndpoint), domainId),
+//            intent
+//        )
+        val result = CommonHttp.post(
             client,
             String.format(CommonHttp.buildUrl(baseUrl, dryRunEndpoint), domainId),
-            intent
+            Klaxon().toJsonString(intent)
         )
+        Klaxon().parse<ValidationResponse>(result)!!
+    }
 }

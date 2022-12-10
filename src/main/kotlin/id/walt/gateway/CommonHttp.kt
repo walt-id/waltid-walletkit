@@ -2,7 +2,6 @@ package id.walt.gateway
 
 import com.beust.klaxon.Klaxon
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -24,26 +23,34 @@ object CommonHttp {
         client.get(endpoint).bodyAsText()
     }
 
-    inline fun <reified T> post(
-        client: HttpClient,
-        endpoint: String,
-        body: Any,
-    ) = runBlocking {
-        val response = post(client, endpoint, body)
-        Klaxon().parse<T>(response)!!
+    //TODO: class polymorphism for ktor client serialization doesn't work
+//    inline fun <reified T> post(
+//        client: HttpClient,
+//        endpoint: String,
+//        body: Any,
+//    ) = runBlocking {
+//        val response = post(client, endpoint, body)
+//        Klaxon().parse<T>(response)!!
+//    }
+//    fun post(
+//        client: HttpClient,
+//        endpoint: String,
+//        body: Any
+//    ) = runBlocking {
 //        client.post(endpoint) {
 //            contentType(ContentType.Application.Json)
-//            setBody(Klaxon().toJsonString(body))
-//        }.body<T>()
-    }
+//            setBody(body)
+//        }.bodyAsText()
+//    }
+
     fun post(
         client: HttpClient,
         endpoint: String,
-        body: Any
+        body: String,
     ) = runBlocking {
         client.post(endpoint) {
             contentType(ContentType.Application.Json)
-            setBody(Klaxon().toJsonString(body))
+            setBody(body)
         }.bodyAsText()
     }
 
