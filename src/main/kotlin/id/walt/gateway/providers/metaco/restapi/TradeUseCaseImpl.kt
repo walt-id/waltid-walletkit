@@ -26,7 +26,7 @@ class TradeUseCaseImpl(
             intentRepository.validate(parameter.domainId, this).let {
                 TradeValidationData(
                     result = it.result.type == "Success",
-                    message = it.result.reason + (it.estimate as EthereumEstimate).gas?.let { "gas: $it" }
+                    message = it.result.reason //+ (it.estimate as EthereumEstimate)?.gas.let { " (gas: $it)" }
                 )
             }
         }

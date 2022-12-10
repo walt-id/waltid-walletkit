@@ -9,6 +9,4 @@ data class BitcoinParameters(
     val outputs: List<Output>,
     override val feeStrategy: FeeStrategy,
     override val maximumFee: String
-) : Parameters() {
-    override val type = "Bitcoin"
-}
+) : Parameters("Bitcoin")

@@ -5,6 +5,4 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PriorityFeeStrategy(
     val priority: String,
-) : FeeStrategy() {
-    override val type = "Priority"
-}
+) : FeeStrategy("Priority")

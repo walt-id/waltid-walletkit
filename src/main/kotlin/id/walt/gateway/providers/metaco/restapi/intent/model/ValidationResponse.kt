@@ -1,7 +1,10 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model
 
+import com.beust.klaxon.Json
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import id.walt.gateway.providers.metaco.restapi.intent.model.dryrun.Result
 import id.walt.gateway.providers.metaco.restapi.intent.model.dryrun.estimate.Estimate
+import id.walt.gateway.providers.metaco.restapi.intent.model.dryrun.estimate.EthereumEstimate
 import kotlinx.serialization.Serializable
 
 @Serializable
