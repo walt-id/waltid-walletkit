@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.intent.model.intent.fee
+package id.walt.gateway.providers.metaco.restapi.intent.model.fee
 
 import kotlinx.serialization.Serializable
 

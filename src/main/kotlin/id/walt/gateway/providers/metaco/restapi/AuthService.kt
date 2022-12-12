@@ -1,6 +1,8 @@
 package id.walt.gateway.providers.metaco.restapi
 
+import com.beust.klaxon.Klaxon
 import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.providers.metaco.restapi.signservice.SignatureService
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -15,7 +17,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
 
-class AuthService {
+class AuthService(
+    private val signatureService: SignatureService<String>
+) {
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -27,14 +31,7 @@ class AuthService {
         }
     }
 
-    fun authorize() = generateToken(signPayload(UUID.randomUUID().toString()))
-
-    private fun signPayload(payload: String) = runBlocking {
-        client.post(ProviderConfig.signServiceUrl) {
-            contentType(ContentType.Application.Json)
-            setBody(mapOf("payload" to payload, "privateKey" to ProviderConfig.privateKey))
-        }.body<SignChallengeResponse>()
-    }
+    fun authorize() = generateToken(Klaxon().parse(signatureService.sign(UUID.randomUUID().toString()))!!)
 
     private fun generateToken(signature: SignChallengeResponse) = runBlocking {
         client.submitForm(

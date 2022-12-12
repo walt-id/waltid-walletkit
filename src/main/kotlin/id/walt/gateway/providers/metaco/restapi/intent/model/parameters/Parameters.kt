@@ -1,8 +1,8 @@
-package id.walt.gateway.providers.metaco.restapi.intent.model.intent.parameters
+package id.walt.gateway.providers.metaco.restapi.intent.model.parameters
 
 import com.beust.klaxon.TypeAdapter
 import com.beust.klaxon.TypeFor
-import id.walt.gateway.providers.metaco.restapi.intent.model.intent.fee.FeeStrategy
+import id.walt.gateway.providers.metaco.restapi.intent.model.fee.FeeStrategy
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 
