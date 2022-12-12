@@ -4,12 +4,13 @@ import id.walt.gateway.dto.*
 import id.walt.gateway.dto.trades.TradeListParameter
 import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.AuthService
+import id.walt.gateway.providers.metaco.restapi.signservice.AuthSignatureService
 import id.walt.gateway.usecases.AccountUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
 object AccountController {
-    private val authService = AuthService()
+    private val authService = AuthService(AuthSignatureService())
     private val accountUseCase: AccountUseCase =
         AccountUseCaseImpl()
 //        AccountUseCaseImpl(

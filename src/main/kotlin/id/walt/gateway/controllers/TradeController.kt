@@ -1,16 +1,20 @@
 package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.trades.*
+import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.providers.metaco.restapi.TradeUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.intent.IntentRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.signservice.AuthSignatureService
+import id.walt.gateway.providers.metaco.restapi.signservice.IntentSignatureService
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
 object TradeController {
-//    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
-    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl(IntentRepositoryImpl(AuthService()))
+    //    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
+    private val tradeUseCase: TradeUseCase =
+        TradeUseCaseImpl(IntentRepositoryImpl(AuthService(AuthSignatureService()), IntentSignatureService()))
 
     fun sell(ctx: Context) {
         val parameters = ctx.bodyAsClass<SellParameter>()
@@ -44,7 +48,7 @@ object TradeController {
 
     fun validate(ctx: Context) {
         val parameters = ctx.bodyAsClass<TradePreview>()
-        tradeUseCase.validate(TradeValidationParameter("8db116f5-7f52-4aa4-bee4-b9e085a99d4b", parameters))
+        tradeUseCase.validate(TradeValidationParameter(ProviderConfig.domainId, parameters))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {

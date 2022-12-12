@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.intent.model.dryrun.estimate
+package id.walt.gateway.providers.metaco.restapi.intent.model.estimate
 
 import kotlinx.serialization.Serializable
 

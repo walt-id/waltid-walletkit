@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.intent.model.intent.fee
+package id.walt.gateway.providers.metaco.restapi.intent.model.fee
 
 import com.beust.klaxon.TypeAdapter
 import com.beust.klaxon.TypeFor
