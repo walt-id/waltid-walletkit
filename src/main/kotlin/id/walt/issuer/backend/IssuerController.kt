@@ -11,11 +11,14 @@ import id.walt.common.klaxonWithConverters
 import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.model.oidc.CredentialRequest
 import id.walt.model.oidc.CredentialResponse
+import id.walt.rest.core.CreateDidRequest
+import id.walt.rest.core.DidController
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
+import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
@@ -36,6 +39,16 @@ object IssuerController {
                             .jsonArray<WalletConfiguration>("200"),
                         VerifierController::listWallets,
                     ))
+                }
+                before("config/*") {
+                    WalletContextManager.setCurrentContext(IssuerManager.issuerContext)
+                }
+                after("config/*") { WalletContextManager.resetCurrentContext() }
+                path("config") {
+                    post("createDid", documented(document().operation {
+                        it.summary("Create DID").operationId("createDid").addTagsItem("Issuer Configuration")
+                    }.body<CreateDidRequest> { it.description("Defines the DID method and optionally the key to be used") }
+                        .json<String>("200") { it.description("DID document of the resolved DID") }, DidController::create))
                 }
                 path("credentials") {
                     get("listIssuables", documented(
@@ -58,6 +71,7 @@ object IssuerController {
                                 .queryParam<String>("sessionId")
                                 .queryParam<Boolean>("isPreAuthorized")
                                 .queryParam<String>("userPin")
+                                .queryParam<String>("issuerDid")
                                 .body<Issuables>()
                                 .result<String>("200"),
                             IssuerController::requestIssuance
@@ -143,6 +157,7 @@ object IssuerController {
         val wallet = ctx.queryParam("walletId")?.let { IssuerConfig.config.wallets.getOrDefault(it, null) }
             ?: IssuerManager.getXDeviceWallet()
         val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
+        val issuerDid = ctx.queryParam("issuerDid") // OPTIONAL
 
         val selectedIssuables = ctx.bodyAsClass<Issuables>()
         if (selectedIssuables.credentials.isEmpty()) {
@@ -152,13 +167,13 @@ object IssuerController {
 
         if (session != null) {
             val authRequest = session.authRequest ?: throw BadRequestResponse("No authorization request found for this session")
-            IssuerManager.updateIssuanceSession(session, selectedIssuables)
+            IssuerManager.updateIssuanceSession(session, selectedIssuables, issuerDid)
             ctx.result("${authRequest.redirectionURI}?code=${IssuerManager.generateAuthorizationCodeFor(session)}&state=${authRequest.state.value}")
         } else {
             val userPin = ctx.queryParam("userPin")?.ifBlank { null }
             val isPreAuthorized = ctx.queryParam("isPreAuthorized")?.toBoolean() ?: false
             val initiationRequest =
-                IssuerManager.newIssuanceInitiationRequest(selectedIssuables, isPreAuthorized, userPin)
+                IssuerManager.newIssuanceInitiationRequest(selectedIssuables, isPreAuthorized, userPin, issuerDid)
             ctx.result("${wallet.url}/${wallet.receivePath}?${initiationRequest.toQueryString()}")
         }
     }
