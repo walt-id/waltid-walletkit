@@ -146,7 +146,8 @@ object IssuerManager {
     fun newIssuanceInitiationRequest(
         selectedIssuables: Issuables,
         preAuthorized: Boolean,
-        userPin: String? = null
+        userPin: String? = null,
+        issuerDid: String? = null
     ): IssuanceInitiationRequest {
         val issuerUri = URI.create("${IssuerConfig.config.issuerApiUrl}/oidc/")
         val session = initializeIssuanceSession(
@@ -155,9 +156,10 @@ object IssuerManager {
             },
             preAuthorized = preAuthorized,
             authRequest = null,
-            userPin = userPin
+            userPin = userPin,
+            issuerDid = issuerDid
         )
-        updateIssuanceSession(session, selectedIssuables)
+        updateIssuanceSession(session, selectedIssuables, issuerDid)
 
         return IssuanceInitiationRequest(
             issuer_url = issuerUri.toString(),
@@ -172,7 +174,8 @@ object IssuerManager {
         credentialDetails: List<CredentialAuthorizationDetails>,
         preAuthorized: Boolean,
         authRequest: AuthorizationRequest?,
-        userPin: String? = null
+        userPin: String? = null,
+        issuerDid: String? = null
     ): IssuanceSession {
         val id = UUID.randomUUID().toString()
         //TODO: validata/verify PAR request, claims, etc
@@ -183,7 +186,8 @@ object IssuerManager {
             isPreAuthorized = preAuthorized,
             authRequest,
             Issuables.fromCredentialAuthorizationDetails(credentialDetails),
-            userPin = userPin
+            userPin = userPin,
+            issuerDid = issuerDid
         )
         sessionCache.put(id, session)
         return session
@@ -193,8 +197,9 @@ object IssuerManager {
         return sessionCache.getIfPresent(id)
     }
 
-    fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables?) {
+    fun updateIssuanceSession(session: IssuanceSession, issuables: Issuables?, issuerDid: String? = null) {
         session.issuables = issuables
+        issuerDid?.let { session.issuerDid = issuerDid }
         sessionCache.put(session.id, session)
     }
 
@@ -220,7 +225,7 @@ object IssuerManager {
             session.issuables!!.credentialsByType[credentialRequest.type]?.let {
                 Signatory.getService().issue(it.type,
                     ProofConfig(
-                        issuerDid = issuerDid,
+                        issuerDid = session.issuerDid ?: issuerDid,
                         proofType = when (credentialRequest.format) {
                             "jwt_vc" -> ProofType.JWT
                             else -> ProofType.LD_PROOF
