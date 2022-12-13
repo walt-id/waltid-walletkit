@@ -2,12 +2,13 @@ package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
-import id.walt.gateway.providers.metaco.repositories.AccountRepository
-import id.walt.gateway.providers.metaco.repositories.TickerRepository
-import id.walt.gateway.providers.metaco.repositories.TransactionRepository
-import id.walt.gateway.providers.metaco.repositories.TransferRepository
+import id.walt.gateway.providers.metaco.repositories.*
+import id.walt.gateway.providers.metaco.restapi.address.model.Address
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
+import id.walt.gateway.providers.metaco.restapi.transfer.model.AccountTransferParty
+import id.walt.gateway.providers.metaco.restapi.transfer.model.AddressTransferParty
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
+import id.walt.gateway.providers.metaco.restapi.transfer.model.TransferParty
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.BalanceUseCase
 import id.walt.gateway.usecases.TickerUseCase
@@ -17,6 +18,7 @@ class AccountUseCaseImpl(
     private val balanceUseCase: BalanceUseCase,
     private val transactionRepository: TransactionRepository,
     private val transferRepository: TransferRepository,
+    private val addressRepository: AddressRepository,
     private val tickerUseCase: TickerUseCase,
 ) : AccountUseCase {
     override fun profile(parameter: AccountParameter): Result<List<ProfileData>> = runCatching {
@@ -45,9 +47,9 @@ class AccountUseCaseImpl(
                         parameter.domainId,
                         mapOf("transactionId" to it.id)
                     ).items.filter { it.kind == "Transfer" }
-                    val ticker =
-                        tickerUseCase.get(TickerParameter(transfers.first().tickerId)).getOrThrow()
-                    buildTransactionData(it, transfers, ticker)
+                    val ticker = tickerUseCase.get(TickerParameter(transfers.first().tickerId)).getOrThrow()
+                    val myAddresses = addressRepository.findAll(parameter.domainId, parameter.accountId).items.map { it.address }
+                    buildTransactionData(parameter.domainId, it, transfers, myAddresses, ticker)
                 }
             }
         }, onFailure = {
@@ -59,7 +61,13 @@ class AccountUseCaseImpl(
         TODO("Not yet implemented")
     }
 
-    private fun buildTransactionData(transaction: Transaction, transfers: List<Transfer>, ticker: TickerData) = let {
+    private fun buildTransactionData(
+        domainId: String,
+        transaction: Transaction,
+        transfers: List<Transfer>,
+        myAddresses: List<String>,
+        ticker: TickerData
+    ) = let {
         val amount = transfers.map { it.value.toIntOrNull() ?: 0 }.fold(0) { acc, d -> acc + d }.toString()
         TransactionData(
             id = transaction.id,
@@ -72,7 +80,25 @@ class AccountUseCaseImpl(
                 Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
                 Common.computeAmount(amount, ticker.decimals) * ticker.price.change
             ),
-//            relatedAccount = transfers.first().
+            relatedAccount = getRelatedAccountAddress(domainId, myAddresses, transfers),
         )
+    }
+
+    private fun getAddresses(domainId: String, transferParties: List<TransferParty>) = transferParties.flatMap {
+        if (it is AddressTransferParty) listOf(it.address)
+        else (it as AccountTransferParty).addressDetails?.let { listOf(it.address) } ?: addressRepository.findAll(
+            domainId,
+            it.accountId
+        ).items.map { it.address }
+    }
+
+    private fun getRelatedAccountAddress(domainId: String, myAddresses: List<String>, transfers: List<Transfer>) = let {
+        val senderAddresses = getAddresses(domainId, transfers.flatMap { it.senders })
+        val recipientAddresses = getAddresses(domainId, transfers.mapNotNull { it.recipient })
+        senderAddresses.none {
+            myAddresses.contains(it)
+        }.takeIf { it }?.let {
+            senderAddresses.first()
+        } ?: recipientAddresses.firstOrNull() ?: "Unknown"
     }
 }
