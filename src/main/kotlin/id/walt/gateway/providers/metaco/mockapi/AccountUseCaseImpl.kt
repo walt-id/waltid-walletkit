@@ -2,7 +2,10 @@ package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
+import id.walt.gateway.dto.trades.TradeListParameter
 import id.walt.gateway.usecases.AccountUseCase
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
 import java.util.*
 
@@ -14,8 +17,8 @@ class AccountUseCaseImpl : AccountUseCase {
     override fun balance(parameter: AccountParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
-    override fun transactions(parameter: AccountParameter) =
-        Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) })
+    override fun transactions(parameter: TradeListParameter) =
+        Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }.sortedByDescending { Instant.parse(it.date) })
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
@@ -68,7 +71,7 @@ class AccountUseCaseImpl : AccountUseCase {
 
     private fun getTransactionStatus() = listOf("Detected", "Confirmed", "Expired")[Common.getRandomInt(to = 3)]
 
-    private fun getDate() = LocalDateTime.now().plusDays(Common.getRandomLong(from = -10, to = 0)).toString()
+    private fun getDate() = Instant.now().plus(Duration.ofDays(Common.getRandomLong(from = -10, to = 0))).toString()
 
     private fun getAmountWithValue() = AmountWithValue(
         amount = Common.getRandomLong(to = 10000).toString(),
