@@ -11,6 +11,7 @@ data class NoSignatureIntent(
     override val request: Request,
 ) : Intent
 
+@Serializable
 data class SignatureIntent(
     override val request: Request,
     val signature: String,

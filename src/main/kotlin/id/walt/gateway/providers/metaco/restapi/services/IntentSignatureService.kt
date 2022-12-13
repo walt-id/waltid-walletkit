@@ -13,7 +13,7 @@ class IntentSignatureService : BaseSignatureService<NoSignatureIntent>() {
     override fun sign(payload: NoSignatureIntent): String = runBlocking {
         val result = client.post(ProviderConfig.signServiceUrl + "/signatures/key") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("payload" to Klaxon().toJsonString(payload), "privateKey" to ProviderConfig.privateKey))
+            setBody(mapOf("payload" to payload, "privateKey" to ProviderConfig.privateKey))
         }.bodyAsText()
         result
     }
