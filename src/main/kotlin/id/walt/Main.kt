@@ -68,7 +68,9 @@ fun main(args: Array<String>) {
                 ),
                 VcTemplatesCommand().subcommands(
                     VcTemplatesListCommand(),
-                    VcTemplatesExportCommand()
+                    VcTemplatesExportCommand(),
+                    VcTemplatesImportCommand(),
+                    VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
             )
