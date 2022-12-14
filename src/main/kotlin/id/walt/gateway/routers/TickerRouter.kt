@@ -7,6 +7,7 @@ import io.javalin.plugin.openapi.dsl.documented
 object TickerRouter : Router {
     override fun routes() {
         ApiBuilder.path("tickers") {
+            ApiBuilder.get("", documented(TickerController.listDoc(), TickerController::list))
             ApiBuilder.get("{tickerId}", documented(TickerController.getDoc(), TickerController::get))
         }
     }
