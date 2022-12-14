@@ -2,10 +2,10 @@ package id.walt.gateway.providers.metaco.restapi.address
 
 import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.repositories.AddressRepository
-import id.walt.gateway.providers.metaco.restapi.AuthService
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
 import id.walt.gateway.providers.metaco.restapi.address.model.Address
 import id.walt.gateway.providers.metaco.restapi.address.model.AddressList
+import id.walt.gateway.providers.metaco.restapi.services.AuthService
 
 class AddressRepositoryImpl(
     override val authService: AuthService,
