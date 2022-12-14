@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.signservice
+package id.walt.gateway.providers.metaco.restapi.services
 
 import id.walt.gateway.providers.metaco.ProviderConfig
 import io.ktor.client.request.*
