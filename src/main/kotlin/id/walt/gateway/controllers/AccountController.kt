@@ -2,6 +2,7 @@ package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.*
 import id.walt.gateway.dto.trades.TradeListParameter
+import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.services.AuthSignatureService
@@ -27,7 +28,7 @@ object AccountController {
 
     fun profile(ctx: Context) {
         val account = ctx.bodyAsClass<ProfileParameter>()
-        accountUseCase.profile(AccountParameter("ProviderConfig.domainId", account.id))
+        accountUseCase.profile(AccountParameter(ProviderConfig.domainId, account.id))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -37,7 +38,7 @@ object AccountController {
 
     fun balance(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
-        accountUseCase.balance(AccountParameter("ProviderConfig.domainId", accountId))
+        accountUseCase.balance(AccountParameter(ProviderConfig.domainId, accountId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -48,7 +49,7 @@ object AccountController {
     fun tickerBalance(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
         val tickerId = ctx.pathParam("tickerId")
-        accountUseCase.balance(BalanceParameter("ProviderConfig.domainId", accountId, tickerId))
+        accountUseCase.balance(BalanceParameter(ProviderConfig.domainId, accountId, tickerId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -59,7 +60,7 @@ object AccountController {
     fun transactions(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
         val tickerId = ctx.queryParam("tickerId")
-        accountUseCase.transactions(TradeListParameter("ProviderConfig.domainId", accountId, tickerId))
+        accountUseCase.transactions(TradeListParameter(ProviderConfig.domainId, accountId, tickerId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -72,7 +73,7 @@ object AccountController {
         val transactionId = ctx.pathParam("transactionId")
         accountUseCase.transaction(
             TransactionParameter(
-                "ProviderConfig.domainId", transactionId, mapOf("accountId" to accountId)
+                ProviderConfig.domainId, transactionId, mapOf("accountId" to accountId)
             )
         ).onSuccess {
             ctx.json(it)
