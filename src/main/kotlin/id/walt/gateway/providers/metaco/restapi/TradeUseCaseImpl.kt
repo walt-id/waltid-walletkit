@@ -10,6 +10,7 @@ import id.walt.gateway.providers.metaco.restapi.intent.builders.ParameterBuilder
 import id.walt.gateway.providers.metaco.restapi.intent.model.CustomProperties
 import id.walt.gateway.providers.metaco.restapi.intent.model.NoSignatureIntent
 import id.walt.gateway.providers.metaco.restapi.intent.model.SignatureIntent
+import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.TransactionOrderPayload
 import id.walt.gateway.providers.metaco.restapi.services.SignChallengeResponse
 import id.walt.gateway.providers.metaco.restapi.services.SignatureService

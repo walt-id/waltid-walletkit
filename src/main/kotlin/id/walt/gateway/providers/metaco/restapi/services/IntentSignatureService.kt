@@ -11,10 +11,9 @@ import kotlinx.coroutines.runBlocking
 class IntentSignatureService : BaseSignatureService<NoSignatureIntent>() {
 
     override fun sign(payload: NoSignatureIntent): String = runBlocking {
-        val result = client.post(ProviderConfig.signServiceUrl + "/signatures/key") {
+        client.post(ProviderConfig.signServiceUrl + "/signatures/key") {
             contentType(ContentType.Application.Json)
-            setBody(mapOf("payload" to payload, "privateKey" to ProviderConfig.privateKey))
+            setBody(Klaxon().toJsonString(mapOf("payload" to payload.request, "privateKey" to ProviderConfig.privateKey)))
         }.bodyAsText()
-        result
     }
 }
