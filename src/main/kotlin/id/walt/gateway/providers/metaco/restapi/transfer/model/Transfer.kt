@@ -1,9 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.transfer.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.transfer.model.Metadata
-import id.walt.gateway.providers.metaco.restapi.transfer.model.Recipient
-import id.walt.gateway.providers.metaco.restapi.transfer.model.Sender
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -15,12 +12,12 @@ data class Transfer(
     @Json(serializeNull = false)
     val quarantined: Boolean?,
     @Json(serializeNull = false)
-    val recipient: Recipient?,
+    val recipient: TransferParty?,
     @Json(serializeNull = false)
     val registeredAt: String?,
     @Json(serializeNull = false)
-    val sender: Sender?,
-    val senders: List<Sender>,
+    val sender: TransferParty?,
+    val senders: List<TransferParty>,
     val tickerId: String,
     val transactionId: String,
     val value: String
