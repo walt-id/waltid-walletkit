@@ -22,18 +22,19 @@ class AccountUseCaseImpl(
     private val balanceUseCase: BalanceUseCase,
     private val tickerUseCase: TickerUseCase,
 ) : AccountUseCase {
-    override fun profile(parameter: AccountParameter): Result<List<ProfileData>> = runCatching {
-        accountRepository.findAll(parameter.domainId, parameter.criteria).items.map {
-            ProfileData(id = it.data.id, alias = it.data.alias, addresses = emptyList(), ticker = "TODO")
+    override fun profile(domainId: String, parameter: ProfileParameter): Result<List<ProfileData>> = runCatching {
+        accountRepository.findAll(domainId, emptyMap()).items.map {
+            ProfileData(accountId = it.data.id, alias = it.data.alias, addresses = emptyList(), tickers = emptyList())
         }
     }
 
     override fun balance(parameter: AccountParameter): Result<AccountBalance> = runCatching {
-        profile(parameter).fold(onSuccess = {
-            balanceUseCase.list(parameter).getOrElse { emptyList() }
-        }, onFailure = { throw it }).let {
-            AccountBalance(it)
-        }
+//        profile(parameter).fold(onSuccess = {
+//            balanceUseCase.list(parameter).getOrElse { emptyList() }
+//        }, onFailure = { throw it }).let {
+//            AccountBalance(it)
+//        }
+        TODO()
     }
 
     override fun balance(parameter: BalanceParameter): Result<BalanceData> = runCatching {

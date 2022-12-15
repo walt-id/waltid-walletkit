@@ -27,8 +27,8 @@ object AccountController {
 //        )
 
     fun profile(ctx: Context) {
-        val account = ctx.bodyAsClass<ProfileParameter>()
-        accountUseCase.profile(AccountParameter(ProviderConfig.domainId, account.id))
+        val profile = ctx.bodyAsClass<ProfileParameter>()
+        accountUseCase.profile(ProviderConfig.domainId, profile)
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
