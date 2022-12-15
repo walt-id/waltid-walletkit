@@ -25,7 +25,7 @@ class AddressRepositoryImpl(
     override fun findById(domainId: String, accountId: String, addressId: String): Address = CommonHttp.get<Address>(
         client,
         String.format(
-            detailEndpoint,
+            CommonHttp.buildUrl(baseUrl, detailEndpoint),
             domainId,
             accountId,
             addressId

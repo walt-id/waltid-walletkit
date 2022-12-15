@@ -1,13 +1,16 @@
 package id.walt.gateway.providers.metaco.restapi.transaction.model
 
-import id.walt.gateway.providers.metaco.restapi.transaction.model.AccountReference
+import com.beust.klaxon.Json
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Output(
-    val accountReference: AccountReference,
-    val address: String,
+    @Json(serializeNull = false)
+    val accountReference: AccountReference? = null,
+    @Json(serializeNull = false)
+    val address: String? = null,
     val amount: String,
     val index: Int,
-    val scriptPubKey: String
+    @Json(serializeNull = false)
+    val scriptPubKey: String? = null,
 )
