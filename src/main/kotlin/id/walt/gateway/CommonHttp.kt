@@ -63,5 +63,5 @@ object CommonHttp {
         if (it.key.isNotEmpty() && it.value.isNotEmpty())
             "&${it.key}=${it.value}"
         else ""
-    }.joinToString { it }.replaceFirst("&", "?")
+    }.joinToString("").replaceFirst("&", "?")
 }
