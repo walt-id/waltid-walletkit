@@ -8,12 +8,13 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
+
 class AccountUseCaseImpl : AccountUseCase {
     val tickerUseCase = TickerUseCaseImpl()
 
     override fun profile(domainId: String, parameter: ProfileParameter) = Result.success((0..1).map { getProfile(parameter.id) })
 
-    override fun balance(parameter: AccountParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
+    override fun balance(domainId: String, parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
     override fun transactions(parameter: TradeListParameter) =

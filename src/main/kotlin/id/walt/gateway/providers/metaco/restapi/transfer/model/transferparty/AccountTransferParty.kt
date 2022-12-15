@@ -1,6 +1,7 @@
-package id.walt.gateway.providers.metaco.restapi.transfer.model
+package id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty
 
 import com.beust.klaxon.Json
+import id.walt.gateway.providers.metaco.restapi.transfer.model.AddressDetails
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -10,7 +10,7 @@ import id.walt.gateway.providers.metaco.restapi.transfer.model.TransferList
 class TransferRepositoryImpl(
     override val authService: AuthService
 ): TransferRepository, BaseRestRepository(authService) {
-    private val listEndpoint = "/v1/domains/%s/transactions/transfers"//?transactionId=fe8da9e8-520a-497c-9001-0b26c8067d3b"
+    private val listEndpoint = "/v1/domains/%s/transactions/transfers%s"//?transactionId=fe8da9e8-520a-497c-9001-0b26c8067d3b"
     private val detailEndpoint = "/v1/domains/%s/transactions/transfers/%s"
 
     override fun findAll(domainId: String, criteria: Map<String, String>) = CommonHttp.get<TransferList>(
