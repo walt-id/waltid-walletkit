@@ -46,11 +46,14 @@ class AccountUseCaseImpl(
         transferRepository.findAll(
             parameter.domainId, mapOf(
                 "accountId" to parameter.accountId,
+                "sortBy" to "registeredAt",
+                "sortOrder" to "DESC",
                 parameter.tickerId?.let { "tickerId" to it } ?: Pair("", ""),
             )
         ).items.filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId }.map {
-            buildTransactionData(parameter, it.key!!, it.value)
-        }.sortedByDescending { Instant.parse(it.date) }
+            val ticker = getTickerData(parameter.tickerId ?: "")
+            buildTransactionData(parameter, it.key!!, it.value, ticker)
+        }//.sortedByDescending { Instant.parse(it.date) }
     }
 
     override fun transaction(parameter: TransactionParameter): Result<TransactionTransferData> = runCatching {
@@ -69,7 +72,7 @@ class AccountUseCaseImpl(
                     TransferData(
                         amount = it.value,
                         type = it.kind,
-                        address = getRelatedAccount(parameter.domainId, transaction.orderReference == null, transfers),
+                        address = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
                     )
                 }
             )
@@ -95,10 +98,10 @@ class AccountUseCaseImpl(
     private fun getTransactionStatus(transaction: Transaction) =
         transaction.ledgerTransactionData?.ledgerStatus ?: transaction.processing?.status ?: "Unknown"
 
-    private fun buildTransactionData(parameter: TradeListParameter, transactionId: String, transfers: List<Transfer>) =
+    private fun buildTransactionData(parameter: TradeListParameter, transactionId: String, transfers: List<Transfer>, tickerData: TickerData? = null) =
         let {
             val transaction = transactionRepository.findById(parameter.domainId, transactionId)
-            val ticker = getTickerData(parameter.tickerId ?: transfers.first().tickerId)
+            val ticker = tickerData ?: getTickerData(parameter.tickerId ?: transfers.first().tickerId)
             val amount = computeAmount(transfers)
             TransactionData(
                 id = transaction.id,
@@ -112,13 +115,13 @@ class AccountUseCaseImpl(
                     Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
                     Common.computeAmount(amount, ticker.decimals) * ticker.price.change
                 ),
-                relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference == null, transfers),
+                relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
             )
         }
 
-    private fun getRelatedAccount(domainId: String, iAmSender: Boolean, transfers: List<Transfer>) =
+    private fun getRelatedAccount(domainId: String, isSender: Boolean, transfers: List<Transfer>) =
         transfers.filter { it.kind == "Transfer" }.let {
-            if (iAmSender) {
+            if (isSender) {
                 getAddresses(domainId, it.mapNotNull { it.recipient })
             } else
                 getAddresses(domainId, it.flatMap { it.senders })
