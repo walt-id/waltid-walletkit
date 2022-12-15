@@ -25,7 +25,7 @@ class AccountRepositoryImpl(
     override fun findById(domainId: String, accountId: String) = CommonHttp.get<Account>(
         client,
         String.format(
-            detailEndpoint,
+            CommonHttp.buildUrl(baseUrl, detailEndpoint),
             domainId,
             accountId,
         )

@@ -1,21 +1,18 @@
 package id.walt.gateway.providers.metaco.restapi.transaction.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.transaction.model.LedgerData
+import id.walt.gateway.providers.metaco.restapi.transaction.model.ledgerdata.LedgerData
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class LedgerTransactionData(
+    val ledgerStatus: String,
     @Json(serializeNull = false)
-    val failure: String?,
+    val failure: String? = null,
+    val ledgerTransactionId: String,
     @Json(serializeNull = false)
-    val ledgerData: LedgerData?,
+    val rawTransaction: String? = null,
+    val statusLastUpdatedAt: String,
     @Json(serializeNull = false)
-    val ledgerStatus: String?,
-    @Json(serializeNull = false)
-    val ledgerTransactionId: String?,
-    @Json(serializeNull = false)
-    val rawTransaction: String?,
-    @Json(serializeNull = false)
-    val statusLastUpdatedAt: String?
+    val ledgerData: LedgerData? = null,
 )

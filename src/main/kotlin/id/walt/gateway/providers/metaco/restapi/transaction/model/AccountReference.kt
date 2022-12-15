@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AccountReference(
-    val domainId: String,
-    val id: String
+    val id: String,
+    val domainId: String
 )
