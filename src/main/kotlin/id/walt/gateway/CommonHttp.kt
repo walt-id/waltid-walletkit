@@ -60,6 +60,8 @@ object CommonHttp {
     }.removeSuffix("/")
 
     fun buildQueryList(params: Map<String, String>) = params.map {
-        "&${it.key}=${it.value}"
+        if (it.key.isNotEmpty() && it.value.isNotEmpty())
+            "&${it.key}=${it.value}"
+        else ""
     }.joinToString { it }.replaceFirst("&", "?")
 }

@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.transfer.model
+package id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty
 
 import com.beust.klaxon.TypeAdapter
 import com.beust.klaxon.TypeFor

@@ -3,12 +3,16 @@ package id.walt.gateway.providers.metaco.restapi
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
 import id.walt.gateway.dto.trades.TradeListParameter
-import id.walt.gateway.providers.metaco.repositories.*
+import id.walt.gateway.providers.metaco.repositories.AccountRepository
+import id.walt.gateway.providers.metaco.repositories.AddressRepository
+import id.walt.gateway.providers.metaco.repositories.TransactionRepository
+import id.walt.gateway.providers.metaco.repositories.TransferRepository
+import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
-import id.walt.gateway.providers.metaco.restapi.transfer.model.AccountTransferParty
-import id.walt.gateway.providers.metaco.restapi.transfer.model.AddressTransferParty
+import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
+import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AddressTransferParty
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
-import id.walt.gateway.providers.metaco.restapi.transfer.model.TransferParty
+import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.TransferParty
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.BalanceUseCase
 import id.walt.gateway.usecases.TickerUseCase
@@ -23,18 +27,15 @@ class AccountUseCaseImpl(
     private val tickerUseCase: TickerUseCase,
 ) : AccountUseCase {
     override fun profile(domainId: String, parameter: ProfileParameter): Result<List<ProfileData>> = runCatching {
-        accountRepository.findAll(domainId, emptyMap()).items.map {
-            ProfileData(accountId = it.data.id, alias = it.data.alias, addresses = emptyList(), tickers = emptyList())
+        getProfileAccounts(domainId, parameter).map {
+            buildProfileData(AccountParameter(domainId, parameter.id), it)
         }
     }
 
-    override fun balance(parameter: AccountParameter): Result<AccountBalance> = runCatching {
-//        profile(parameter).fold(onSuccess = {
-//            balanceUseCase.list(parameter).getOrElse { emptyList() }
-//        }, onFailure = { throw it }).let {
-//            AccountBalance(it)
-//        }
-        TODO()
+    override fun balance(domainId: String, parameter: ProfileParameter): Result<AccountBalance> = runCatching {
+        getProfileAccounts(domainId, parameter).flatMap {
+            balanceUseCase.list(AccountParameter(it.data.domainId, it.data.id)).getOrElse { emptyList() }
+        }.let { AccountBalance(it) }
     }
 
     override fun balance(parameter: BalanceParameter): Result<BalanceData> = runCatching {
@@ -45,10 +46,10 @@ class AccountUseCaseImpl(
         transferRepository.findAll(
             parameter.domainId, mapOf(
                 "accountId" to parameter.accountId,
-                "tickerId" to (parameter.tickerId ?: ""),
+                parameter.tickerId?.let { "tickerId" to it } ?: Pair("", ""),
             )
-        ).items.groupBy { it.transactionId }.map {
-            buildTransactionData(parameter, it.key, it.value)
+        ).items.filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId }.map {
+            buildTransactionData(parameter, it.key!!, it.value)
         }.sortedByDescending { Instant.parse(it.date) }
     }
 
@@ -75,7 +76,17 @@ class AccountUseCaseImpl(
         }
     }
 
+    private fun getProfileAccounts(domainId: String, profile: ProfileParameter) = let {
+        if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(profile.id)) {
+            listOf(accountRepository.findById(domainId, profile.id))
+        } else {
+            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:${profile.id}")).items
+        }
+    }
+
     private fun getTickerData(tickerId: String) = tickerUseCase.get(TickerParameter(tickerId)).getOrThrow()
+
+    private fun getAccountTickers(account: AccountParameter) = balanceUseCase.list(account).getOrNull() ?: emptyList()
 
     private fun computeAmount(transfers: List<Transfer>) =
         transfers.filter { it.kind == "Transfer" }.map { it.value.toIntOrNull() ?: 0 }
@@ -120,5 +131,12 @@ class AccountUseCaseImpl(
             it.accountId
         ).items.map { it.address }
     }
+
+    private fun buildProfileData(parameter: AccountParameter, account: Account) = ProfileData(
+        accountId = account.data.id,
+        alias = account.data.alias,
+        addresses = emptyList(),
+        tickers = getAccountTickers(parameter).map { it.ticker.id }
+    )
 }
 
