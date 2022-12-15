@@ -1,12 +1,12 @@
 package id.walt.gateway.usecases
 
-import id.walt.gateway.dto.trades.BuyParameter
-import id.walt.gateway.dto.trades.*
+import id.walt.gateway.dto.trades.TradeData
+import id.walt.gateway.dto.trades.TradeValidationParameter
 
 interface TradeUseCase {
-    fun sell(parameter: SellParameter): Result<SellData>
-    fun buy(parameter: BuyParameter): Result<BuyData>
-    fun send(parameter: SendParameter): Result<SendData>
+    fun sell(parameter: TradeValidationParameter): Result<TradeData>
+    fun buy(parameter: TradeValidationParameter): Result<TradeData>
+    fun send(parameter: TradeValidationParameter): Result<TradeData>
 
-    fun validate(parameter: TradeValidationParameter): Result<TradeValidationData>
+    fun validate(parameter: TradeValidationParameter): Result<TradeData>
 }
