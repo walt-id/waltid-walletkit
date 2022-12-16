@@ -7,35 +7,41 @@ import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
 import id.walt.gateway.providers.metaco.ProviderConfig
-import id.walt.gateway.providers.metaco.mockapi.AccountUseCaseImpl
+import id.walt.gateway.providers.metaco.restapi.AccountUseCaseImpl
+import id.walt.gateway.providers.metaco.restapi.BalanceUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.TickerUseCaseImpl
+import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.address.AddressRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.balance.BalanceRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.services.AuthSignatureService
 import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.transaction.TransactionRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.transfer.TransferRepositoryImpl
 import id.walt.gateway.usecases.AccountUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
 object AccountController {
-//    private val authService = AuthService(AuthSignatureService())
-//    private val tickerUseCase = TickerUseCaseImpl(
-//        TickerRepositoryImpl(authService),
-//        SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
-//        LogoUseCaseImpl()
-//    )
+    private val authService = AuthService(AuthSignatureService())
+    private val tickerUseCase = TickerUseCaseImpl(
+        TickerRepositoryImpl(authService),
+        SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
+        LogoUseCaseImpl()
+    )
     private val accountUseCase: AccountUseCase =
-        AccountUseCaseImpl()
-//        AccountUseCaseImpl(
-//            AccountRepositoryImpl(authService),
-//            TransactionRepositoryImpl(authService),
-//            TransferRepositoryImpl(authService),
-//            AddressRepositoryImpl(authService),
-//            BalanceUseCaseImpl(
-//                BalanceRepositoryImpl(authService),
-//                tickerUseCase,
-//            ),
-//            tickerUseCase
-//        )
+//        AccountUseCaseImpl()
+        AccountUseCaseImpl(
+            AccountRepositoryImpl(authService),
+            TransactionRepositoryImpl(authService),
+            TransferRepositoryImpl(authService),
+            AddressRepositoryImpl(authService),
+            BalanceUseCaseImpl(
+                BalanceRepositoryImpl(authService),
+                tickerUseCase,
+            ),
+            tickerUseCase
+        )
 
     fun profile(ctx: Context) {
         val profile = ctx.bodyAsClass<ProfileParameter>()
