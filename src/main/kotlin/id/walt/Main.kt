@@ -13,6 +13,7 @@ import id.walt.webwallet.backend.context.WalletContextManager
 
 
 val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
+val WALTID_WALLET_SOCKET_PORT = System.getenv("WALTID_WALLET_SOCKET_PORT")?.toIntOrNull() ?: 9999
 
 var WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_BACKEND_BIND_ADDRESS") ?: "0.0.0.0"
 
