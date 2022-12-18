@@ -7,6 +7,10 @@ import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.providers.metaco.CoinMapper.map
 import id.walt.gateway.providers.metaco.repositories.TickerRepository
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
+import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC20LedgerProperties
+import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC721LedgerProperties
+import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.LedgerProperties
+import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.NativeLedgerProperties
 import id.walt.gateway.usecases.CoinUseCase
 import id.walt.gateway.usecases.LogoUseCase
 import id.walt.gateway.usecases.TickerUseCase
@@ -17,9 +21,7 @@ class TickerUseCaseImpl(
     private val logoUseCase: LogoUseCase,
 ) : TickerUseCase {
     override fun get(parameter: TickerParameter): Result<TickerData> = runCatching {
-        tickerRepository.findById(parameter.id).let {
-            buildTickerData(it, parameter.currency)
-        }
+        buildTickerData(tickerRepository.findById(parameter.id), parameter.currency)
     }
 
     override fun list(currency: String): Result<List<TickerData>> = runCatching {
@@ -32,7 +34,7 @@ class TickerUseCaseImpl(
         id = ticker.data.id,
         kind = ticker.data.kind,
         chain = ticker.data.ledgerId,
-        imageUrl = logoUseCase.get(AssetParameter(ticker.data.name, ticker.data.symbol)).data,
+        imageUrl = logoUseCase.get(AssetParameter(ticker.data.name, ticker.data.name)).data,
         name = ticker.data.name,
         price = coinUseCase.metadata(ticker.map(currency)).fold(
             onSuccess = {
@@ -40,8 +42,17 @@ class TickerUseCaseImpl(
             }, onFailure = {
                 ValueWithChange()
             }),
-        decimals = ticker.data.decimals,
-        symbol = ticker.data.symbol,
+        decimals = ticker.data.decimals ?: 0,
+        symbol = ticker.data.symbol ?: ticker.data.name,
         maxFee = 1000,
+        address = extractTickerAddress(ticker.data.ledgerDetails.properties)
     )
+
+    private fun extractTickerAddress(properties: LedgerProperties) = properties.let {
+        when (it) {
+            is ERC20LedgerProperties -> it.address
+            is ERC721LedgerProperties -> it.address
+            is NativeLedgerProperties -> null
+        }
+    }
 }
