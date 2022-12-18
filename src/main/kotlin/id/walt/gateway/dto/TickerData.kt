@@ -1,5 +1,6 @@
 package id.walt.gateway.dto
 
+import com.beust.klaxon.Json
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,4 +14,6 @@ data class TickerData(
     val decimals: Int,
     val symbol: String,
     val maxFee: Int,
+    @Json(serializeNull = false)
+    val address: String? = null,
 )
