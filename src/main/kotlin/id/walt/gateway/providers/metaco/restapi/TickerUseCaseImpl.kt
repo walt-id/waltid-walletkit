@@ -34,7 +34,7 @@ class TickerUseCaseImpl(
         id = ticker.data.id,
         kind = ticker.data.kind,
         chain = ticker.data.ledgerId,
-        imageUrl = logoUseCase.get(AssetParameter(ticker.data.name, ticker.data.name)).data,
+        imageUrl = logoUseCase.get(AssetParameter(ticker.data.ledgerId, ticker.data.symbol?:ticker.data.ledgerDetails.type)).data,
         name = ticker.data.name,
         price = coinUseCase.metadata(ticker.map(currency)).fold(
             onSuccess = {
