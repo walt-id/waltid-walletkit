@@ -12,10 +12,8 @@ import id.walt.webwallet.backend.cli.ConfigCmd
 import id.walt.webwallet.backend.cli.RunCmd
 import id.walt.webwallet.backend.cli.WalletCmd
 import id.walt.webwallet.backend.context.WalletContextManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 
 val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
@@ -42,6 +40,12 @@ fun main(args: Array<String>): Unit = runBlocking {
             WALTID_TLS_VERSION,
         )
     }
+
+//    launch {
+//        Server().startUnsecure(
+//            WALTID_WALLET_SOCKET_PORT,
+//        )
+//    }
 
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)

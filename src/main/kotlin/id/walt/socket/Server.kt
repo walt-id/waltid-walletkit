@@ -33,12 +33,24 @@ class Server {
         initContext(port, trustStore, keyStore).use {it as SSLServerSocket
             it.needClientAuth = true
             it.enabledProtocols = arrayOf(tlsVersion)
+//            it.enabledProtocols = it.supportedProtocols
+//            it.enabledCipherSuites = it.supportedCipherSuites
+//            it.needClientAuth = false
+//            it.wantClientAuth = false
+//            it.useClientMode = false
             logger.info("Server running on port ${it.localPort}")
-            while (true) {
-                val socket = it.accept()
-                logger.info("New connection: ${socket.inetAddress.hostAddress}")
-                launch { handleConnection(socket) }
-            }
+            listen(it)
+//            while (true) {
+//                val socket = it.accept() as SSLSocket
+//                logger.info("New connection: ${socket.inetAddress.hostAddress}")
+//                launch { handleConnection(socket) }
+//                socket.addHandshakeCompletedListener {
+//                    //start to communicate
+//                    logger.info { "Handshake completed for ${it.peerPrincipal.name}" }
+//                    launch { handleConnection(socket) }
+//                }
+//                socket.startHandshake()
+//            }
         }
     }
 
@@ -47,16 +59,20 @@ class Server {
         val server = ServerSocket(port)
         logger.info("Server running on port ${server.localPort}")
         try {
-            while (true) {
-                val socket = server.accept()
-                logger.info("New connection: ${socket.inetAddress.hostAddress}")
-                launch { handleConnection(socket) }
-            }
+            listen(server)
         } catch (e: Exception) {
             logger.error("Server exception: ${e.message}")
         } finally {
             logger.info("Closing server: ${server.inetAddress}:${server.localPort}")
             server.close()
+        }
+    }
+
+    private suspend fun listen(server: ServerSocket) = withContext(Dispatchers.IO) {
+        while (true) {
+            val socket = server.accept()
+            logger.info("New connection: ${socket.inetAddress.hostAddress}")
+            launch { handleConnection(socket) }
         }
     }
 
