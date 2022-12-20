@@ -6,7 +6,6 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.common.VCList
 import id.walt.common.VCObjectList
 import id.walt.credentials.w3c.VerifiableCredential
 import id.walt.credentials.w3c.templates.VcTemplateManager
@@ -102,7 +101,7 @@ data class CredentialIssuanceSession(
 
 object CredentialIssuanceManager {
 
-    private val log = KotlinLogging.logger {  }
+    private val log = KotlinLogging.logger { }
 
     val EXPIRATION_TIME = Duration.ofMinutes(5)
     val sessionCache = CacheBuilder.newBuilder().expireAfterAccess(EXPIRATION_TIME.seconds, TimeUnit.SECONDS)
