@@ -197,12 +197,12 @@ abstract class VerifierManager : BaseService() {
         val state = siopResponse.state ?: throw BadRequestResponse("No state set on SIOP response")
         val req = reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
         reqCache.invalidate(state)
-        val vps = siopResponse.vp_token
+        val verifiablePresentations = siopResponse.vp_token
 
         val result = SIOPResponseVerificationResult(
             state = state,
-            subject = vps.firstOrNull { !it.holder.isNullOrEmpty() }?.holder,
-            vps = vps.map { vp ->
+            subject = verifiablePresentations.firstOrNull { !it.holder.isNullOrEmpty() }?.holder,
+            vps = verifiablePresentations.map { vp ->
                 VPVerificationResult(
                     vp = vp,
                     vcs = vp.verifiableCredential ?: listOf(),
@@ -214,6 +214,8 @@ abstract class VerifierManager : BaseService() {
                 )
             }, auth_token = null
         )
+
+        var overallValid = result.isValid
 
         // Verification callback
         val callbackRequestedRedirectUrl = if (verificationCallbacks[state].isPresent) {
@@ -236,11 +238,17 @@ abstract class VerifierManager : BaseService() {
                     HttpStatusCode.MovedPermanently, HttpStatusCode.PermanentRedirect,
                     HttpStatusCode.Found, HttpStatusCode.SeeOther, HttpStatusCode.TemporaryRedirect
                 ) -> response.headers[HttpHeaders.Location]
+                in setOf(
+                    HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden
+                ) -> {
+                    overallValid = false
+                    null
+                }
                 else -> null
             }
         } else null
 
-        if (result.isValid) {
+        if (result.isValid && overallValid) {
             result.auth_token = JWTService.toJWT(UserInfo(result.subject!!))
         }
 
