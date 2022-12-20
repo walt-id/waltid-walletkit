@@ -90,13 +90,11 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
-          env:
-            - name: WALTID_DATA_ROOT
-              value: "/waltid/wallet"
-            - name: WALTID_WALLET_BACKEND_BIND_ADDRESS
-              value: 0.0.0.0
-            - name: WALTID_WALLET_AUTH_SECRET
-              value: 0b218176-d8f3-4a58-83db-fd328defc30f
+          envFrom:
+          - secretRef:
+              name: wallet-secret
+          - secretRef:
+              name: socket-secret
           args:
             - run
           ports:
