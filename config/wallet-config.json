@@ -1,20 +1,20 @@
 {
-  "walletUiUrl": "http://localhost:3000",
-  "walletApiUrl": "http://localhost:3000/api",
+  "walletUiUrl": "http://wallet.local:3000",
+  "walletApiUrl": "http://wallet.local:3000/api",
   "issuers": {
     "walt.id": {
       "id": "walt.id",
-      "url": "http://localhost:8080/issuer-api/oidc",
+      "url": "http://wallet.local:8080/issuer-api/oidc",
       "description": "walt.id Issuer Portal"
     },
     "local": {
       "id": "local",
-      "url": "http://localhost:8080/issuer-api/oidc",
+      "url": "http://wallet.local:8080/issuer-api/oidc",
       "description": "local Issuer Portal"
     },
     "onboarding@walt.id": {
       "id": "onboarding@walt.id",
-      "url": "http://localhost:8080/onboarding-api/oidc",
+      "url": "http://wallet.local:8080/onboarding-api/oidc",
       "description": "walt.id On-Boarding service"
     }
   }
