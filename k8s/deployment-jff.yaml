@@ -57,7 +57,7 @@ spec:
             - mountPath: "/waltid/wallet/data/"
               name: jff-data
             - name: socket-keystore
-              mountPath: "/waltid/wallet/keystore/"
+              mountPath: "/waltid/wallet/keystore/servercert.p12"
               subPath: servercert.p12
               readOnly: true
           envFrom:
