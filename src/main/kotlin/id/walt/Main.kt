@@ -41,12 +41,6 @@ fun main(args: Array<String>): Unit = runBlocking {
         )
     }
 
-//    launch {
-//        Server().startUnsecure(
-//            WALTID_WALLET_SOCKET_PORT,
-//        )
-//    }
-
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)
 
