@@ -56,6 +56,10 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: jff-data
+            - name: socket-keystore
+              mountPath: "/waltid/wallet/keystore/"
+              subPath: servercert.p12
+              readOnly: true
           envFrom:
           - secretRef:
               name: wallet-secret
@@ -73,6 +77,13 @@ spec:
         - name: jff-data
           persistentVolumeClaim:
             claimName: jff-data-volume-claim
+        - name: socket-keystore
+          secret:
+            secretName: socket-keystore-secret
+            items:
+              - key: servercert.p12
+                path: servercert.p12
+            defaultMode: 420
 ---
 kind: Service
 apiVersion: v1
