@@ -120,7 +120,6 @@ spec:
             items:
               - key: servercert.p12
                 path: servercert.p12
-            defaultMode: 420
 ---
 kind: Service
 apiVersion: v1
