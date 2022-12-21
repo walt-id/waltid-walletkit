@@ -26,5 +26,5 @@ object Common {
         }
     ).let {
         it.insert(it.length - decimals, '.')
-    }.toString().toDoubleOrNull() ?: Double.NaN
+    }.toString().toDoubleOrNull() ?: .0//Double.NaN
 }
