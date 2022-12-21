@@ -17,9 +17,9 @@ class SimplePriceParser : ResponseParser<CoinData> {
         val change24h = Regex(String.format(change24hRegex, currency)).find(coin)
 
         CoinData(
-            price = price?.groups?.get(2)?.value?.toDoubleOrNull() ?: Double.NaN,
-            marketCap = marketCap?.groups?.get(2)?.value?.toDoubleOrNull() ?: Double.NaN,
-            change = change24h?.groups?.get(2)?.value?.toDoubleOrNull() ?: Double.NaN
+            price = price?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN,
+            marketCap = marketCap?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN,
+            change = change24h?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN
         )
     }
 }
