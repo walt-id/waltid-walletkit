@@ -56,11 +56,11 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: jff-data
-          env:
-            - name: WALTID_DATA_ROOT
-              value: "/waltid/wallet"
-            - name: WALTID_WALLET_BACKEND_BIND_ADDRESS
-              value: 0.0.0.0
+          envFrom:
+          - secretRef:
+              name: wallet-secret
+          - secretRef:
+              name: socket-secret
           args:
             - run
           ports:
