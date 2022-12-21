@@ -16,7 +16,6 @@ import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.Tra
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.BalanceUseCase
 import id.walt.gateway.usecases.TickerUseCase
-import java.time.Instant
 
 class AccountUseCaseImpl(
     private val accountRepository: AccountRepository,
@@ -26,10 +25,12 @@ class AccountUseCaseImpl(
     private val balanceUseCase: BalanceUseCase,
     private val tickerUseCase: TickerUseCase,
 ) : AccountUseCase {
-    override fun profile(domainId: String, parameter: ProfileParameter): Result<List<ProfileData>> = runCatching {
-        getProfileAccounts(domainId, parameter).map {
-            buildProfileData(AccountParameter(domainId, parameter.id), it)
-        }
+    override fun profile(domainId: String, parameter: ProfileParameter): Result<ProfileData> = runCatching {
+        ProfileData(
+            profileId = parameter.id,
+            accounts = getProfileAccounts(domainId, parameter).map {
+                buildProfileData(AccountParameter(domainId, parameter.id), it)
+            })
     }
 
     override fun balance(domainId: String, parameter: ProfileParameter): Result<AccountBalance> = runCatching {
@@ -135,7 +136,7 @@ class AccountUseCaseImpl(
         ).items.map { it.address }
     }
 
-    private fun buildProfileData(parameter: AccountParameter, account: Account) = ProfileData(
+    private fun buildProfileData(parameter: AccountParameter, account: Account) = AccountData(
         accountId = account.data.id,
         alias = account.data.alias,
         addresses = emptyList(),

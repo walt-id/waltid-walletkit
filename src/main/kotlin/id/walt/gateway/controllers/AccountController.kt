@@ -103,7 +103,7 @@ object AccountController {
         it.summary("Returns the account profile data").operationId("profile").addTagsItem("Account Management")
     }.body<ProfileParameter> {
         it.description("Profile parameter.")
-    }.json<List<ProfileData>>("200") { it.description("The account profile data") }
+    }.json<ProfileData>("200") { it.description("The account profile data") }
 
     fun balanceDoc() = document().operation {
         it.summary("Returns the account balance").operationId("balance").addTagsItem("Account Management")
