@@ -90,13 +90,15 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
-          env:
-            - name: WALTID_DATA_ROOT
-              value: "/waltid/wallet"
-            - name: WALTID_WALLET_BACKEND_BIND_ADDRESS
-              value: 0.0.0.0
-            - name: WALTID_WALLET_AUTH_SECRET
-              value: 0b218176-d8f3-4a58-83db-fd328defc30f
+            - name: socket-keystore
+              mountPath: "/waltid/wallet/keystore/"
+              subPath: servercert.p12
+              readOnly: true
+          envFrom:
+          - secretRef:
+              name: wallet-secret
+          - secretRef:
+              name: socket-secret
           args:
             - run
           ports:
@@ -112,6 +114,13 @@ spec:
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
+        - name: socket-keystore
+          secret:
+            secretName: socket-keystore-secret
+            items:
+              - key: servercert.p12
+                path: servercert.p12
+            defaultMode: 420
 ---
 kind: Service
 apiVersion: v1
