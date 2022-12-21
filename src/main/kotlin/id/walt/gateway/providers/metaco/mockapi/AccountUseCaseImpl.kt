@@ -12,7 +12,7 @@ import java.util.*
 class AccountUseCaseImpl : AccountUseCase {
     val tickerUseCase = TickerUseCaseImpl()
 
-    override fun profile(domainId: String, parameter: ProfileParameter) = Result.success((0..1).map { getProfile(parameter.id) })
+    override fun profile(domainId: String, parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
 
     override fun balance(domainId: String, parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
@@ -22,7 +22,11 @@ class AccountUseCaseImpl : AccountUseCase {
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
-    private fun getProfile(id: String?) = ProfileData(
+    private fun getProfile(id: String) = ProfileData(
+        profileId = UUID.randomUUID().toString(),
+        accounts = (0..1).map { getAccount(id) },
+    )
+    private fun getAccount(id: String?) = AccountData(
         accountId = UUID.randomUUID().toString(),
         alias = Common.getRandomString(7, 1),
         addresses = listOf("0x${Common.getRandomString(40, 2)}"),
