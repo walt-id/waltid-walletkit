@@ -94,6 +94,10 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
+            - name: socket-keystore
+              mountPath: "/waltid/wallet/keystore/"
+              subPath: servercert.p12
+              readOnly: true
           envFrom:
           - secretRef:
               name: wallet-secret
@@ -114,6 +118,13 @@ spec:
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
+        - name: socket-keystore
+          secret:
+            secretName: socket-keystore-secret
+            items:
+              - key: servercert.p12
+                path: servercert.p12
+            defaultMode: 420
 ---
 kind: Service
 apiVersion: v1
