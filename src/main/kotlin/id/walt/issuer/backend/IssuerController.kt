@@ -16,6 +16,7 @@ import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
+import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
@@ -37,6 +38,8 @@ object IssuerController {
                         VerifierController::listWallets,
                     ))
                 }
+                before("credentials/*") { WalletContextManager.setCurrentContext(IssuerManager.issuerContext) }
+                after("credentials/*") { WalletContextManager.resetCurrentContext() }
                 path("credentials") {
                     get("listIssuables", documented(
                         document().operation {
