@@ -98,11 +98,17 @@ spec:
               mountPath: "/waltid/wallet/keystore/servercert.p12"
               subPath: servercert.p12
               readOnly: true
+            - name: metaco-key-secret
+              mountPath: "/waltid/wallet/metaco/privkey.pem"
+              subPath: privkey.pem
+              readOnly: true
           envFrom:
           - secretRef:
               name: wallet-secret
           - secretRef:
               name: socket-secret
+          - secretRef:
+              name: metaco-secret
           args:
             - run
           ports:
@@ -126,6 +132,12 @@ spec:
             items:
               - key: servercert.p12
                 path: servercert.p12
+        - name: metaco-key-secret
+          secret:
+            secretName: metaco-key-secret
+            items:
+              - key: privkey.pem
+                path: privkey.pem
 ---
 kind: Service
 apiVersion: v1
