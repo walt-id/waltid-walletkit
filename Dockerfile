@@ -1,5 +1,14 @@
+# --- dos2unix-env
+# convert line endings from Windows machines
+FROM docker.io/rkimf1/dos2unix@sha256:60f78cd8bf42641afdeae3f947190f98ae293994c0443741a2b3f3034998a6ed as dos2unix-env
+WORKDIR /convert
+COPY gradlew .
+RUN dos2unix ./gradlew
+
 FROM openjdk:17-jdk-slim as buildstage
 COPY ./ /
+# copy converted Windows line endings files
+COPY --from=dos2unix-env /convert/gradlew .
 RUN ./gradlew installDist
 
 FROM waltid/waltid_iota_identity_wrapper:latest as iota_wrapper
