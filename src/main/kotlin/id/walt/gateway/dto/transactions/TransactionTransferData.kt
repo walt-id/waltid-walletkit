@@ -1,5 +1,7 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.transactions
 
+import id.walt.gateway.dto.AmountWithValue
+import id.walt.gateway.dto.TransferData
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 

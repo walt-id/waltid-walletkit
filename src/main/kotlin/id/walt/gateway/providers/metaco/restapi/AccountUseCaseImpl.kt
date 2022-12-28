@@ -2,12 +2,14 @@ package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
-import id.walt.gateway.dto.trades.TradeListParameter
-import id.walt.gateway.providers.metaco.repositories.AccountRepository
-import id.walt.gateway.providers.metaco.repositories.AddressRepository
-import id.walt.gateway.providers.metaco.repositories.TransactionRepository
-import id.walt.gateway.providers.metaco.repositories.TransferRepository
+import id.walt.gateway.dto.transactions.TransactionData
+import id.walt.gateway.dto.transactions.TransactionListParameter
+import id.walt.gateway.dto.transactions.TransactionParameter
+import id.walt.gateway.dto.transactions.TransactionTransferData
+import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionOrderTypeCustomProperties
+import id.walt.gateway.providers.metaco.restapi.transaction.model.OrderReference
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AddressTransferParty
@@ -20,6 +22,7 @@ import id.walt.gateway.usecases.TickerUseCase
 class AccountUseCaseImpl(
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
+    private val orderRepository: OrderRepository,
     private val transferRepository: TransferRepository,
     private val addressRepository: AddressRepository,
     private val balanceUseCase: BalanceUseCase,
@@ -43,7 +46,7 @@ class AccountUseCaseImpl(
         balanceUseCase.get(parameter).getOrThrow()
     }
 
-    override fun transactions(parameter: TradeListParameter): Result<List<TransactionData>> = runCatching {
+    override fun transactions(parameter: TransactionListParameter): Result<List<TransactionData>> = runCatching {
         transferRepository.findAll(
             parameter.domainId, mapOf(
                 "accountId" to parameter.accountId,
@@ -99,7 +102,7 @@ class AccountUseCaseImpl(
     private fun getTransactionStatus(transaction: Transaction) =
         transaction.ledgerTransactionData?.ledgerStatus ?: transaction.processing?.status ?: "Unknown"
 
-    private fun buildTransactionData(parameter: TradeListParameter, transactionId: String, transfers: List<Transfer>, tickerData: TickerData? = null) =
+    private fun buildTransactionData(parameter: TransactionListParameter, transactionId: String, transfers: List<Transfer>, tickerData: TickerData? = null) =
         let {
             val transaction = transactionRepository.findById(parameter.domainId, transactionId)
             val ticker = tickerData ?: getTickerData(parameter.tickerId ?: transfers.first().tickerId)
@@ -109,8 +112,7 @@ class AccountUseCaseImpl(
                 date = transaction.registeredAt,
                 amount = amount,
                 ticker = ticker,
-                //TODO: get outgoing status from order custom properties
-                type = transaction.orderReference?.let { "Outgoing" } ?: "Receive",
+                type = getTransactionOrderType(transaction.orderReference),
                 status = getTransactionStatus(transaction),
                 price = ValueWithChange(
                     Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
@@ -142,5 +144,15 @@ class AccountUseCaseImpl(
         addresses = emptyList(),
         tickers = getAccountTickers(parameter).map { it.ticker.id }
     )
+
+    private fun getTransactionOrderType(order: OrderReference?) = order?.let {
+        runCatching {
+            orderRepository.findById(it.domainId, it.id).data
+        }.fold(onSuccess = {
+            (it.metadata.customProperties as? TransactionOrderTypeCustomProperties)?.transactionType ?: "Outgoing"
+        }, onFailure = {
+            "Unknown"
+        })
+    } ?: "Receive"
 }
 

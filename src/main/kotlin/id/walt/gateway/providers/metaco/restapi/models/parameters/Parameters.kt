@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.intent.model.parameters
+package id.walt.gateway.providers.metaco.restapi.models.parameters
 
 import com.beust.klaxon.TypeAdapter
 import com.beust.klaxon.TypeFor

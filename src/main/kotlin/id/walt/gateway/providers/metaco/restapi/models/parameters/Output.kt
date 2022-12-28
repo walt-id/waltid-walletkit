@@ -1,6 +1,6 @@
-package id.walt.gateway.providers.metaco.restapi.intent.model
+package id.walt.gateway.providers.metaco.restapi.models.parameters
 
-import id.walt.gateway.providers.metaco.restapi.intent.model.destination.Destination
+import id.walt.gateway.providers.metaco.restapi.models.destination.Destination
 import kotlinx.serialization.Serializable
 
 @Serializable
