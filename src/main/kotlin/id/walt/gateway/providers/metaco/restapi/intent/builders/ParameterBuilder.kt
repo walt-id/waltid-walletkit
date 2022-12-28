@@ -1,7 +1,7 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders
 
 import id.walt.gateway.dto.trades.TradeParameter
-import id.walt.gateway.providers.metaco.restapi.intent.model.parameters.Parameters
+import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 
 interface ParameterBuilder {
     fun build(params: TradeParameter): Parameters

@@ -2,7 +2,10 @@ package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
-import id.walt.gateway.dto.trades.TradeListParameter
+import id.walt.gateway.dto.transactions.TransactionData
+import id.walt.gateway.dto.transactions.TransactionListParameter
+import id.walt.gateway.dto.transactions.TransactionParameter
+import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.usecases.AccountUseCase
 import java.time.Duration
 import java.time.Instant
@@ -17,7 +20,7 @@ class AccountUseCaseImpl : AccountUseCase {
     override fun balance(domainId: String, parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
-    override fun transactions(parameter: TradeListParameter) =
+    override fun transactions(parameter: TransactionListParameter) =
         Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }.sortedByDescending { Instant.parse(it.date) })
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
