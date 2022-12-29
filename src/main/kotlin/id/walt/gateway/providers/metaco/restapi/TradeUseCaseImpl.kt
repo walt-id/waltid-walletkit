@@ -6,6 +6,7 @@ import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TradeResult
 import id.walt.gateway.dto.trades.TradeValidationParameter
 import id.walt.gateway.providers.metaco.repositories.IntentRepository
+import id.walt.gateway.providers.metaco.repositories.TickerRepository
 import id.walt.gateway.providers.metaco.restapi.intent.builders.IntentBuilder
 import id.walt.gateway.providers.metaco.restapi.intent.builders.ParameterBuilder
 import id.walt.gateway.providers.metaco.restapi.intent.model.NoSignatureIntent
@@ -15,10 +16,12 @@ import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPr
 import id.walt.gateway.providers.metaco.restapi.services.SignChallengeResponse
 import id.walt.gateway.providers.metaco.restapi.services.SignatureService
 import id.walt.gateway.usecases.TradeUseCase
+import kotlinx.coroutines.channels.ticker
 import java.util.*
 
 class TradeUseCaseImpl(
     private val intentRepository: IntentRepository,
+    private val tickerRepository: TickerRepository,
     private val intentSignatureService: SignatureService<NoSignatureIntent>,
 ) : TradeUseCase {
     override fun sell(parameter: TradeData): Result<TradeResult> =
@@ -37,7 +40,7 @@ class TradeUseCaseImpl(
             id = UUID.randomUUID().toString(),
             accountId = parameter.trade.sender,
             customProperties = CustomProperties(),
-            parameters = ParameterBuilder.getBuilder(parameter.trade.ticker).build(parameter.trade)
+            parameters = ParameterBuilder.getBuilder(getTickerType(parameter.trade.ticker)).build(parameter.trade)
         ).run {
             intentRepository.validate(parameter.domainId, this).let {
                 TradeResult(
@@ -47,6 +50,14 @@ class TradeUseCaseImpl(
             }
         }
     }
+
+    private fun getTickerType(tickerId: String) = runCatching {
+        tickerRepository.findById(tickerId).data.ledgerDetails.type
+    }.fold(onSuccess = {
+        it
+    }, onFailure = {
+        "Unknown"
+    })
 
     private fun createTransactionOrder(type: String, data: TradeData) = runCatching {
         IntentBuilder.getBuilder(IntentBuilderParam(type, data.trade.ticker)).build(data)
