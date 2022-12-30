@@ -1,10 +1,10 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders
 
 import id.walt.gateway.dto.trades.TradeParameter
-import id.walt.gateway.providers.metaco.restapi.intent.model.destination.Destination
+import id.walt.gateway.providers.metaco.restapi.models.destination.Destination
 import id.walt.gateway.providers.metaco.restapi.intent.model.fee.PriorityFeeStrategy
-import id.walt.gateway.providers.metaco.restapi.intent.model.parameters.EthereumParameters
-import id.walt.gateway.providers.metaco.restapi.intent.model.parameters.Parameters
+import id.walt.gateway.providers.metaco.restapi.models.parameters.EthereumParameters
+import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 
 class EthereumParamBuilder : ParameterBuilder {
     override fun build(params: TradeParameter): Parameters = EthereumParameters(

@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.order.model
 
+import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 import kotlinx.serialization.Serializable
 
 @Serializable

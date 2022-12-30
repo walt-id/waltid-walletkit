@@ -2,25 +2,33 @@ package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TradeParameter
+import id.walt.gateway.dto.trades.TradeResult
 import id.walt.gateway.dto.trades.TradeValidationParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
-import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.TradeUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.intent.IntentRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.services.AuthSignatureService
 import id.walt.gateway.providers.metaco.restapi.services.IntentSignatureService
+import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
 object TradeController {
+    private val authService = AuthService(AuthSignatureService())
+
     //    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
     private val tradeUseCase: TradeUseCase =
-        TradeUseCaseImpl(IntentRepositoryImpl(AuthService(AuthSignatureService())), IntentSignatureService())
+        TradeUseCaseImpl(
+            IntentRepositoryImpl(authService),
+            TickerRepositoryImpl(authService),
+            IntentSignatureService()
+        )
 
     fun sell(ctx: Context) {
         val parameters = ctx.bodyAsClass<TradeParameter>()
-        tradeUseCase.sell(TradeValidationParameter(ProviderConfig.domainId, parameters))
+        tradeUseCase.sell(TradeData(ProviderConfig.domainId, parameters, "Sell"))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -30,7 +38,7 @@ object TradeController {
 
     fun buy(ctx: Context) {
         val parameters = ctx.bodyAsClass<TradeParameter>()
-        tradeUseCase.buy(TradeValidationParameter(ProviderConfig.domainId, parameters))
+        tradeUseCase.buy(TradeData(ProviderConfig.domainId, parameters, "Buy"))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -40,7 +48,7 @@ object TradeController {
 
     fun send(ctx: Context) {
         val parameters = ctx.bodyAsClass<TradeParameter>()
-        tradeUseCase.send(TradeValidationParameter(ProviderConfig.domainId, parameters))
+        tradeUseCase.send(TradeData(ProviderConfig.domainId, parameters, "Transfer"))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -62,23 +70,23 @@ object TradeController {
         it.summary("Returns the sell trade details").operationId("sell").addTagsItem("Trade Management")
     }.body<TradeParameter> {
         it.description("Sell parameters")
-    }.json<TradeData>("200") { it.description("The sell trade details") }
+    }.json<TradeResult>("200") { it.description("The sell trade details") }
 
     fun buyDocs() = document().operation {
         it.summary("Returns the buy trade details").operationId("buy").addTagsItem("Trade Management")
     }.body<TradeParameter> {
         it.description("Buy parameters")
-    }.json<TradeData>("200") { it.description("The buy trade details") }
+    }.json<TradeResult>("200") { it.description("The buy trade details") }
 
     fun sendDocs() = document().operation {
         it.summary("Returns the send trade details").operationId("send").addTagsItem("Trade Management")
     }.body<TradeParameter> {
         it.description("Send parameters")
-    }.json<TradeData>("200") { it.description("The send trade details") }
+    }.json<TradeResult>("200") { it.description("The send trade details") }
 
     fun validateDocs() = document().operation {
         it.summary("Returns the trade validation details").operationId("validate").addTagsItem("Trade Management")
     }.body<TradeParameter> {
         it.description("Trade preview parameters")
-    }.json<TradeData>("200") { it.description("The trade validation details") }
+    }.json<TradeResult>("200") { it.description("The trade validation details") }
 }

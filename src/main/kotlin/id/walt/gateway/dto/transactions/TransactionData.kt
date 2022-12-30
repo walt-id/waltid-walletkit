@@ -1,7 +1,8 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.transactions
 
+import id.walt.gateway.dto.TickerData
+import id.walt.gateway.dto.ValueWithChange
 import kotlinx.serialization.Serializable
-import java.time.LocalDateTime
 
 @Serializable
 data class TransactionData(
