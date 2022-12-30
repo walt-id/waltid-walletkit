@@ -1,10 +1,10 @@
-package id.walt.gateway.providers.metaco.restapi.order.model
+package id.walt.gateway.providers.metaco.restapi.models.customproperties
 
 import com.beust.klaxon.Json
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CustomProperties(
+data class EnhancedDestinationReferenceCustomProperties(
     @Json(serializeNull = false)
     val enhancedDestinationReference: String?
 )

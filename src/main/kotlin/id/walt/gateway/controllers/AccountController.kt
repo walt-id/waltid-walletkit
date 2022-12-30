@@ -1,18 +1,23 @@
 package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.*
-import id.walt.gateway.dto.trades.TradeListParameter
+import id.walt.gateway.dto.transactions.TransactionData
+import id.walt.gateway.dto.transactions.TransactionListParameter
+import id.walt.gateway.dto.transactions.TransactionParameter
+import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.providers.coingecko.CoinRepositoryImpl
 import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
 import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.providers.metaco.repositories.OrderRepository
 import id.walt.gateway.providers.metaco.restapi.AccountUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.BalanceUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.TickerUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.address.AddressRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.balance.BalanceRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.order.OrderRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.services.AuthSignatureService
 import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
@@ -34,6 +39,7 @@ object AccountController {
         AccountUseCaseImpl(
             AccountRepositoryImpl(authService),
             TransactionRepositoryImpl(authService),
+            OrderRepositoryImpl(authService),
             TransferRepositoryImpl(authService),
             AddressRepositoryImpl(authService),
             BalanceUseCaseImpl(
@@ -77,7 +83,7 @@ object AccountController {
     fun transactions(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
         val tickerId = ctx.queryParam("tickerId")
-        accountUseCase.transactions(TradeListParameter(ProviderConfig.domainId, accountId, tickerId))
+        accountUseCase.transactions(TransactionListParameter(ProviderConfig.domainId, accountId, tickerId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
