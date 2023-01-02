@@ -119,6 +119,16 @@ object WalletController {
                 }
                 path("presentation") {
                     // called by wallet UI
+                    post("startPresentation", documented(
+                        document().operation {
+                            it.summary("Start a presentation session from an OIDC URL, that could be scanned from a QR code (cross device)")
+                                .addTagsItem("Presentation")
+                                .operationId("startPresentation")
+                        }
+                            .body<CrossDeviceIssuanceInitiationRequest>()
+                            .result<String>("200"),
+                        WalletController::startPresentationFromUri
+                    ), UserRole.AUTHORIZED)
                     get("continue", documented(
                         document().operation {
                             it.summary("Continue presentation requested by verifer, returns CredentialPresentationSession")
@@ -195,7 +205,7 @@ object WalletController {
                         document().operation {
                             it.summary("Start an issuer-initiated issuance session from an OIDC URL, that could be scanned from a QR code (cross device)")
                                 .addTagsItem("Issuance")
-                                .operationId("continueIssuerInitiatedIssuance")
+                                .operationId("startIssuerInitiatedIssuance")
                         }
                             .body<CrossDeviceIssuanceInitiationRequest>()
                             .result<String>("200"),
@@ -228,6 +238,16 @@ object WalletController {
                             ), UserRole.AUTHORIZED
                         )
                     }
+                }
+                path("oidc") {
+                    get("detectRequestType", documented(document().operation {
+                        it.summary("Detect OIDC request type")
+                            .description("Detect OIDC request type: initiate-issuance, presentation")
+                            .operationId("detectRequestType").addTagsItem("OIDC")
+                    }
+                        .queryParam<String>("uri")
+                        .result<String>("200"), WalletController::detectOIDCRequestType
+                    ), UserRole.AUTHORIZED)
                 }
             }
             path("siop") {
@@ -390,6 +410,13 @@ object WalletController {
             .header("Location", "${WalletConfig.config.walletUiUrl}/CredentialRequest/?sessionId=${session.id}")
     }
 
+    private fun startPresentationFromUri(ctx: Context) {
+        val req = ctx.bodyAsClass<CrossDeviceIssuanceInitiationRequest>()
+        val oidc4VPReq = OIDC4VPService.parseOIDC4VPRequestUri(URI.create(req.oidcUri))
+        val session = CredentialPresentationManager.initCredentialPresentation(oidc4VPReq)
+        ctx.result(session.id)
+    }
+
     fun initiateIssuance(ctx: Context) {
         val issuanceInitiationReq = IssuanceInitiationRequest.fromQueryParams(ctx.queryParamMap())
         val sessionId = CredentialIssuanceManager.startIssuerInitiatedIssuance(issuanceInitiationReq)
@@ -416,8 +443,7 @@ object WalletController {
             ?: throw BadRequestResponse("No selected credentials given")
 
         ctx.json(
-            CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials)
-                .let { PresentationResponse.fromSiopResponse(it) })
+            CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials))
     }
 
     fun listIssuers(ctx: Context) {
@@ -548,6 +574,21 @@ object WalletController {
                 proofPurpose = "assertionMethod"
             ), dataProvider = data?.let { MergingDataProvider(data) }
         )
+    }
+
+    private fun detectOIDCRequestType(context: Context) {
+        val uri = context.queryParam("uri")?.let { URI.create(it) } ?: throw BadRequestResponse("Missing parameter: uri")
+        if(kotlin.runCatching {
+                OIDC4VPService.getPresentationDefinition(OIDC4VPService.parseOIDC4VPRequestUri(uri)) }.isSuccess) {
+            // OIDC4VP
+            context.result("presentation-request")
+        } else if(kotlin.runCatching {
+                IssuanceInitiationRequest.fromQueryParams(URLUtils.parseParameters(uri.query)) }.isSuccess) {
+            // OIDC4VCI
+            context.result("credential-offer")
+        } else {
+            context.result("unknown")
+        }
     }
 
 }
