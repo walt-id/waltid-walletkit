@@ -205,6 +205,7 @@ abstract class VerifierManager : BaseService() {
             vps = vps.map { vp ->
                 VPVerificationResult(
                     vp = vp,
+                    vcs = vp.verifiableCredential ?: listOf(),
                     verification_result = ContextManager.runWith(verifierContext) {
                         Auditor.getService().verify(
                             vp, getVerificationPoliciesFor(req)
