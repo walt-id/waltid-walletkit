@@ -94,18 +94,31 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
+            - name: socket-keystore
+              mountPath: "/waltid/wallet/keystore/servercert.p12"
+              subPath: servercert.p12
+              readOnly: true
+            - name: metaco-key-secret
+              mountPath: "/waltid/wallet/metaco/privkey.pem"
+              subPath: privkey.pem
+              readOnly: true
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
             - name: WALTID_WALLET_BACKEND_BIND_ADDRESS
               value: 0.0.0.0
-            - name: WALTID_WALLET_AUTH_SECRET
-              value: 0b218176-d8f3-4a58-83db-fd328defc30f
+          envFrom:
+          - secretRef:
+              name: socket-secret
+          - secretRef:
+              name: metaco-secret
           args:
             - run
           ports:
             - containerPort: 8080
               name: http-api
+            - containerPort: 9999
+              name: socket-api
       volumes:
         - name: wallet-config
           configMap:
@@ -116,6 +129,18 @@ spec:
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
+        - name: socket-keystore
+          secret:
+            secretName: socket-keystore-secret
+            items:
+              - key: servercert.p12
+                path: servercert.p12
+        - name: metaco-key-secret
+          secret:
+            secretName: metaco-key-secret
+            items:
+              - key: privkey.pem
+                path: privkey.pem
 ---
 kind: Service
 apiVersion: v1
@@ -238,6 +263,19 @@ spec:
   selector:
     app: issuer-portal
 ---
+kind: Service
+apiVersion: v1
+metadata:
+  name: socket-portal
+spec:
+  ports:
+    - name: socket
+      port: 9999
+      targetPort: socket-api
+      protocol: TCP
+  selector:
+    app: walletkit
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -255,6 +293,7 @@ spec:
         - wallet.walt-test.cloud
         - verifier.walt-test.cloud
         - issuer.walt-test.cloud
+        - socket.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
     - host: wallet.walt-test.cloud
@@ -364,3 +403,13 @@ spec:
                 name: issuer-portal
                 port:
                   number: 80
+    - host: socket.walt-test.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: socket-portal
+                port:
+                  number: 9999

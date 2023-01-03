@@ -1,7 +1,7 @@
 package id.walt.gateway.providers.metaco.restapi.account
 
 import id.walt.gateway.providers.metaco.repositories.AccountRepository
-import id.walt.gateway.providers.metaco.restapi.AuthService
+import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
 import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
@@ -25,7 +25,7 @@ class AccountRepositoryImpl(
     override fun findById(domainId: String, accountId: String) = CommonHttp.get<Account>(
         client,
         String.format(
-            detailEndpoint,
+            CommonHttp.buildUrl(baseUrl, detailEndpoint),
             domainId,
             accountId,
         )

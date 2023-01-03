@@ -2,28 +2,38 @@ package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
+import id.walt.gateway.dto.transactions.TransactionData
+import id.walt.gateway.dto.transactions.TransactionListParameter
+import id.walt.gateway.dto.transactions.TransactionParameter
+import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.usecases.AccountUseCase
-import java.time.LocalDateTime
+import java.time.Duration
+import java.time.Instant
 import java.util.*
+
 
 class AccountUseCaseImpl : AccountUseCase {
     val tickerUseCase = TickerUseCaseImpl()
 
-    override fun profile(parameter: AccountParameter) = Result.success((0..1).map { getProfile(parameter.accountId) })
+    override fun profile(domainId: String, parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
 
-    override fun balance(parameter: AccountParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
+    override fun balance(domainId: String, parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
-    override fun transactions(parameter: AccountParameter) =
-        Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) })
+    override fun transactions(parameter: TransactionListParameter) =
+        Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }.sortedByDescending { Instant.parse(it.date) })
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
     private fun getProfile(id: String) = ProfileData(
-        id = UUID.randomUUID().toString(),
+        profileId = UUID.randomUUID().toString(),
+        accounts = (0..1).map { getAccount(id) },
+    )
+    private fun getAccount(id: String?) = AccountData(
+        accountId = UUID.randomUUID().toString(),
         alias = Common.getRandomString(7, 1),
         addresses = listOf("0x${Common.getRandomString(40, 2)}"),
-        ticker = listOf("tGOLD", "eth")[Common.getRandomInt(from = 0, to = 2)]
+        tickers = (1..5).map { UUID.randomUUID().toString() }
     )
 
     private fun getBalance() = BalanceData(
@@ -68,7 +78,7 @@ class AccountUseCaseImpl : AccountUseCase {
 
     private fun getTransactionStatus() = listOf("Detected", "Confirmed", "Expired")[Common.getRandomInt(to = 3)]
 
-    private fun getDate() = LocalDateTime.now().plusDays(Common.getRandomLong(from = -10, to = 0)).toString()
+    private fun getDate() = Instant.now().plus(Duration.ofDays(Common.getRandomLong(from = -10, to = 0))).toString()
 
     private fun getAmountWithValue() = AmountWithValue(
         amount = Common.getRandomLong(to = 10000).toString(),

@@ -10,6 +10,8 @@ import java.util.*
 class TickerUseCaseImpl : TickerUseCase {
     override fun get(parameter: TickerParameter): Result<TickerData> = Result.success(getTickerData())
 
+    override fun list(currency: String): Result<List<TickerData>> = Result.success((1..5).map { getTickerData() })
+
     private fun getTickerData() = getTokenTriple().let {
         TickerData(
             id = UUID.randomUUID().toString(),
