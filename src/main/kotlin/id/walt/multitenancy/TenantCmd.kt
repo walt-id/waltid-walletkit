@@ -1,0 +1,37 @@
+package id.walt.multitenancy
+
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.types.enum
+import id.walt.issuer.backend.IssuerConfig
+import id.walt.issuer.backend.IssuerManager
+import id.walt.issuer.backend.IssuerTenant
+import id.walt.services.context.ContextManager
+import id.walt.webwallet.backend.context.WalletContextManager
+import java.io.File
+import java.util.UUID
+
+class TenantCmd : CliktCommand(name = "tenant", help = "Manage tenant for this issuer or verifier") {
+
+  override fun run() {
+  }
+}
+
+class ConfigureTenantCmd: CliktCommand(name = "configure", help = "Configure current issuer or verifier tenant") {
+  val config: String by argument("config", help = "Path to config file for this tenant")
+
+  override fun run() {
+    val configFile = File(config)
+    if(!configFile.exists()) {
+      throw Exception("Config file not found")
+    }
+
+    val tenantContext = WalletContextManager.currentContext as TenantContext<*>
+    when(tenantContext.tenantId.tenantType) {
+      TenantType.ISSUER -> IssuerTenant.setConfig(IssuerConfig.fromJson(configFile.readText()))
+      else -> throw TODO("Tenant type not yet supported")
+    }
+  }
+}
