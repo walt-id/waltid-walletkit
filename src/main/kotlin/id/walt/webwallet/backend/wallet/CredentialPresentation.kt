@@ -3,6 +3,7 @@ package id.walt.webwallet.backend.wallet
 import com.beust.klaxon.Json
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
+import com.nimbusds.oauth2.sdk.ResponseMode
 import id.walt.common.klaxonWithConverters
 import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.credentials.w3c.toVerifiablePresentation
@@ -41,15 +42,17 @@ data class PresentationResponse(
     val vp_token: String,
     val presentation_submission: String,
     val id_token: String?,
-    val state: String?
+    val state: String?,
+    val fulfilled: Boolean,
+    val rp_response: String?
 ) {
     companion object {
-        fun fromSiopResponse(siopResp: SIOPv2Response): PresentationResponse {
+        fun fromSiopResponse(siopResp: SIOPv2Response, fulfilled: Boolean, rp_response: String?): PresentationResponse {
             return PresentationResponse(
                 OIDCUtils.toVpToken(siopResp.vp_token),
                 klaxonWithConverters.toJsonString(siopResp.presentation_submission),
                 siopResp.id_token,
-                siopResp.state
+                siopResp.state, fulfilled, rp_response
             )
         }
     }
@@ -106,7 +109,7 @@ object CredentialPresentationManager {
         return session
     }
 
-    fun fulfillPresentation(sessionId: String, selectedCredentials: List<PresentableCredential>): SIOPv2Response {
+    fun fulfillPresentation(sessionId: String, selectedCredentials: List<PresentableCredential>): PresentationResponse {
         val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
         val did = session.sessionInfo.did ?: throw Exception("Did not set for this session")
 
@@ -124,8 +127,11 @@ object CredentialPresentationManager {
         ).toVerifiablePresentation()
 
         val siopResponse = OIDC4VPService.getSIOPResponseFor(session.req, did, listOf(vp))
+        val rp_response = if(ResponseMode("post") == session.req.responseMode) {
+            OIDC4VPService.postSIOPResponse(session.req, siopResponse)
+        } else null
 
-        return siopResponse
+        return PresentationResponse.fromSiopResponse(siopResponse, rp_response != null, rp_response)
     }
 
     fun getPresentationSession(id: String): CredentialPresentationSession? {

@@ -50,6 +50,8 @@ object IssuerController {
                     }.body<CreateDidRequest> { it.description("Defines the DID method and optionally the key to be used") }
                         .json<String>("200") { it.description("DID document of the resolved DID") }, DidController::create))
                 }
+                before("credentials/*") { WalletContextManager.setCurrentContext(IssuerManager.issuerContext) }
+                after("credentials/*") { WalletContextManager.resetCurrentContext() }
                 path("credentials") {
                     get("listIssuables", documented(
                         document().operation {

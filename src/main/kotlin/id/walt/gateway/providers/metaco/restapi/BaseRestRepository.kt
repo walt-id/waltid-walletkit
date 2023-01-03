@@ -1,6 +1,7 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.auth.*

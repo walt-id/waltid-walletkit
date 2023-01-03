@@ -1,6 +1,7 @@
 package id.walt.verifier.backend
 
 import com.nimbusds.oauth2.sdk.ResponseMode
+import id.walt.common.klaxonWithConverters
 import id.walt.model.oidc.SIOPv2Response
 import id.walt.rest.auditor.AuditorRestController
 import id.walt.webwallet.backend.auth.JWTService
@@ -9,6 +10,7 @@ import id.walt.webwallet.backend.context.WalletContextManager
 import io.github.pavleprica.kotlin.cache.time.based.customTimeBasedCache
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
+import io.javalin.http.ContentType
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
@@ -247,7 +249,7 @@ object VerifierController {
             ctx.status(HttpCode.FORBIDDEN)
             return
         }
-        ctx.json(result)
+        ctx.contentType(ContentType.JSON).result(klaxonWithConverters.toJsonString(result))
     }
 
     fun getProtectedData(ctx: Context) {
