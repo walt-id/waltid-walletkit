@@ -19,8 +19,8 @@ class ConfigCmd : CliktCommand(name = "config", help = "Configure or setup dids,
     private val log = KotlinLogging.logger {}
 
     val context: Context by mutuallyExclusiveOptions(
-        option("-i", "--as-issuer", help = "Execute in context of issuer backend").flag()
-            .convert { if (it) IssuerManager.issuerContext; else null },
+        option("-i", "--as-issuer", help = "Execute in context of issuer backend")
+            .convert { issuerId -> IssuerManager.getIssuerContext(issuerId) },
         option("-v", "--as-verifier", help = "Execute in context of verifier backend").flag()
             .convert { if (it) VerifierManager.getService().verifierContext; else null },
         option("-u", "--as-user", help = "Execute in user context").convert { userId -> UserContextLoader.load(userId) }

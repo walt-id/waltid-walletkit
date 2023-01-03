@@ -11,6 +11,7 @@ import id.walt.common.klaxonWithConverters
 import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.model.oidc.CredentialRequest
 import id.walt.model.oidc.CredentialResponse
+import id.walt.multitenancy.TenantId
 import id.walt.rest.core.CreateDidRequest
 import id.walt.rest.core.DidController
 import id.walt.services.oidc.OIDC4CIService
@@ -23,12 +24,22 @@ import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import mu.KotlinLogging
 import java.net.URI
 
 object IssuerController {
+    private val logger = KotlinLogging.logger {  }
     val routes
         get() =
-            path("") {
+            path("{issuerId}") {
+                before { ctx ->
+                    logger.info { "Setting issuer API context: ${ctx.pathParam("issuerId")}" }
+                    WalletContextManager.setCurrentContext(IssuerManager.getIssuerContext(ctx.pathParam("issuerId")))
+                }
+                after {
+                    logger.info { "Resetting issuer API context" }
+                    WalletContextManager.resetCurrentContext()
+                }
                 path("wallets") {
                     get("list", documented(
                         document().operation {
@@ -36,22 +47,19 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("listWallets")
                         }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .jsonArray<WalletConfiguration>("200"),
                         VerifierController::listWallets,
                     ))
                 }
-                before("config/*") {
-                    WalletContextManager.setCurrentContext(IssuerManager.issuerContext)
-                }
-                after("config/*") { WalletContextManager.resetCurrentContext() }
                 path("config") {
                     post("createDid", documented(document().operation {
                         it.summary("Create DID").operationId("createDid").addTagsItem("Issuer Configuration")
-                    }.body<CreateDidRequest> { it.description("Defines the DID method and optionally the key to be used") }
+                    }
+                        .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .body<CreateDidRequest> { it.description("Defines the DID method and optionally the key to be used") }
                         .json<String>("200") { it.description("DID document of the resolved DID") }, DidController::create))
                 }
-                before("credentials/*") { WalletContextManager.setCurrentContext(IssuerManager.issuerContext) }
-                after("credentials/*") { WalletContextManager.resetCurrentContext() }
                 path("credentials") {
                     get("listIssuables", documented(
                         document().operation {
@@ -59,6 +67,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("listIssuableCredentials")
                         }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("sessionId")
                             .json<Issuables>("200"),
                         IssuerController::listIssuableCredentials))
@@ -69,6 +78,7 @@ object IssuerController {
                                     .addTagsItem("Issuer")
                                     .operationId("requestIssuance")
                             }
+                                .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                                 .queryParam<String>("walletId")
                                 .queryParam<String>("sessionId")
                                 .queryParam<Boolean>("isPreAuthorized")
@@ -87,6 +97,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("oidcProviderMeta")
                         }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
@@ -96,6 +107,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("oidcProviderMeta")
                         }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
@@ -105,6 +117,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("par")
                         }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .formParam<String>("response_type")
                             .formParam<String>("client_id")
                             .formParam<String>("redirect_uri")
@@ -117,6 +130,7 @@ object IssuerController {
                     ))
                     get("fulfillPAR", documented(
                         document().operation { it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("request_uri"),
                         IssuerController::fulfillPAR
                     ))
@@ -126,6 +140,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("token")
                         }
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .formParam<String>("grant_type")
                             .formParam<String>("code")
                             .formParam<String>("pre-authorized_code")
@@ -140,6 +155,7 @@ object IssuerController {
                             it.summary("Credential endpoint").operationId("credential").addTagsItem("Issuer")
                         }
                             .header<String>("Authorization")
+                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .body<CredentialRequest>()
                             .json<CredentialResponse>("200"),
                         IssuerController::credential
@@ -156,7 +172,7 @@ object IssuerController {
     }
 
     fun requestIssuance(ctx: Context) {
-        val wallet = ctx.queryParam("walletId")?.let { IssuerConfig.config.wallets.getOrDefault(it, null) }
+        val wallet = ctx.queryParam("walletId")?.let { IssuerTenant.config.wallets.getOrDefault(it, null) }
             ?: IssuerManager.getXDeviceWallet()
         val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
         val issuerDid = ctx.queryParam("issuerDid") // OPTIONAL
@@ -211,7 +227,7 @@ object IssuerController {
         ctx.status(HttpCode.CREATED).json(
             PushedAuthorizationSuccessResponse(
                 URI("urn:ietf:params:oauth:request_uri:${session.id}"),
-                IssuerManager.EXPIRATION_TIME.seconds
+                IssuerState.EXPIRATION_TIME.seconds
             ).toJSONObject()
         )
     }
@@ -221,10 +237,10 @@ object IssuerController {
         val sessionID = parURI.substringAfterLast("urn:ietf:params:oauth:request_uri:")
         val session = IssuerManager.getIssuanceSession(sessionID)
         if (session != null) {
-            ctx.status(HttpCode.FOUND).header("Location", "${IssuerConfig.config.issuerUiUrl}/?sessionId=${session.id}")
+            ctx.status(HttpCode.FOUND).header("Location", "${IssuerTenant.config.issuerUiUrl}/?sessionId=${session.id}")
         } else {
             ctx.status(HttpCode.FOUND)
-                .header("Location", "${IssuerConfig.config.issuerUiUrl}/IssuanceError?message=Invalid issuance session")
+                .header("Location", "${IssuerTenant.config.issuerUiUrl}/IssuanceError?message=Invalid issuance session")
         }
     }
 
@@ -252,7 +268,7 @@ object IssuerController {
         ctx.json(
             OIDCTokenResponse(
                 OIDCTokens(JWTService.toJWT(UserInfo(session.id)), BearerAccessToken(session.id), RefreshToken()), mapOf(
-                    "expires_in" to IssuerManager.EXPIRATION_TIME.seconds,
+                    "expires_in" to IssuerState.EXPIRATION_TIME.seconds,
                     "c_nonce" to session.nonce
                 )
             ).toJSONObject()

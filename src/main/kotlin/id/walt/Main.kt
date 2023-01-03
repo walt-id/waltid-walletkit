@@ -3,6 +3,8 @@ package id.walt
 import com.github.ajalt.clikt.core.subcommands
 import id.walt.cli.*
 import id.walt.issuer.backend.IssuerManager
+import id.walt.multitenancy.ConfigureTenantCmd
+import id.walt.multitenancy.TenantCmd
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -14,6 +16,8 @@ import id.walt.webwallet.backend.cli.WalletCmd
 import id.walt.webwallet.backend.context.WalletContextManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
+import java.io.File
 
 
 val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
@@ -29,29 +33,24 @@ val WALTID_KEYSTORE_PATH = System.getenv("WALTID_KEYSTORE_PATH") ?: "servercert.
 val WALTID_TRUSTSTORE_PWD = (System.getenv("WALTID_TRUSTSTORE_PWD") ?: "").toCharArray()
 val WALTID_KEYSTORE_PWD = (System.getenv("WALTID_KEYSTORE_PWD") ?: "").toCharArray()
 
-
+private val log = KotlinLogging.logger { }
 fun main(args: Array<String>): Unit = runBlocking {
 
     launch {
-        Server().start(
-            WALTID_WALLET_SOCKET_PORT,
-            StoreParameter(WALTID_KEYSTORE_PATH, WALTID_KEYSTORE_PWD),
-            StoreParameter(WALTID_TRUSTSTORE_PATH, WALTID_TRUSTSTORE_PWD),
-            WALTID_TLS_VERSION,
-        )
+        if(File(WALTID_KEYSTORE_PATH).exists() && File(WALTID_TRUSTSTORE_PATH).exists()) {
+            Server().start(
+                WALTID_WALLET_SOCKET_PORT,
+                StoreParameter(WALTID_KEYSTORE_PATH, WALTID_KEYSTORE_PWD),
+                StoreParameter(WALTID_TRUSTSTORE_PATH, WALTID_TRUSTSTORE_PWD),
+                WALTID_TLS_VERSION,
+            )
+        } else {
+            log.info { "Socket server disabled, due to empty or faulty configuration" }
+        }
     }
 
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)
-
-    if (args.isNotEmpty()) when {
-        args.contains("--init-issuer") -> {
-            IssuerManager.initializeInteractively()
-            return@runBlocking
-        }
-
-        args.contains("--bind-all") -> WALTID_WALLET_BACKEND_BIND_ADDRESS = "0.0.0.0"
-    }
 
     WalletCmd().subcommands(
         RunCmd(),
@@ -94,6 +93,9 @@ fun main(args: Array<String>): Unit = runBlocking {
                     VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
+            ),
+            TenantCmd().subcommands(
+                ConfigureTenantCmd()
             )
         )
     ).main(args)
