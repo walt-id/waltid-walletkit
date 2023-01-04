@@ -212,6 +212,7 @@ object OnboardingController {
                     "${IssuerConfig.config.onboardingUiUrl}?access_token=${access_token}&sessionId=${session.id}"
                 )
         } catch (exc: Exception) {
+            exc.printStackTrace()
             ctx.status(HttpCode.FOUND).header(
                 "Location",
                 "${IssuerConfig.config.issuerUiUrl}/IssuanceError/?message=${exc.message}"

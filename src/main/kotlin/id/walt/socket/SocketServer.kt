@@ -15,7 +15,7 @@ import javax.net.ssl.*
 
 
 //TODO: make it cancelable
-class Server {
+class SocketServer {
     private val logger = KotlinLogging.logger {}
 
     init {
