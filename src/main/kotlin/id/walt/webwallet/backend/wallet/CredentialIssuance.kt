@@ -6,6 +6,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
+import id.walt.common.VCList
 import id.walt.common.VCObjectList
 import id.walt.credentials.w3c.VerifiableCredential
 import id.walt.credentials.w3c.templates.VcTemplateManager

@@ -90,8 +90,8 @@ fun main(args: Array<String>): Unit = runBlocking {
                 ),
                 VcTemplatesCommand().subcommands(
                     VcTemplatesListCommand(),
-                    VcTemplatesExportCommand(),
                     VcTemplatesImportCommand(),
+                    VcTemplatesExportCommand(),
                     VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
