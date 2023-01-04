@@ -124,9 +124,9 @@ abstract class VerifierManager : BaseService() {
         return newRequest(
             walletUrl, PresentationDefinition(
                 id = "1",
-                input_descriptors = schemaUris.map { schemaUri ->
+                input_descriptors = schemaUris.mapIndexed { index, schemaUri ->
                     InputDescriptor(
-                        id = "1",
+                        id = "${index+1}",
                         schema = VCSchema(uri = schemaUri)
                     )
                 }.toList()
@@ -144,9 +144,9 @@ abstract class VerifierManager : BaseService() {
         return newRequest(
             walletUrl, PresentationDefinition(
                 id = "1",
-                input_descriptors = vcTypes.map { vcType ->
+                input_descriptors = vcTypes.mapIndexed { index, vcType ->
                     InputDescriptor(
-                        id = "1",
+                        id = "${index+1}",
                         constraints = InputDescriptorConstraints(
                             fields = listOf(
                                 InputDescriptorField(
