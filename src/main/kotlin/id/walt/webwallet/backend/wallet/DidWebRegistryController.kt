@@ -66,6 +66,7 @@ object DidWebRegistryController {
                     )
                 )
             } catch (e: Exception) {
+                e.printStackTrace()
                 ctx.status(404)
             }
         }
