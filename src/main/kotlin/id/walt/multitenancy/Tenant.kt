@@ -4,32 +4,32 @@ import id.walt.services.context.ContextManager
 import id.walt.services.hkvstore.HKVKey
 import id.walt.webwallet.backend.context.WalletContextManager
 
-abstract class Tenant<C: TenantConfig,S>(private val configFactory: TenantConfigFactory<C>) {
-  abstract val tenantType: TenantType
-  val CONFIG_KEY = "config"
-  val context: TenantContext<S>
-    get() = WalletContextManager.currentContext as TenantContext<S>
+abstract class Tenant<C: TenantConfig,S: TenantState<C>>(private val configFactory: TenantConfigFactory<C>) {
+  class TenantNotFoundException(message: String): Exception(message) {}
 
-  var _config: C? = null
+  val CONFIG_KEY = "config"
+  val context: TenantContext<C,S>
+    get() = WalletContextManager.currentContext as TenantContext<C, S>
+
+  val tenantId: TenantId
+    get() = context.tenantId
 
   val config: C
-    get() = _config ?: if(context.tenantId == TenantId(tenantType, TenantId.DEFAULT_TENANT)) {
+    get() = context.state.config ?:
+    ContextManager.hkvStore.getAsString(HKVKey(CONFIG_KEY))?.let { configFactory.fromJson(it) } ?:
+    if(context.tenantId.id == TenantId.DEFAULT_TENANT) {
       configFactory.forDefaultTenant()
     } else {
-      ContextManager.hkvStore.getAsString(HKVKey(CONFIG_KEY))?.let { configFactory.fromJson(it) }
-        ?: throw Exception("Tenant config not found")
+      throw TenantNotFoundException("Tenant config not found")
     }.also {
-      _config = it
+      context.state.config = it
     }
 
   val state: S
     get() = context.state
 
   fun setConfig(config: C) {
-    if(context.tenantId == TenantId(tenantType, TenantId.DEFAULT_TENANT)) {
-      throw Exception("Can't override default tenant config")
-    }
-    _config = config
+    context.state.config = config
     ContextManager.hkvStore.put(HKVKey(CONFIG_KEY), config.toJson())
   }
 }

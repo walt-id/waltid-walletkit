@@ -1,12 +1,12 @@
 package id.walt.multitenancy
 
-data class TenantId(val tenantType: TenantType, val tenantId: String) {
+data class TenantId(val type: TenantType, val id: String) {
   override fun toString(): String {
-    return "$tenantType/$tenantId"
+    return "$type/$id"
   }
 
   override fun equals(other: Any?): Boolean {
-    return other is TenantId && tenantType == other.tenantType && tenantId == other.tenantId
+    return other is TenantId && type == other.type && id == other.id
   }
 
   companion object {
