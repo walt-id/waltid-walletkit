@@ -11,7 +11,7 @@ import java.io.File
 
 data class IssuerConfig(
     @ExternalHostnameUrl val issuerUiUrl: String = "http://localhost:5000",
-    @ExternalHostnameUrl val issuerApiUrl: String = "http://localhost:8080/issuer-api",
+    @ExternalHostnameUrl val issuerApiUrl: String = "http://localhost:8080/issuer-api/default",
     @Json(serializeNull = false) val issuerClientName: String = "Walt.id Issuer Portal",
     val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations(),
     val issuerDid: String? = null
