@@ -4,5 +4,4 @@ import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantType
 
 object IssuerTenant : Tenant<IssuerConfig, IssuerState>(IssuerConfig) {
-  override val tenantType = TenantType.ISSUER
 }
