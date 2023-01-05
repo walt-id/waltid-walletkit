@@ -25,6 +25,7 @@ import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.verifier.backend.WalletConfiguration
 import io.javalin.http.BadRequestResponse
+import mu.KotlinLogging
 import java.net.URI
 import java.time.Instant
 import java.util.*
@@ -35,13 +36,14 @@ fun isSchema(typeOrSchema: String): Boolean {
 }
 
 object IssuerManager {
-
-    private var _defaultDid: String? = null
+    val logger = KotlinLogging.logger {  }
     val defaultDid: String
         get() = IssuerTenant.config.issuerDid
-            ?: _defaultDid
+            ?: IssuerTenant.state.defaultDid
             ?: DidService.create(DidMethod.key)
-                .also { _defaultDid = it }
+                .also { IssuerTenant.state.defaultDid = it
+                    logger.warn { "No issuer DID configured, created temporary did:key for issuing: $it" }
+                }
 
     fun getIssuerContext(tenantId: String): TenantContext<IssuerConfig, IssuerState> {
         return TenantContextManager.getTenantContext(TenantId(TenantType.ISSUER, tenantId)) { IssuerState() }
