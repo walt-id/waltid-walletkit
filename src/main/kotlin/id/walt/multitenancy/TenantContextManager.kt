@@ -7,15 +7,15 @@ import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
 
 object TenantContextManager {
-  private val contexts: MutableMap<String, TenantContext<*>> = mutableMapOf()
+  private val contexts: MutableMap<String, TenantContext<*, *>> = mutableMapOf()
 
   // TODO: make context data stores configurable
 
-  fun <S> getTenantContext(tenantId: TenantId, createState: () -> S): TenantContext<S> {
+  fun <C: TenantConfig, S: TenantState<C>> getTenantContext(tenantId: TenantId, createState: () -> S): TenantContext<C, S> {
     // TODO: create tenant context according to context configuration
-    return contexts.get(tenantId.toString()) as? TenantContext<S> ?: TenantContext(
+    return contexts.get(tenantId.toString()) as? TenantContext<C, S> ?: TenantContext(
       tenantId,
-      hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/tenants/${tenantId.tenantType}/${tenantId.tenantId}")),
+      hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/tenants/${tenantId.type}/${tenantId.id}")),
       keyStore = HKVKeyStoreService(),
       vcStore = HKVVcStoreService(),
       state = createState()

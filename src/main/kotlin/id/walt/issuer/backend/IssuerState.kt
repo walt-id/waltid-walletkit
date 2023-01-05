@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.google.common.cache.CacheBuilder
 import id.walt.model.DidMethod
+import id.walt.multitenancy.TenantState
 import id.walt.services.did.DidService
 import id.walt.webwallet.backend.context.WalletContextManager
 import javalinjwt.JWTProvider
@@ -11,7 +12,7 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class IssuerState {
+class IssuerState: TenantState<IssuerConfig> {
   val nonceCache =
     CacheBuilder.newBuilder().expireAfterWrite(EXPIRATION_TIME.seconds, TimeUnit.SECONDS).build<String, Boolean>()
   val sessionCache =
@@ -31,4 +32,6 @@ class IssuerState {
   companion object {
     val EXPIRATION_TIME: Duration = Duration.ofMinutes(5)
   }
+
+  override var config: IssuerConfig? = null
 }

@@ -16,8 +16,10 @@ data class IssuerConfig(
     val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations(),
     val issuerDid: String? = null
 ): TenantConfig {
+    @Json(ignored = true)
     val onboardingApiUrl
         get() = issuerApiUrl.replace("/issuer-api", "/onboarding-api")
+    @Json(ignored = true)
     val onboardingUiUrl
         get() = "$issuerUiUrl/Onboarding/"
 

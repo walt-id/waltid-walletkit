@@ -11,10 +11,12 @@ import id.walt.common.klaxonWithConverters
 import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.model.oidc.CredentialRequest
 import id.walt.model.oidc.CredentialResponse
+import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
 import id.walt.rest.core.CreateDidRequest
 import id.walt.rest.core.DidController
 import id.walt.services.oidc.OIDC4CIService
+import id.walt.signatory.rest.SignatoryController
 import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
@@ -31,10 +33,10 @@ object IssuerController {
     private val logger = KotlinLogging.logger {  }
     val routes
         get() =
-            path("{issuerId}") {
+            path("{tenantId}") {
                 before { ctx ->
-                    logger.info { "Setting issuer API context: ${ctx.pathParam("issuerId")}" }
-                    WalletContextManager.setCurrentContext(IssuerManager.getIssuerContext(ctx.pathParam("issuerId")))
+                    logger.info { "Setting issuer API context: ${ctx.pathParam("tenantId")}" }
+                    WalletContextManager.setCurrentContext(IssuerManager.getIssuerContext(ctx.pathParam("tenantId")))
                 }
                 after {
                     logger.info { "Resetting issuer API context" }
@@ -47,7 +49,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("listWallets")
                         }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .jsonArray<WalletConfiguration>("200"),
                         VerifierController::listWallets,
                     ))
@@ -56,9 +58,38 @@ object IssuerController {
                     post("createDid", documented(document().operation {
                         it.summary("Create DID").operationId("createDid").addTagsItem("Issuer Configuration")
                     }
-                        .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                         .body<CreateDidRequest> { it.description("Defines the DID method and optionally the key to be used") }
                         .json<String>("200") { it.description("DID document of the resolved DID") }, DidController::create))
+                    post("setConfiguration", documented(document().operation {
+                        it.summary("Set configuration for this issuer tenant").operationId("setConfiguration").addTagsItem("Issuer Configuration")
+                    }
+                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .body<IssuerConfig>()
+                        .json<String>("200"), IssuerController::setConfiguration))
+                    get("getConfiguration", documented(document().operation {
+                        it.summary("Get configuration for this issuer tenant").operationId("getConfiguration").addTagsItem("Issuer Configuration")
+                    }
+                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .json<IssuerConfig>("200"), IssuerController::getConfiguration
+                    ))
+                    path("templates") {
+                        get("", documented(document().operation {
+                            it.summary("List templates").operationId("listTemplates").addTagsItem("Issuer Configuration")
+                        }.json<Array<String>>("200"), SignatoryController::listTemplates))
+                        get("{id}", documented(document().operation {
+                            it.summary("Load a VC template").operationId("loadTemplate").addTagsItem("Issuer Configuration")
+                        }.pathParam<String>("id") { it.description("Retrieves a single VC template form the data store") }
+                            .json<String>("200"), SignatoryController::loadTemplate))
+                        post("{id}", documented(document().operation {
+                            it.summary("Import a VC template").operationId("importTemplate").addTagsItem("Issuer Configuration")
+                        }.pathParam<String>("id").body<String>(contentType = ContentType.JSON).result<String>("200"),
+                            SignatoryController::importTemplate))
+                        delete("{id}", documented(document().operation {
+                            it.summary("Remove VC template").operationId("removeTemplate").addTagsItem("Issuer Configuration")
+                        }.pathParam<String>("id").result<String>("200"), SignatoryController::removeTemplate))
+
+                    }
                 }
                 path("credentials") {
                     get("listIssuables", documented(
@@ -67,7 +98,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("listIssuableCredentials")
                         }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("sessionId")
                             .json<Issuables>("200"),
                         IssuerController::listIssuableCredentials))
@@ -78,7 +109,7 @@ object IssuerController {
                                     .addTagsItem("Issuer")
                                     .operationId("requestIssuance")
                             }
-                                .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                                .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                                 .queryParam<String>("walletId")
                                 .queryParam<String>("sessionId")
                                 .queryParam<Boolean>("isPreAuthorized")
@@ -97,7 +128,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("oidcProviderMeta")
                         }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
@@ -107,7 +138,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("oidcProviderMeta")
                         }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
@@ -117,7 +148,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("par")
                         }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .formParam<String>("response_type")
                             .formParam<String>("client_id")
                             .formParam<String>("redirect_uri")
@@ -130,7 +161,7 @@ object IssuerController {
                     ))
                     get("fulfillPAR", documented(
                         document().operation { it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("request_uri"),
                         IssuerController::fulfillPAR
                     ))
@@ -140,7 +171,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("token")
                         }
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .formParam<String>("grant_type")
                             .formParam<String>("code")
                             .formParam<String>("pre-authorized_code")
@@ -155,13 +186,26 @@ object IssuerController {
                             it.summary("Credential endpoint").operationId("credential").addTagsItem("Issuer")
                         }
                             .header<String>("Authorization")
-                            .pathParam<String>("issuerId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .body<CredentialRequest>()
                             .json<CredentialResponse>("200"),
                         IssuerController::credential
                     ))
                 }
             }
+
+    private fun getConfiguration(context: Context) {
+        try {
+            context.json(IssuerTenant.config)
+        } catch (nfe: Tenant.TenantNotFoundException) {
+            throw NotFoundResponse()
+        }
+    }
+
+    private fun setConfiguration(context: Context) {
+        val config = context.bodyAsClass<IssuerConfig>()
+        IssuerTenant.setConfig(config)
+    }
 
     fun listIssuableCredentials(ctx: Context) {
         val sessionId = ctx.queryParam("sessionId")

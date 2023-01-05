@@ -43,8 +43,8 @@ object IssuerManager {
             ?: DidService.create(DidMethod.key)
                 .also { _defaultDid = it }
 
-    fun getIssuerContext(issuerId: String): TenantContext<IssuerState> {
-        return TenantContextManager.getTenantContext(TenantId(TenantType.ISSUER, issuerId)) { IssuerState() }
+    fun getIssuerContext(tenantId: String): TenantContext<IssuerConfig, IssuerState> {
+        return TenantContextManager.getTenantContext(TenantId(TenantType.ISSUER, tenantId)) { IssuerState() }
     }
 
     fun listIssuableCredentials(): Issuables {
