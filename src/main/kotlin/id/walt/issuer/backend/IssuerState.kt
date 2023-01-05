@@ -28,6 +28,7 @@ class IssuerState: TenantState<IssuerConfig> {
     },
     JWT.require(algorithm).build()
   )
+  var defaultDid: String? = null
 
   companion object {
     val EXPIRATION_TIME: Duration = Duration.ofMinutes(5)

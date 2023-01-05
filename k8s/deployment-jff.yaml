@@ -6,7 +6,7 @@ data:
   issuer-config.json: |
     {
       "issuerUiUrl": "https://jff.walt.id",
-      "issuerApiUrl": "https://jff.walt.id/issuer-api",
+      "issuerApiUrl": "https://jff.walt.id/issuer-api/default",
       "issuerClientName": "walt.id JFF Issuer Portal",
       "issuerDid": "did:jwk:eyJrdHkiOiJFQyIsInVzZSI6InNpZyIsImNydiI6IlAtMjU2Iiwia2lkIjoiOWUzZTI3MjliZWMzNDU3YTgzMGQ3MGFkNDNmZmMzYzkiLCJ4IjoiMTlFWXV4aWJ2bGpWUTdORXo3SFNwRjlTcnZPTTJmMkJPaE9UWGlsa0I3OCIsInkiOiJUdGI4WTdQVmhReGZ4UURWQkFIYklvbUNhWWo0VGt3ZEZ3OHMwVWxJOVFZIiwiYWxnIjoiRVMyNTYifQ",
       "wallets": {
