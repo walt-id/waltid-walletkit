@@ -7,6 +7,7 @@ import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.custodian.Custodian
 import id.walt.issuer.backend.*
 import id.walt.model.DidMethod
+import id.walt.multitenancy.TenantId
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -72,7 +73,7 @@ class SIOPv2Test : BaseApiTest() {
 
     @BeforeClass
     fun initSIOPTest() {
-        mockkObject(VerifierConfig, IssuerConfig, WalletConfig, UserContextLoader)
+        mockkObject(VerifierConfig, IssuerTenant, WalletConfig, UserContextLoader)
         every { VerifierConfig.config } returns VerifierConfig(
             verifierUiUrl = "$url",
             verifierApiUrl = "$url/verifier-api",
@@ -87,9 +88,9 @@ class SIOPv2Test : BaseApiTest() {
             walletUiUrl = "$url",
             walletApiUrl = "$url/api"
         )
-        every { IssuerConfig.config } returns IssuerConfig(
+        every { IssuerTenant.config } returns IssuerConfig(
             issuerUiUrl = "$url",
-            issuerApiUrl = "$url/issuer-api"
+            issuerApiUrl = "$url/issuer-api/default"
         )
         every { UserContextLoader.load(any()) } returns UserContext("testuser",
             HKVKeyStoreService(),
@@ -177,9 +178,11 @@ class SIOPv2Test : BaseApiTest() {
 
     @Test
     fun testPreAuthzIssuanceFlow() {
-        val preAuthReq = IssuerManager.newIssuanceInitiationRequest(Issuables(
-            credentials = listOf(IssuableCredential("VerifiableId", null))
-        ), preAuthorized = true)
+        val preAuthReq = ContextManager.runWith(IssuerManager.getIssuerContext(TenantId.DEFAULT_TENANT)) {
+            IssuerManager.newIssuanceInitiationRequest(Issuables(
+                credentials = listOf(IssuableCredential("VerifiableId", null))
+            ), preAuthorized = true)
+        }
         val userInfo = UserInfo("testuser")
         val session = ContextManager.runWith(UserContextLoader.load(userInfo.id)) {
             val subjectDid = DidService.create(DidMethod.key)
