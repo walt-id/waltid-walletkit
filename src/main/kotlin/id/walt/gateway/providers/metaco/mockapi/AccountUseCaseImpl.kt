@@ -7,13 +7,15 @@ import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter
 import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.usecases.AccountUseCase
+import id.walt.gateway.usecases.TickerUseCase
 import java.time.Duration
 import java.time.Instant
 import java.util.*
 
 
-class AccountUseCaseImpl : AccountUseCase {
-    private val tickerUseCase = TickerUseCaseImpl()
+class AccountUseCaseImpl(
+    private val tickerUseCase: TickerUseCase,
+) : AccountUseCase {
     private val accountsPool = (1..5).map { getAccount() }
 
     override fun profile(domainId: String, parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
