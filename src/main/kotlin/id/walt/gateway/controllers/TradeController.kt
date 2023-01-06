@@ -7,6 +7,7 @@ import id.walt.gateway.dto.trades.TradeValidationParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
+import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 
 class TradeController(
@@ -26,8 +27,10 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.sell(TradeData(ProviderConfig.domainId, parameters, "Sell"))
             .onSuccess {
+                ctx.status(HttpCode.OK)
                 ctx.json(it)
             }.onFailure {
+                ctx.status(HttpCode.NOT_FOUND)
                 ctx.json(it)
             }
     }
@@ -36,8 +39,10 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.buy(TradeData(ProviderConfig.domainId, parameters, "Buy"))
             .onSuccess {
+                ctx.status(HttpCode.OK)
                 ctx.json(it)
             }.onFailure {
+                ctx.status(HttpCode.NOT_FOUND)
                 ctx.json(it)
             }
     }
@@ -46,8 +51,10 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.send(TradeData(ProviderConfig.domainId, parameters, "Transfer"))
             .onSuccess {
+                ctx.status(HttpCode.OK)
                 ctx.json(it)
             }.onFailure {
+                ctx.status(HttpCode.NOT_FOUND)
                 ctx.json(it)
             }
     }
@@ -56,8 +63,10 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.validate(TradeValidationParameter(ProviderConfig.domainId, parameters))
             .onSuccess {
+                ctx.status(HttpCode.OK)
                 ctx.json(it)
             }.onFailure {
+                ctx.status(HttpCode.NOT_FOUND)
                 ctx.json(it)
             }
     }
