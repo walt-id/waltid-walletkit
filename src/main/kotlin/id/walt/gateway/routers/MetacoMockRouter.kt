@@ -11,9 +11,10 @@ import io.javalin.apibuilder.ApiBuilder
 
 object MetacoMockRouter : Router {
 
-    private val accountRouter = AccountRouter(AccountController(AccountUseCaseImpl()))
+    private val tickerUseCase = TickerUseCaseImpl()
+    private val accountRouter = AccountRouter(AccountController(AccountUseCaseImpl(tickerUseCase)))
     private val transactionRouter = TransactionRouter(TradeController(TradeUseCaseImpl()))
-    private val tickerRouter = TickerRouter(TickerController(TickerUseCaseImpl()))
+    private val tickerRouter = TickerRouter(TickerController(tickerUseCase))
 
     override fun routes() {
         ApiBuilder.path("mock") {
