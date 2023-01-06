@@ -13,7 +13,8 @@ import java.util.*
 
 
 class AccountUseCaseImpl : AccountUseCase {
-    val tickerUseCase = TickerUseCaseImpl()
+    private val tickerUseCase = TickerUseCaseImpl()
+    private val accountsPool = (1..5).map { getAccount() }
 
     override fun profile(domainId: String, parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
 
@@ -27,13 +28,13 @@ class AccountUseCaseImpl : AccountUseCase {
 
     private fun getProfile(id: String) = ProfileData(
         profileId = UUID.randomUUID().toString(),
-        accounts = (0..1).map { getAccount(id) },
+        accounts = accountsPool,
     )
-    private fun getAccount(id: String?) = AccountData(
+    private fun getAccount() = AccountData(
         accountId = UUID.randomUUID().toString(),
         alias = Common.getRandomString(7, 1),
         addresses = listOf("0x${Common.getRandomString(40, 2)}"),
-        tickers = (1..5).map { UUID.randomUUID().toString() }
+        tickers = (1..5).map { tickerUseCase.get(TickerParameter("")).getOrThrow().id }.distinct()
     )
 
     private fun getBalance() = BalanceData(
