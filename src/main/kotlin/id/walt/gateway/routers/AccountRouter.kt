@@ -4,14 +4,16 @@ import id.walt.gateway.controllers.AccountController
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.plugin.openapi.dsl.documented
 
-object AccountRouter: Router {
+class AccountRouter(
+    private val accountController: AccountController
+): Router {
     override fun routes() {
         ApiBuilder.path("accounts") {
-            ApiBuilder.post("login", documented(AccountController.profileDoc(), AccountController::profile))
-            ApiBuilder.get("{profileId}/balance", documented(AccountController.balanceDoc(), AccountController::balance))
-            ApiBuilder.get("{accountId}/balance/{tickerId}", documented(AccountController.tickerBalanceDoc(), AccountController::tickerBalance))
-            ApiBuilder.get("{accountId}/transactions", documented(AccountController.transactionsDoc(), AccountController::transactions))
-            ApiBuilder.get("{accountId}/transactions/{transactionId}", documented(AccountController.transactionDoc(), AccountController::transaction))
+            ApiBuilder.post("login", documented(accountController.profileDoc(), accountController::profile))
+            ApiBuilder.get("{profileId}/balance", documented(accountController.balanceDoc(), accountController::balance))
+            ApiBuilder.get("{accountId}/balance/{tickerId}", documented(accountController.tickerBalanceDoc(), accountController::tickerBalance))
+            ApiBuilder.get("{accountId}/transactions", documented(accountController.transactionsDoc(), accountController::transactions))
+            ApiBuilder.get("{accountId}/transactions/{transactionId}", documented(accountController.transactionDoc(), accountController::transaction))
         }
     }
 }

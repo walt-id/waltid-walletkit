@@ -5,26 +5,22 @@ import id.walt.gateway.dto.trades.TradeParameter
 import id.walt.gateway.dto.trades.TradeResult
 import id.walt.gateway.dto.trades.TradeValidationParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
-import id.walt.gateway.providers.metaco.restapi.TradeUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.intent.IntentRepositoryImpl
-import id.walt.gateway.providers.metaco.restapi.services.AuthService
-import id.walt.gateway.providers.metaco.restapi.services.AuthSignatureService
-import id.walt.gateway.providers.metaco.restapi.services.IntentSignatureService
-import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
 
-object TradeController {
-    private val authService = AuthService(AuthSignatureService())
-
-    //    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
-    private val tradeUseCase: TradeUseCase =
-        TradeUseCaseImpl(
-            IntentRepositoryImpl(authService),
-            TickerRepositoryImpl(authService),
-            IntentSignatureService()
-        )
+class TradeController(
+    private val tradeUseCase: TradeUseCase,
+) {
+//    private val authService = AuthService(AuthSignatureService())
+//
+//    //    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
+//    private val tradeUseCase: TradeUseCase =
+//        TradeUseCaseImpl(
+//            IntentRepositoryImpl(authService),
+//            TickerRepositoryImpl(authService),
+//            IntentSignatureService()
+//        )
 
     fun sell(ctx: Context) {
         val parameters = ctx.bodyAsClass<TradeParameter>()
