@@ -27,7 +27,7 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.sell(TradeData(ProviderConfig.domainId, parameters, "Sell"))
             .onSuccess {
-                ctx.status(HttpCode.OK)
+                ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
             }.onFailure {
                 ctx.status(HttpCode.NOT_FOUND)
@@ -39,7 +39,7 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.buy(TradeData(ProviderConfig.domainId, parameters, "Buy"))
             .onSuccess {
-                ctx.status(HttpCode.OK)
+                ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
             }.onFailure {
                 ctx.status(HttpCode.NOT_FOUND)
@@ -51,7 +51,7 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.send(TradeData(ProviderConfig.domainId, parameters, "Transfer"))
             .onSuccess {
-                ctx.status(HttpCode.OK)
+                ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
             }.onFailure {
                 ctx.status(HttpCode.NOT_FOUND)
@@ -63,7 +63,7 @@ class TradeController(
         val parameters = ctx.bodyAsClass<TradeParameter>()
         tradeUseCase.validate(TradeValidationParameter(ProviderConfig.domainId, parameters))
             .onSuccess {
-                ctx.status(HttpCode.OK)
+                ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
             }.onFailure {
                 ctx.status(HttpCode.NOT_FOUND)
