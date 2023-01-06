@@ -4,11 +4,13 @@ import id.walt.gateway.controllers.TickerController
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.plugin.openapi.dsl.documented
 
-object TickerRouter : Router {
+class TickerRouter(
+    private val tickerController: TickerController,
+) : Router {
     override fun routes() {
         ApiBuilder.path("tickers") {
-            ApiBuilder.get("", documented(TickerController.listDoc(), TickerController::list))
-            ApiBuilder.get("{tickerId}", documented(TickerController.getDoc(), TickerController::get))
+            ApiBuilder.get("", documented(tickerController.listDoc(), tickerController::list))
+            ApiBuilder.get("{tickerId}", documented(tickerController.getDoc(), tickerController::get))
         }
     }
 }
