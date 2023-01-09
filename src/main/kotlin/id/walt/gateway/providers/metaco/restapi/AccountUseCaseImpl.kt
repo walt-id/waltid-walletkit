@@ -96,8 +96,8 @@ class AccountUseCaseImpl(
     private fun getAccountTickers(account: AccountParameter) = balanceUseCase.list(account).getOrNull() ?: emptyList()
 
     private fun computeAmount(transfers: List<Transfer>) =
-        transfers.filter { it.kind == "Transfer" }.map { it.value.toIntOrNull() ?: 0 }
-            .fold(0) { acc, d -> acc + d }.toString()
+        transfers.filter { it.kind == "Transfer" }.map { it.value.toLongOrNull() ?: 0 }
+            .fold(0L) { acc, d -> acc + d }.toString()
 
     private fun getTransactionStatus(transaction: Transaction) =
         transaction.ledgerTransactionData?.ledgerStatus ?: transaction.processing?.status ?: "Unknown"
