@@ -25,7 +25,7 @@ class TickerUseCaseImpl : TickerUseCase {
             price = getPrice(),
             imageUrl = if (it.third == "eth") "https://cryptologos.cc/logos/ethereum-eth-logo.png" else "https://cryptologos.cc/logos/pax-gold-paxg-logo.png",
             decimals = Common.getRandomInt(12, 18),
-            maxFee = Common.getRandomInt(from = 200, to = 1000),
+            maxFee = Common.getRandomLong(from = 200, to = 1000),
             address = if (it.second == "Contract") "0x${Common.getRandomString(40, 2)}" else null,
         )
     }
