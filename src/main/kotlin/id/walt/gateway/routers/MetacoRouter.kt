@@ -3,6 +3,7 @@ package id.walt.gateway.routers
 import id.walt.gateway.controllers.AccountController
 import id.walt.gateway.controllers.TickerController
 import id.walt.gateway.controllers.TradeController
+import id.walt.gateway.providers.MultiCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.CoinRepositoryImpl
 import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
@@ -22,6 +23,7 @@ import id.walt.gateway.providers.metaco.restapi.services.IntentSignatureService
 import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transaction.TransactionRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transfer.TransferRepositoryImpl
+import id.walt.gateway.providers.mockcoin.RBITokensMockUseCaseImpl
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
@@ -31,7 +33,11 @@ object MetacoRouter : Router {
     private val tickerRepository = TickerRepositoryImpl(authService)
     private val tickerUseCase = TickerUseCaseImpl(
         tickerRepository,
-        SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
+        MultiCoinUseCaseImpl(
+            RBITokensMockUseCaseImpl(),
+            SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
+        ),
+//        SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
         LogoUseCaseImpl()
     )
     private val accountUseCase: AccountUseCase =
