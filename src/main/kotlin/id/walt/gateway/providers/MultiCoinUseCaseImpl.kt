@@ -12,7 +12,7 @@ class MultiCoinUseCaseImpl(
         var result: Result<CoinData>
         do {
             result = coinUseCases[i++].metadata(parameter)
-        } while (result.isFailure || i == coinUseCases.size)
+        } while (result.isFailure && i < coinUseCases.size)
         return result
     }
 }
