@@ -8,7 +8,7 @@ import id.walt.multitenancy.TenantCmd
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
-import id.walt.socket.Server
+import id.walt.socket.SocketServer
 import id.walt.socket.StoreParameter
 import id.walt.webwallet.backend.cli.ConfigCmd
 import id.walt.webwallet.backend.cli.RunCmd
@@ -27,25 +27,22 @@ var WALTID_WALLET_BACKEND_BIND_ADDRESS = System.getenv("WALTID_WALLET_BACKEND_BI
 
 val WALTID_DATA_ROOT = System.getenv("WALTID_DATA_ROOT") ?: "."
 
-val WALTID_TLS_VERSION = System.getenv("WALTID_TLS_VERSION") ?: "TLSv1.2"
-val WALTID_TRUSTSTORE_PATH = System.getenv("WALTID_TRUSTSTORE_PATH") ?: "servercert.p12"
-val WALTID_KEYSTORE_PATH = System.getenv("WALTID_KEYSTORE_PATH") ?: "servercert.p12"
-val WALTID_TRUSTSTORE_PWD = (System.getenv("WALTID_TRUSTSTORE_PWD") ?: "").toCharArray()
-val WALTID_KEYSTORE_PWD = (System.getenv("WALTID_KEYSTORE_PWD") ?: "").toCharArray()
-
-private val log = KotlinLogging.logger { }
 fun main(args: Array<String>): Unit = runBlocking {
 
-    launch {
-        if(File(WALTID_KEYSTORE_PATH).exists() && File(WALTID_TRUSTSTORE_PATH).exists()) {
-            Server().start(
+    if (args.contains("--start-socket")) {
+        val tlsVersion = System.getenv("WALTID_TLS_VERSION") ?: "TLSv1.2"
+        val truststorePath = System.getenv("WALTID_TRUSTSTORE_PATH") ?: "servercert.p12"
+        val keystorePath = System.getenv("WALTID_KEYSTORE_PATH") ?: "servercert.p12"
+        val truststorePassword = (System.getenv("WALTID_TRUSTSTORE_PWD") ?: "").toCharArray()
+        val keystorePassword = (System.getenv("WALTID_KEYSTORE_PWD") ?: "").toCharArray()
+
+        launch {
+            SocketServer().start(
                 WALTID_WALLET_SOCKET_PORT,
-                StoreParameter(WALTID_KEYSTORE_PATH, WALTID_KEYSTORE_PWD),
-                StoreParameter(WALTID_TRUSTSTORE_PATH, WALTID_TRUSTSTORE_PWD),
-                WALTID_TLS_VERSION,
+                StoreParameter(keystorePath, keystorePassword),
+                StoreParameter(truststorePath, truststorePassword),
+                tlsVersion,
             )
-        } else {
-            log.info { "Socket server disabled, due to empty or faulty configuration" }
         }
     }
 
@@ -88,15 +85,16 @@ fun main(args: Array<String>): Unit = runBlocking {
                 ),
                 VcTemplatesCommand().subcommands(
                     VcTemplatesListCommand(),
-                    VcTemplatesExportCommand(),
                     VcTemplatesImportCommand(),
+                    VcTemplatesExportCommand(),
                     VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
             ),
             TenantCmd().subcommands(
                 ConfigureTenantCmd()
-            )
+            ),
+            ServeCommand()
         )
     ).main(args)
 }

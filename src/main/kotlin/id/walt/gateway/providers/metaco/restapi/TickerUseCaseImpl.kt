@@ -44,7 +44,7 @@ class TickerUseCaseImpl(
             }),
         decimals = ticker.data.decimals ?: 0,
         symbol = ticker.data.symbol ?: ticker.data.name,
-        maxFee = 1000,
+        maxFee = 50250000462000,
         address = extractTickerAddress(ticker.data.ledgerDetails.properties)
     )
 

@@ -9,10 +9,13 @@ object CoinMapper {
             "bitcoin" -> "bitcoin"
             "ethereum" -> "ethereum"
             "polygon" -> "matic-network"
+            "polygon testnet mumbai" -> "polygon testnet mumbai"
             "avalanche coin" -> "avalanche-2"
             "dexalot token" -> "dexalot"
             "bitcoin testnet" -> "t-bitcoin"
             "tezos" -> "tezos"
+            "euro test 1" -> "euro test 1"
+            "gold test 1" -> "gold test 1"
             else -> ""
 //            else -> throw IllegalArgumentException("Missing coin mapping for ticker name.")
         }.let { CoinParameter(it, currency) }

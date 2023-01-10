@@ -1,6 +1,5 @@
 package id.walt.webwallet.backend.wallet
 
-import com.beust.klaxon.Klaxon
 import com.nimbusds.oauth2.sdk.ResponseType
 import com.nimbusds.oauth2.sdk.Scope
 import com.nimbusds.oauth2.sdk.id.Issuer
@@ -438,12 +437,14 @@ object WalletController {
     }
 
     fun fulfillPresentation(ctx: Context) {
+        println("fulfillPresentation")
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
         val selectedCredentials = ctx.body().let { klaxonWithConverters.parseArray<PresentableCredential>(it) }
             ?: throw BadRequestResponse("No selected credentials given")
 
         ctx.json(
-            CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials))
+            CredentialPresentationManager.fulfillPresentation(sessionId, selectedCredentials)
+        )
     }
 
     fun listIssuers(ctx: Context) {
@@ -504,7 +505,10 @@ object WalletController {
                 }
             ctx.result(location)
         } catch (exc: Exception) {
+            println("Error: ${exc.message}")
+            exc.printStackTrace()
             ctx.result("/IssuanceError/?reason=${URLEncoder.encode(exc.message, StandardCharsets.UTF_8)}")
+            exc.printStackTrace()
         }
     }
 
@@ -578,12 +582,14 @@ object WalletController {
 
     private fun detectOIDCRequestType(context: Context) {
         val uri = context.queryParam("uri")?.let { URI.create(it) } ?: throw BadRequestResponse("Missing parameter: uri")
-        if(kotlin.runCatching {
-                OIDC4VPService.getPresentationDefinition(OIDC4VPService.parseOIDC4VPRequestUri(uri)) }.isSuccess) {
+        if (kotlin.runCatching {
+                OIDC4VPService.getPresentationDefinition(OIDC4VPService.parseOIDC4VPRequestUri(uri))
+            }.isSuccess) {
             // OIDC4VP
             context.result("presentation-request")
-        } else if(kotlin.runCatching {
-                IssuanceInitiationRequest.fromQueryParams(URLUtils.parseParameters(uri.query)) }.isSuccess) {
+        } else if (kotlin.runCatching {
+                IssuanceInitiationRequest.fromQueryParams(URLUtils.parseParameters(uri.query))
+            }.isSuccess) {
             // OIDC4VCI
             context.result("credential-offer")
         } else {
