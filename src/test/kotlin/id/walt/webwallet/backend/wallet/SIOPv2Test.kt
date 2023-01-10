@@ -17,10 +17,7 @@ import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
-import id.walt.verifier.backend.SIOPResponseVerificationResult
-import id.walt.verifier.backend.VerifierConfig
-import id.walt.verifier.backend.VerifierController
-import id.walt.verifier.backend.WalletConfiguration
+import id.walt.verifier.backend.*
 import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.config.WalletConfig
@@ -73,10 +70,10 @@ class SIOPv2Test : BaseApiTest() {
 
     @BeforeClass
     fun initSIOPTest() {
-        mockkObject(VerifierConfig, IssuerTenant, WalletConfig, UserContextLoader)
-        every { VerifierConfig.config } returns VerifierConfig(
+        mockkObject(VerifierTenant, IssuerTenant, WalletConfig, UserContextLoader)
+        every { VerifierTenant.config } returns VerifierConfig(
             verifierUiUrl = "$url",
-            verifierApiUrl = "$url/verifier-api",
+            verifierApiUrl = "$url/verifier-api/default",
             wallets = mapOf(
                 "walt.id" to WalletConfiguration(
                     "walt.id", "$url",
@@ -103,7 +100,7 @@ class SIOPv2Test : BaseApiTest() {
     fun test_OIDC4VP_vp_token_flow() = runBlocking {
         // VERIFIER PORTAL
         // verifier portal triggers presentation
-        val redirectToWalletResponse = clientNoFollow.get("$url/verifier-api/present/?walletId=walt.id&vcType=VerifiableId") {}
+        val redirectToWalletResponse = clientNoFollow.get("${VerifierTenant.config.verifierApiUrl}/present/?walletId=walt.id&vcType=VerifiableId") {}
         redirectToWalletResponse.status shouldBe HttpStatusCode.Found
         val redirectToWalletLocation = redirectToWalletResponse.headers.get("Location")!!
         val verificationReq = OIDC4VPService.parseOIDC4VPRequestUri(URI.create(redirectToWalletLocation))
@@ -165,7 +162,7 @@ class SIOPv2Test : BaseApiTest() {
         val redirectToVerifierUILocation = redirectToVerifierUIResponse.headers["Location"]
         val accessToken = URLUtils.parseParameters(URI.create(redirectToVerifierUILocation!!).query).get("access_token")!!.first()
 
-        val verificationResult = client.get("$url/verifier-api/auth?access_token=$accessToken") {}.bodyAsText().let { klaxonWithConverters.parse<SIOPResponseVerificationResult>(it) }
+        val verificationResult = client.get("${VerifierTenant.config.verifierApiUrl}/auth?access_token=$accessToken") {}.bodyAsText().let { klaxonWithConverters.parse<SIOPResponseVerificationResult>(it) }
         verificationResult!!.isValid shouldBe true
         verificationResult.subject shouldBe did
         verificationResult.vps shouldHaveSize 1

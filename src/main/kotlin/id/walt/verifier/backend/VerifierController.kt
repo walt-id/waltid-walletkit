@@ -1,18 +1,23 @@
 package id.walt.verifier.backend
 
 import com.nimbusds.oauth2.sdk.ResponseMode
+import id.walt.auditor.VerificationPolicy
+import id.walt.auditor.dynamic.DynamicPolicyArg
 import id.walt.common.klaxonWithConverters
+import id.walt.issuer.backend.IssuerConfig
+import id.walt.issuer.backend.IssuerController
+import id.walt.issuer.backend.IssuerManager
+import id.walt.issuer.backend.IssuerTenant
 import id.walt.model.oidc.SIOPv2Response
+import id.walt.multitenancy.Tenant
+import id.walt.multitenancy.TenantId
 import id.walt.rest.auditor.AuditorRestController
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.context.WalletContextManager
 import io.github.pavleprica.kotlin.cache.time.based.customTimeBasedCache
 import io.javalin.apibuilder.ApiBuilder.*
-import io.javalin.http.BadRequestResponse
-import io.javalin.http.ContentType
-import io.javalin.http.Context
-import io.javalin.http.HttpCode
+import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import mu.KotlinLogging
@@ -26,7 +31,15 @@ object VerifierController {
 
     val routes
         get() =
-            path("") {
+            path("{tenantId}") {
+                before { ctx ->
+                    log.info { "Setting verifier API context: ${ctx.pathParam("tenantId")}" }
+                    WalletContextManager.setCurrentContext(VerifierManager.getService().getVerifierContext(ctx.pathParam("tenantId")))
+                }
+                after {
+                    log.info { "Resetting verifier API context" }
+                    WalletContextManager.resetCurrentContext()
+                }
                 path("wallets") {
                     get("list", documented(
                         document().operation {
@@ -90,18 +103,50 @@ object VerifierController {
                             VerifierController::hasRecentlyVerified)
                     )
                 }
-                path("policies") {
-                    before { WalletContextManager.setCurrentContext(VerifierManager.getService().verifierContext) }
-                    after { WalletContextManager.resetCurrentContext() }
-                    get("list", documented(AuditorRestController.listPoliciesDocs(), AuditorRestController::listPolicies))
-                    post(
-                        "create/{name}",
-                        documented(AuditorRestController.createDynamicPolicyDocs(), AuditorRestController::createDynamicPolicy)
-                    )
-                    delete(
-                        "delete/{name}",
-                        documented(AuditorRestController.deleteDynamicPolicyDocs(), AuditorRestController::deleteDynamicPolicy)
-                    )
+                path("config") {
+                    post("setConfiguration", documented(document().operation {
+                        it.summary("Set configuration for this verifier tenant").operationId("setConfiguration").addTagsItem("Verifier Configuration")
+                    }
+                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .body<IssuerConfig>()
+                        .json<String>("200"), VerifierController::setConfiguration))
+                    get("getConfiguration", documented(document().operation {
+                        it.summary("Get configuration for this verifier tenant").operationId("getConfiguration").addTagsItem("Verifier Configuration")
+                    }
+                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .json<IssuerConfig>("200"), VerifierController::getConfiguration
+                    ))
+                    path("policies") {
+                        get(
+                            "list",
+                            documented(document().operation {
+                                it.summary("List verification policies").operationId("listPolicies").addTagsItem("Verifier Configuration")
+                            }.json<Array<VerificationPolicy>>("200"), AuditorRestController::listPolicies)
+                        )
+                        post(
+                            "create/{name}",
+                            documented(
+                                document().operation {
+                                    it.summary("Create dynamic verification policy").operationId("createDynamicPolicy").addTagsItem("Verifier Configuration")
+                                }
+                                    .pathParam<String>("name")
+                                    .queryParam<Boolean>("update")
+                                    .queryParam<Boolean>("downloadPolicy")
+                                    .body<DynamicPolicyArg>()
+                                    .json<DynamicPolicyArg>("200"),
+                                AuditorRestController::createDynamicPolicy
+                            )
+                        )
+                        delete(
+                            "delete/{name}",
+                            documented(
+                                document().operation {
+                                    it.summary("Delete a dynamic verification policy").operationId("deletePolicy").addTagsItem("Verifier Configuration")
+                                }.pathParam<String>("name"),
+                                AuditorRestController::deleteDynamicPolicy
+                            )
+                        )
+                    }
                 }
                 path("auth") {
                     get(documented(
@@ -128,8 +173,20 @@ object VerifierController {
                 }
             }
 
+    private fun getConfiguration(context: Context) {
+        try {
+            context.json(VerifierTenant.config)
+        } catch (nfe: Tenant.TenantNotFoundException) {
+            throw NotFoundResponse()
+        }
+    }
+
+    private fun setConfiguration(context: Context) {
+        val config = context.bodyAsClass<VerifierConfig>()
+        VerifierTenant.setConfig(config)
+    }
     fun listWallets(ctx: Context) {
-        ctx.json(VerifierConfig.config.wallets.values)
+        ctx.json(VerifierTenant.config.wallets.values)
     }
 
     private fun getPresentationCustomQueryParams(queryParamMap: Map<String, List<String>>): String {
@@ -158,7 +215,7 @@ object VerifierController {
     val verifierManager = VerifierManager.getService()
 
     fun presentCredential(ctx: Context) {
-        val wallet = ctx.queryParam("walletId")?.let { VerifierConfig.config.wallets[it] }
+        val wallet = ctx.queryParam("walletId")?.let { VerifierTenant.config.wallets[it] }
             ?: throw BadRequestResponse("Unknown or missing walletId")
 
         val (schemaUris, vcTypes, verificationCallbackUrl) = ctx.getSchemaOrVcType()
@@ -209,7 +266,7 @@ object VerifierController {
 
     fun verifySIOPResponse(ctx: Context) {
         log.debug { "Verifying SIOP response..." }
-        val verifierUiUrl = ctx.queryParam("verifierUiUrl") ?: VerifierConfig.config.verifierUiUrl
+        val verifierUiUrl = ctx.queryParam("verifierUiUrl") ?: VerifierTenant.config.verifierUiUrl
         val siopResponse =
             SIOPv2Response.fromFormParams(ctx.formParamMap().map { kv -> Pair(kv.key, kv.value.first()) }.toMap())
 

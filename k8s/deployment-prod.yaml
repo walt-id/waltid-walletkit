@@ -21,7 +21,7 @@ data:
   verifier-config.json: |
     {
       "verifierUiUrl": "https://verifier.walt.id",
-      "verifierApiUrl": "https://verifier.walt.id/verifier-api",
+      "verifierApiUrl": "https://verifier.walt.id/verifier-api/default",
       "wallets": {
         "walt.id": {
           "id": "walt.id",

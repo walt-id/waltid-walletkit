@@ -20,9 +20,9 @@ class ConfigCmd : CliktCommand(name = "config", help = "Configure or setup dids,
 
     val context: Context by mutuallyExclusiveOptions(
         option("-i", "--as-issuer", help = "Execute in context of issuer backend")
-            .convert { issuerId -> IssuerManager.getIssuerContext(issuerId) },
-        option("-v", "--as-verifier", help = "Execute in context of verifier backend").flag()
-            .convert { if (it) VerifierManager.getService().verifierContext; else null },
+            .convert { tenantId -> IssuerManager.getIssuerContext(tenantId) },
+        option("-v", "--as-verifier", help = "Execute in context of verifier backend")
+            .convert { tenantId -> VerifierManager.getService().getVerifierContext(tenantId) },
         option("-u", "--as-user", help = "Execute in user context").convert { userId -> UserContextLoader.load(userId) }
     ).single().required()
 
