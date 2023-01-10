@@ -14,8 +14,8 @@ object CoinMapper {
             "dexalot token" -> "dexalot"
             "bitcoin testnet" -> "t-bitcoin"
             "tezos" -> "tezos"
-            "euro test 1" -> "euro test 1"
-            "gold test 1" -> "gold test 1"
+            "euro test 1" -> "euro"
+            "gold test 1" -> "gold"
             else -> ""
 //            else -> throw IllegalArgumentException("Missing coin mapping for ticker name.")
         }.let { CoinParameter(it, currency) }

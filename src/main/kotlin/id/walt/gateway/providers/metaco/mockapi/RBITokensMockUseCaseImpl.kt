@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.mockcoin
+package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.dto.CoinData
 import id.walt.gateway.dto.CoinParameter
@@ -6,11 +6,12 @@ import id.walt.gateway.usecases.CoinUseCase
 
 class RBITokensMockUseCaseImpl : CoinUseCase {
     override fun metadata(parameter: CoinParameter): Result<CoinData> = when (parameter.id) {
-        "euro test 1" -> CoinData(
+        // Jan.09.'23
+        "euro" -> CoinData(
             price = 1.0, marketCap = -1.0, change = .0
         )
 
-        "gold test 1" -> CoinData(
+        "gold" -> CoinData(
             price = 56.62, marketCap = 11520 * Math.pow(10.0, 12.0), change = 0.05
         )
 
