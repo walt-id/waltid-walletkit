@@ -11,5 +11,6 @@ data class IssuanceSession(
     var authRequest: AuthorizationRequest?,
     var issuables: Issuables?,
     var did: String? = null,
-    val userPin: String? = null
+    val userPin: String? = null,
+    var issuerDid: String? = null
 )

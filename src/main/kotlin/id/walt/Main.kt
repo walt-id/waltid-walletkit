@@ -3,6 +3,8 @@ package id.walt
 import com.github.ajalt.clikt.core.subcommands
 import id.walt.cli.*
 import id.walt.issuer.backend.IssuerManager
+import id.walt.multitenancy.ConfigureTenantCmd
+import id.walt.multitenancy.TenantCmd
 import id.walt.servicematrix.ServiceMatrix
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.ContextManager
@@ -14,6 +16,8 @@ import id.walt.webwallet.backend.cli.WalletCmd
 import id.walt.webwallet.backend.context.WalletContextManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import mu.KotlinLogging
+import java.io.File
 
 
 val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080
@@ -44,15 +48,6 @@ fun main(args: Array<String>): Unit = runBlocking {
 
     ServiceMatrix("service-matrix.properties")
     ServiceRegistry.registerService<ContextManager>(WalletContextManager)
-
-    if (args.isNotEmpty()) when {
-        args.contains("--init-issuer") -> {
-            IssuerManager.initializeInteractively()
-            return@runBlocking
-        }
-
-        args.contains("--bind-all") -> WALTID_WALLET_BACKEND_BIND_ADDRESS = "0.0.0.0"
-    }
 
     WalletCmd().subcommands(
         RunCmd(),
@@ -95,6 +90,9 @@ fun main(args: Array<String>): Unit = runBlocking {
                     VcTemplatesRemoveCommand()
                 ),
                 VcImportCommand()
+            ),
+            TenantCmd().subcommands(
+                ConfigureTenantCmd()
             ),
             ServeCommand()
         )
