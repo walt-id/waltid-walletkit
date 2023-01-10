@@ -3,8 +3,8 @@ package id.walt.gateway.routers
 import id.walt.gateway.controllers.AccountController
 import id.walt.gateway.controllers.TickerController
 import id.walt.gateway.controllers.TradeController
-import id.walt.gateway.providers.MultiCoinUseCaseImpl
-import id.walt.gateway.providers.coingecko.CoinRepositoryImpl
+import id.walt.gateway.usecases.MultiCoinUseCaseImpl
+import id.walt.gateway.providers.coingecko.CoinRepositoryImpl as CoingeckoImpl
 import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
@@ -23,7 +23,10 @@ import id.walt.gateway.providers.metaco.restapi.services.IntentSignatureService
 import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transaction.TransactionRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transfer.TransferRepositoryImpl
-import id.walt.gateway.providers.mockcoin.RBITokensMockUseCaseImpl
+import id.walt.gateway.providers.metaco.mockapi.RBITokensMockUseCaseImpl
+import id.walt.gateway.providers.rcb.CoinRepositoryImpl as RcbImpl
+import id.walt.gateway.providers.rcb.CoinUseCaseImpl
+import id.walt.gateway.providers.rcb.DoubleFieldResponseParser
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
@@ -34,10 +37,10 @@ object MetacoRouter : Router {
     private val tickerUseCase = TickerUseCaseImpl(
         tickerRepository,
         MultiCoinUseCaseImpl(
+            CoinUseCaseImpl(RcbImpl(), DoubleFieldResponseParser()),
+            SimpleCoinUseCaseImpl(CoingeckoImpl(), SimplePriceParser()),
             RBITokensMockUseCaseImpl(),
-            SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
         ),
-//        SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
         LogoUseCaseImpl()
     )
     private val accountUseCase: AccountUseCase =
