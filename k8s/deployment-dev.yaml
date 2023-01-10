@@ -6,7 +6,7 @@ data:
   issuer-config.json: |
     {
       "issuerUiUrl": "https://issuer.walt-test.cloud",
-      "issuerApiUrl": "https://issuer.walt-test.cloud/issuer-api",
+      "issuerApiUrl": "https://issuer.walt-test.cloud/issuer-api/default",
       "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
         "walt.id": {
@@ -21,7 +21,7 @@ data:
   verifier-config.json: |
     {
       "verifierUiUrl": "https://verifier.walt-test.cloud",
-      "verifierApiUrl": "https://verifier.walt-test.cloud/verifier-api",
+      "verifierApiUrl": "https://verifier.walt-test.cloud/verifier-api/default",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
@@ -39,7 +39,7 @@ data:
       "issuers": {
         "walt.id": {
           "id": "walt.id",
-          "url": "https://issuer.walt-test.cloud/issuer-api/oidc",
+          "url": "https://issuer.walt-test.cloud/issuer-api/default/oidc",
           "description": "walt.id Issuer Portal"
         },
         "yes.com": {

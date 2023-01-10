@@ -1,6 +1,6 @@
 {
   "issuerUiUrl": "http://$EXTERNAL_HOSTNAME:8082",
-  "issuerApiUrl": "http://$EXTERNAL_HOSTNAME:8082/issuer-api",
+  "issuerApiUrl": "http://$EXTERNAL_HOSTNAME:8082/issuer-api/default",
   "wallets": {
     "walt.id": {
       "id": "walt.id",
