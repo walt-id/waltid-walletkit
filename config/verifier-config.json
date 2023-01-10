@@ -1,6 +1,6 @@
 {
   "verifierUiUrl": "http://localhost:4000",
-  "verifierApiUrl": "http://localhost:8080/verifier-api",
+  "verifierApiUrl": "http://localhost:8080/verifier-api/default",
   "additionalPolicies": [
   ],
   "wallets": {

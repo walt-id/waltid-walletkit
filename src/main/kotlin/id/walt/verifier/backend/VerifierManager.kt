@@ -11,6 +11,10 @@ import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
 import id.walt.model.dif.*
 import id.walt.model.oidc.SIOPv2Response
+import id.walt.multitenancy.TenantContext
+import id.walt.multitenancy.TenantContextManager
+import id.walt.multitenancy.TenantId
+import id.walt.multitenancy.TenantType
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
 import id.walt.services.context.Context
@@ -38,11 +42,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 abstract class VerifierManager : BaseService() {
-    val reqCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, AuthorizationRequest>()
-    val respCache =
-        CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build<String, SIOPResponseVerificationResult>()
-
-    abstract val verifierContext: Context
+    open fun getVerifierContext(tenantId: String): TenantContext<VerifierConfig, VerifierState> {
+        return TenantContextManager.getTenantContext(TenantId(TenantType.VERIFIER, tenantId)) { VerifierState() }
+    }
 
     private val log = KotlinLogging.logger { }
 
@@ -58,19 +60,19 @@ abstract class VerifierManager : BaseService() {
         val redirectQuery = if (redirectCustomUrlQuery.isEmpty()) "" else "?$redirectCustomUrlQuery"
         val req = OIDC4VPService.createOIDC4VPRequest(
             wallet_url = walletUrl,
-            redirect_uri = URI.create("${VerifierConfig.config.verifierApiUrl}/verify$redirectQuery"),
+            redirect_uri = URI.create("${VerifierTenant.config.verifierApiUrl}/verify$redirectQuery"),
             response_mode = responseMode,
             nonce = Nonce(nonce),
             presentation_definition = presentationDefinition,
             state = State(requestId)
         )
-        reqCache.put(requestId, req)
+        VerifierTenant.state.reqCache.put(requestId, req)
 
         return req
     }
 
     private fun isWebhookAllowed(requestedWebhookUrl: String): Boolean {
-        val allowedWebhooks = VerifierConfig.config.allowedWebhookHosts
+        val allowedWebhooks = VerifierTenant.config.allowedWebhookHosts
 
         if (allowedWebhooks == null) {
             log.debug { "No allowedWebhookHosts attribute in verifier config, but webhook was requested." }
@@ -168,7 +170,7 @@ abstract class VerifierManager : BaseService() {
             SignaturePolicy(),
             ChallengePolicy(req.getCustomParameter("nonce")!!.first(), applyToVC = false, applyToVP = true),
             PresentationDefinitionPolicy(OIDC4VPService.getPresentationDefinition(req)),
-            *(VerifierConfig.config.additionalPolicies?.map { p ->
+            *(VerifierTenant.config.additionalPolicies?.map { p ->
                 PolicyRegistry.getPolicyWithJsonArg(p.policy, p.argument?.let { JsonObject(it) })
             }?.toList() ?: listOf()).toTypedArray()
         )
@@ -195,8 +197,8 @@ abstract class VerifierManager : BaseService() {
      */
     open fun verifyResponse(siopResponse: SIOPv2Response): Pair<SIOPResponseVerificationResult, String?> {
         val state = siopResponse.state ?: throw BadRequestResponse("No state set on SIOP response")
-        val req = reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
-        reqCache.invalidate(state)
+        val req = VerifierTenant.state.reqCache.getIfPresent(state) ?: throw BadRequestResponse("State invalid or expired")
+        VerifierTenant.state.reqCache.invalidate(state)
         val vps = siopResponse.vp_token
 
         val result = SIOPResponseVerificationResult(
@@ -206,11 +208,9 @@ abstract class VerifierManager : BaseService() {
                 VPVerificationResult(
                     vp = vp,
                     vcs = vp.verifiableCredential ?: listOf(),
-                    verification_result = ContextManager.runWith(verifierContext) {
-                        Auditor.getService().verify(
+                    verification_result = Auditor.getService().verify(
                             vp, getVerificationPoliciesFor(req)
                         )
-                    }
                 )
             }, auth_token = null
         )
@@ -244,14 +244,14 @@ abstract class VerifierManager : BaseService() {
             result.auth_token = JWTService.toJWT(UserInfo(result.subject!!))
         }
 
-        respCache.put(result.state, result)
+        VerifierTenant.state.respCache.put(result.state, result)
 
         return Pair(result, callbackRequestedRedirectUrl)
     }
 
     open fun getVerificationRedirectionUri(
         verificationResult: SIOPResponseVerificationResult,
-        uiUrl: String? = VerifierConfig.config.verifierUiUrl
+        uiUrl: String? = VerifierTenant.config.verifierUiUrl
     ): URI {
         return URI.create("$uiUrl/success/?access_token=${verificationResult.state}")
         /*if(verificationResult.isValid)
@@ -263,8 +263,8 @@ abstract class VerifierManager : BaseService() {
     }
 
     fun getVerificationResult(id: String): SIOPResponseVerificationResult? {
-        return respCache.getIfPresent(id).also {
-            respCache.invalidate(id)
+        return VerifierTenant.state.respCache.getIfPresent(id).also {
+            VerifierTenant.state.respCache.invalidate(id)
         }
     }
 
@@ -277,11 +277,5 @@ abstract class VerifierManager : BaseService() {
 }
 
 class DefaultVerifierManager : VerifierManager() {
-    override val verifierContext = UserContext(
-        contextId = "Verifier",
-        hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/verifier")),
-        keyStore = HKVKeyStoreService(),
-        vcStore = HKVVcStoreService()
-    )
 
 }
