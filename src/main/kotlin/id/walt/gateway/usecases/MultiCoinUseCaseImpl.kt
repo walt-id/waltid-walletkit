@@ -1,8 +1,7 @@
-package id.walt.gateway.providers
+package id.walt.gateway.usecases
 
 import id.walt.gateway.dto.CoinData
 import id.walt.gateway.dto.CoinParameter
-import id.walt.gateway.usecases.CoinUseCase
 
 class MultiCoinUseCaseImpl(
     private vararg val coinUseCases: CoinUseCase
