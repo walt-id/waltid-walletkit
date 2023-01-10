@@ -47,6 +47,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("listWallets")
                         }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .jsonArray<WalletConfiguration>("200"),
                         VerifierController::listWallets,
                     ))
@@ -58,6 +59,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("presentVID")
                         }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("walletId")
                             .queryParam<String>("schemaUri", isRepeatable = true)
                             .queryParam<String>("vcType", isRepeatable = true)
@@ -72,6 +74,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("presentXDevice")
                         }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("schemaUri", isRepeatable = true)
                             .queryParam<String>("vcType", isRepeatable = true)
                             .result<PresentationRequestInfo>("200"),
@@ -85,6 +88,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("verifySIOPv2Request")
                         }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("state")
                             .formParamBody<String> { }
                             .result<String>("302"),
@@ -97,6 +101,7 @@ object VerifierController {
                                     .addTagsItem("Verifier")
                                     .operationId("isVerified")
                             }
+                                .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                                 .queryParam<String>("state")
                                 .result<Unit>("404")
                                 .result<String>("200"),
@@ -121,7 +126,7 @@ object VerifierController {
                             "list",
                             documented(document().operation {
                                 it.summary("List verification policies").operationId("listPolicies").addTagsItem("Verifier Configuration")
-                            }.json<Array<VerificationPolicy>>("200"), AuditorRestController::listPolicies)
+                            }.pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }.json<Array<VerificationPolicy>>("200"), AuditorRestController::listPolicies)
                         )
                         post(
                             "create/{name}",
@@ -129,6 +134,7 @@ object VerifierController {
                                 document().operation {
                                     it.summary("Create dynamic verification policy").operationId("createDynamicPolicy").addTagsItem("Verifier Configuration")
                                 }
+                                    .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                                     .pathParam<String>("name")
                                     .queryParam<Boolean>("update")
                                     .queryParam<Boolean>("downloadPolicy")
@@ -142,7 +148,7 @@ object VerifierController {
                             documented(
                                 document().operation {
                                     it.summary("Delete a dynamic verification policy").operationId("deletePolicy").addTagsItem("Verifier Configuration")
-                                }.pathParam<String>("name"),
+                                }.pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }.pathParam<String>("name"),
                                 AuditorRestController::deleteDynamicPolicy
                             )
                         )
@@ -155,6 +161,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("completeAuthentication")
                         }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("access_token")
                             .json<Map<String, Any>>("200"),
                         VerifierController::completeAuthentication
@@ -167,6 +174,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("get protected data")
                         }
+                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .result<String>("200"),
                         VerifierController::getProtectedData
                     ), UserRole.AUTHORIZED)
