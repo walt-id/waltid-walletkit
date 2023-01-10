@@ -60,7 +60,7 @@ class TradeUseCaseImpl(
     })
 
     private fun createTransactionOrder(type: String, data: TradeData) = runCatching {
-        IntentBuilder.getBuilder(IntentBuilderParam(type, data.trade.ticker)).build(data)
+        IntentBuilder.getBuilder(IntentBuilderParam(type, getTickerType(data.trade.ticker))).build(data)
             .let { intent ->
                 SignatureIntent(
                     request = intent.request,

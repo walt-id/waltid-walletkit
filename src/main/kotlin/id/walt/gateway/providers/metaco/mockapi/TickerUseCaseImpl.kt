@@ -8,13 +8,16 @@ import id.walt.gateway.usecases.TickerUseCase
 import java.util.*
 
 class TickerUseCaseImpl : TickerUseCase {
+    private val tickerPool = (1..10).map { getTickerData(UUID.randomUUID().toString()) }
     override fun get(parameter: TickerParameter): Result<TickerData> = Result.success(getTickerData())
 
-    override fun list(currency: String): Result<List<TickerData>> = Result.success((1..5).map { getTickerData() })
+    override fun list(currency: String): Result<List<TickerData>> = Result.success(tickerPool)
 
-    private fun getTickerData() = getTokenTriple().let {
+    private fun getTickerData() = tickerPool[Common.getRandomInt(0, tickerPool.size)]
+
+    private fun getTickerData(id: String) = getTokenTriple().let {
         TickerData(
-            id = UUID.randomUUID().toString(),
+            id = id,
             name = it.first,
             kind = it.second,
             symbol = it.third,
@@ -22,7 +25,8 @@ class TickerUseCaseImpl : TickerUseCase {
             price = getPrice(),
             imageUrl = if (it.third == "eth") "https://cryptologos.cc/logos/ethereum-eth-logo.png" else "https://cryptologos.cc/logos/pax-gold-paxg-logo.png",
             decimals = Common.getRandomInt(12, 18),
-            maxFee = Common.getRandomInt(from = 200, to = 1000),
+            maxFee = Common.getRandomLong(from = 200, to = 1000),
+            address = if (it.second == "Contract") "0x${Common.getRandomString(40, 2)}" else null,
         )
     }
 

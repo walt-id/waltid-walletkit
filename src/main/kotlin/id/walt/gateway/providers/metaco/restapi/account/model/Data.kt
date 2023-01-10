@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Data(
+    @Json(serializeNull = false)
     val alias: String?,
     val domainId: String,
     val id: String,
