@@ -17,7 +17,6 @@ import id.walt.rest.core.CreateDidRequest
 import id.walt.rest.core.DidController
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.signatory.rest.SignatoryController
-import id.walt.verifier.backend.VerifierController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
@@ -51,7 +50,7 @@ object IssuerController {
                         }
                             .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .jsonArray<WalletConfiguration>("200"),
-                        VerifierController::listWallets,
+                        IssuerController::listWallets,
                     ))
                 }
                 path("config") {
@@ -205,6 +204,10 @@ object IssuerController {
     private fun setConfiguration(context: Context) {
         val config = context.bodyAsClass<IssuerConfig>()
         IssuerTenant.setConfig(config)
+    }
+
+    fun listWallets(ctx: Context) {
+        ctx.json(IssuerTenant.config.wallets.values)
     }
 
     fun listIssuableCredentials(ctx: Context) {
