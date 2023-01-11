@@ -4,6 +4,9 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import com.beust.klaxon.Klaxon
+import com.beust.klaxon.KlaxonException
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import id.walt.gateway.routers.GatewayRouter
 import id.walt.issuer.backend.IssuerController
 import id.walt.onboarding.backend.OnboardingController
@@ -12,9 +15,11 @@ import id.walt.webwallet.backend.auth.AuthController
 import id.walt.webwallet.backend.wallet.DidWebRegistryController
 import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
-import io.javalin.apibuilder.ApiBuilder
+import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.core.security.AccessManager
 import io.javalin.core.util.RouteOverviewPlugin
+import io.javalin.http.Context
+import io.javalin.http.HttpCode
 import io.javalin.plugin.json.JavalinJackson
 import io.javalin.plugin.json.JsonMapper
 import io.javalin.plugin.openapi.InitialConfigurationCreator
@@ -33,19 +38,19 @@ object RestAPI {
     private val log = KotlinLogging.logger {}
 
     val DEFAULT_ROUTES = {
-        ApiBuilder.path("api") {
+        path("api") {
             AuthController.routes
             WalletController.routes
             DidWebRegistryController.routes
             GatewayRouter.routes()
         }
-        ApiBuilder.path("verifier-api") {
+        path("verifier-api") {
             VerifierController.routes
         }
-        ApiBuilder.path("issuer-api") {
+        path("issuer-api") {
             IssuerController.routes
         }
-        ApiBuilder.path("onboarding-api") {
+        path("onboarding-api") {
             OnboardingController.routes
         }
     }
@@ -65,7 +70,9 @@ object RestAPI {
                             if (ctx.body().isNotEmpty()) append("\nRequest: ${ctx.body()}")
                             if (!ctx.resultString().isNullOrEmpty()) append("\nResponse: ${ctx.resultString()}")
 
-                            if (!ctx.res.getHeader(HttpHeaders.Location).isNullOrEmpty()) append("\nLocation: ${ctx.res.getHeader(HttpHeaders.Location)}")
+                            if (!ctx.res.getHeader(HttpHeaders.Location)
+                                    .isNullOrEmpty()
+                            ) append("\nLocation: ${ctx.res.getHeader(HttpHeaders.Location)}")
                         }.toString()
                 }
             }
@@ -106,6 +113,16 @@ object RestAPI {
                 }
             })
         }
+    }.apply {
+
+        fun Context.reportRequestException(exception: Exception) =
+            this.json(mapOf("error" to true, "error_type" to exception::class.simpleName, "message" to exception.message))
+                .status(HttpCode.BAD_REQUEST)
+
+        exception(IllegalArgumentException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(MismatchedInputException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(JsonParseException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(KlaxonException::class.java) { e, ctx -> ctx.reportRequestException(e) }
     }
 
     fun start(bindAddress: String, port: Int, accessManager: AccessManager, routes: () -> Unit = DEFAULT_ROUTES): Javalin {
