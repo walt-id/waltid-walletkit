@@ -19,5 +19,5 @@
       "description": "local wallet"
     }
   },
-  "allowedWebhookHosts": [ "http://localhost" ]
+  "allowedWebhookHosts": [ "http://localhost", "http://wallet.local" ]
 }
