@@ -49,9 +49,13 @@ abstract class BaseApiTest : AnnotationSpec() {
             config.apply {
                 enableDevLogging()
                 requestLogger { ctx, ms ->
-                    log.debug { "Received: ${ctx.body()} - Time: ${ms}ms" }
+                    log.debug { "${ctx.status()} ${ctx.ip()}: ${ctx.method()} ${ctx.fullUrl()}: ${ctx.body()} (Time: ${ms}ms)" }
                 }
                 accessManager(JWTService)
+            }
+        }.events { event ->
+            event.handlerAdded {
+                println("Registered handler: ${it.httpMethod.name} ${it.path}")
             }
         }.apply {
             before(JWTService.jwtHandler)

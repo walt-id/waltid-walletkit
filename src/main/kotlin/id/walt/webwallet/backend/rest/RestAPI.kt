@@ -20,6 +20,7 @@ import io.javalin.core.security.AccessManager
 import io.javalin.core.util.RouteOverviewPlugin
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
+import io.javalin.http.NotFoundResponse
 import io.javalin.plugin.json.JavalinJackson
 import io.javalin.plugin.json.JsonMapper
 import io.javalin.plugin.openapi.InitialConfigurationCreator
@@ -116,7 +117,7 @@ object RestAPI {
     }.apply {
 
         fun Context.reportRequestException(exception: Exception) =
-            this.json(mapOf("error" to true, "error_type" to exception::class.simpleName, "message" to exception.message))
+            this.json(mapOf("error" to true, "error_type" to exception::class.simpleName, "message" to exception.message, "url" to this.fullUrl()))
                 .status(HttpCode.BAD_REQUEST)
 
         exception(IllegalArgumentException::class.java) { e, ctx -> ctx.reportRequestException(e) }

@@ -7,7 +7,7 @@ import id.walt.services.key.KeyFormat
 import id.walt.services.key.KeyService
 import id.walt.services.keystore.KeyType
 import id.walt.webwallet.backend.auth.AuthController
-import io.javalin.apibuilder.ApiBuilder
+import io.javalin.apibuilder.ApiBuilder.path
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.data.blocking.forAll
 import io.kotest.data.row
@@ -25,7 +25,7 @@ private val log = KotlinLogging.logger {}
 class WalletApiTest : BaseApiTest() {
 
     override fun loadRoutes() {
-        ApiBuilder.path("api") {
+        path("api") {
             AuthController.routes
             WalletController.routes
         }
@@ -52,7 +52,7 @@ class WalletApiTest : BaseApiTest() {
     // TODO: analyze potential walt-context issue @Test()
     fun testDidWebCreate() = runBlocking {
         val userInfo = authenticateDid()
-        val did = client.post("$url/api/wallet/did/create"){
+        val did = client.post("$url/api/wallet/did/create") {
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
             contentType(ContentType.Application.Json)
@@ -119,14 +119,4 @@ class WalletApiTest : BaseApiTest() {
             response shouldBe keyStr
         }
     }
-
-/*    @Test()
-    fun listKeys() = runBlocking {
-        val userInfo = authenticate()
-        val key = client.get<Key>("$url/wallet/keys/list"){
-            header("Authorization", "Bearer ${userInfo.token}")
-            contentType(ContentType.Application.Json)
-        }
-        println(key)
-    }*/
 }
