@@ -11,46 +11,47 @@ group = "id.walt"
 version = "0.6.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://jitpack.io")
     maven("https://maven.walt.id/repository/waltid/")
     maven("https://maven.walt.id/repository/waltid-ssi-kit/")
     maven("https://repo.danubetech.com/repository/maven-public/")
-    mavenLocal()
 }
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT4")
+    implementation("id.walt:waltid-ssi-kit:1.13.0-SNAPSHOT6")
     //implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
     // Metaco
-//    implementation("com.metaco:sdk:2.1.0")
+    // implementation("com.metaco:sdk:2.1.0")
 
     implementation("io.javalin:javalin-bundle:4.6.4")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.6")
     implementation("com.nimbusds:oauth2-oidc-sdk:9.43.1")
+
     // CLI
-    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.0")
-    implementation("com.github.ajalt.clikt:clikt:3.5.0")
+    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.1")
+    implementation("com.github.ajalt.clikt:clikt:3.5.1")
 
     // Service-Matrix
-    implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.0")
+    implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.3")
 
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.4")
-    implementation("org.slf4j:slf4j-simple:2.0.4")
+    implementation("org.slf4j:slf4j-api:2.0.5")
+    implementation("org.slf4j:slf4j-simple:2.0.5")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
 
     // Ktor
-    implementation("io.ktor:ktor-client-jackson:2.1.2")
-    implementation("io.ktor:ktor-client-content-negotiation:2.1.2")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.1.3")
-    implementation("io.ktor:ktor-client-core:2.1.2")
-    implementation("io.ktor:ktor-client-cio:2.1.2")
-    implementation("io.ktor:ktor-client-logging:2.1.2")
-    implementation("io.ktor:ktor-client-auth:2.1.2")
+    implementation("io.ktor:ktor-client-jackson:2.2.1")
+    implementation("io.ktor:ktor-client-content-negotiation:2.2.1")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.2.1")
+    implementation("io.ktor:ktor-client-core:2.2.1")
+    implementation("io.ktor:ktor-client-cio:2.2.1")
+    implementation("io.ktor:ktor-client-logging:2.2.1")
+    implementation("io.ktor:ktor-client-auth:2.2.1")
 
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
@@ -64,10 +65,10 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-json:5.5.4")
 
     // HTTP
-    implementation("io.ktor:ktor-client-core:2.1.3")
-    implementation("io.ktor:ktor-client-content-negotiation:2.1.3")
-    implementation("io.ktor:ktor-client-cio:2.1.3")
-    implementation("io.ktor:ktor-client-logging:2.1.3")
+    implementation("io.ktor:ktor-client-core:2.2.1")
+    implementation("io.ktor:ktor-client-content-negotiation:2.2.1")
+    implementation("io.ktor:ktor-client-cio:2.2.1")
+    implementation("io.ktor:ktor-client-logging:2.2.1")
 }
 
 tasks.withType<KotlinCompile> {

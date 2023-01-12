@@ -13,8 +13,8 @@ import id.walt.model.oidc.CredentialRequest
 import id.walt.model.oidc.CredentialResponse
 import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
-import id.walt.rest.core.CreateDidRequest
 import id.walt.rest.core.DidController
+import id.walt.rest.core.KeyController
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.signatory.rest.SignatoryController
 import id.walt.verifier.backend.WalletConfiguration
@@ -23,13 +23,14 @@ import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
+import io.javalin.plugin.openapi.dsl.OpenApiDocumentation
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import mu.KotlinLogging
 import java.net.URI
 
 object IssuerController {
-    private val logger = KotlinLogging.logger {  }
+    private val logger = KotlinLogging.logger { }
     val routes
         get() =
             path("{tenantId}") {
@@ -48,28 +49,43 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("listWallets")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .jsonArray<WalletConfiguration>("200"),
                         IssuerController::listWallets,
                     ))
                 }
                 path("config") {
-                    post("createDid", documented(document().operation {
-                        it.summary("Create DID").operationId("createDid").addTagsItem("Issuer Configuration")
+                    fun OpenApiDocumentation.describeTenantId() =
+                        this.run { pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) } }
+
+                    path("did") {
+                        post("create", documented(DidController.createDocs().describeTenantId(), DidController::create))
+                        post("import", documented(DidController.importDocs().describeTenantId(), DidController::import))
+                        get("list", documented(DidController.listDocs().describeTenantId(), DidController::list))
+                        post("delete", documented(DidController.deleteDocs().describeTenantId(), DidController::delete))
                     }
-                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
-                        .body<CreateDidRequest> { it.description("Defines the DID method and optionally the key to be used") }
-                        .json<String>("200") { it.description("DID document of the resolved DID") }, DidController::create))
+
+                    path("key") {
+                        post("gen", documented(KeyController.genDocs().describeTenantId(), KeyController::gen))
+                        post("import", documented(KeyController.importDocs().describeTenantId(), KeyController::import))
+                        post("export", documented(KeyController.exportDocs().describeTenantId(), KeyController::export))
+                        post("delete", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
+                        post("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
+                        post("load", documented(KeyController.loadDocs().describeTenantId(), KeyController::load))
+                    }
+
                     post("setConfiguration", documented(document().operation {
-                        it.summary("Set configuration for this issuer tenant").operationId("setConfiguration").addTagsItem("Issuer Configuration")
+                        it.summary("Set configuration for this issuer tenant").operationId("setConfiguration")
+                            .addTagsItem("Issuer Configuration")
                     }
-                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                         .body<IssuerConfig>()
                         .json<String>("200"), IssuerController::setConfiguration))
                     get("getConfiguration", documented(document().operation {
-                        it.summary("Get configuration for this issuer tenant").operationId("getConfiguration").addTagsItem("Issuer Configuration")
+                        it.summary("Get configuration for this issuer tenant").operationId("getConfiguration")
+                            .addTagsItem("Issuer Configuration")
                     }
-                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                         .json<IssuerConfig>("200"), IssuerController::getConfiguration
                     ))
                     path("templates") {
@@ -80,10 +96,15 @@ object IssuerController {
                             it.summary("Load a VC template").operationId("loadTemplate").addTagsItem("Issuer Configuration")
                         }.pathParam<String>("id") { it.description("Retrieves a single VC template form the data store") }
                             .json<String>("200"), SignatoryController::loadTemplate))
-                        post("{id}", documented(document().operation {
-                            it.summary("Import a VC template").operationId("importTemplate").addTagsItem("Issuer Configuration")
-                        }.pathParam<String>("id").body<String>(contentType = ContentType.JSON).result<String>("200"),
-                            SignatoryController::importTemplate))
+                        post(
+                            "{id}", documented(
+                                document().operation {
+                                    it.summary("Import a VC template").operationId("importTemplate")
+                                        .addTagsItem("Issuer Configuration")
+                                }.pathParam<String>("id").body<String>(contentType = ContentType.JSON).result<String>("200"),
+                                SignatoryController::importTemplate
+                            )
+                        )
                         delete("{id}", documented(document().operation {
                             it.summary("Remove VC template").operationId("removeTemplate").addTagsItem("Issuer Configuration")
                         }.pathParam<String>("id").result<String>("200"), SignatoryController::removeTemplate))
@@ -97,7 +118,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("listIssuableCredentials")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("sessionId")
                             .json<Issuables>("200"),
                         IssuerController::listIssuableCredentials))
@@ -108,7 +129,7 @@ object IssuerController {
                                     .addTagsItem("Issuer")
                                     .operationId("requestIssuance")
                             }
-                                .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                                .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                                 .queryParam<String>("walletId")
                                 .queryParam<String>("sessionId")
                                 .queryParam<Boolean>("isPreAuthorized")
@@ -127,7 +148,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("oidcProviderMeta")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
@@ -137,7 +158,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("oidcProviderMeta")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .json<OIDCProviderMetadata>("200"),
                         IssuerController::oidcProviderMeta
                     ))
@@ -147,7 +168,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("par")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .formParam<String>("response_type")
                             .formParam<String>("client_id")
                             .formParam<String>("redirect_uri")
@@ -160,7 +181,7 @@ object IssuerController {
                     ))
                     get("fulfillPAR", documented(
                         document().operation { it.summary("fulfill PAR").addTagsItem("Issuer").operationId("fulfillPAR") }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("request_uri"),
                         IssuerController::fulfillPAR
                     ))
@@ -170,7 +191,7 @@ object IssuerController {
                                 .addTagsItem("Issuer")
                                 .operationId("token")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .formParam<String>("grant_type")
                             .formParam<String>("code")
                             .formParam<String>("pre-authorized_code")
@@ -185,7 +206,7 @@ object IssuerController {
                             it.summary("Credential endpoint").operationId("credential").addTagsItem("Issuer")
                         }
                             .header<String>("Authorization")
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .body<CredentialRequest>()
                             .json<CredentialResponse>("200"),
                         IssuerController::credential
@@ -328,7 +349,8 @@ object IssuerController {
             ?: throw ForbiddenResponse("Invalid or unknown access token")
 
         val credentialRequest =
-            klaxonWithConverters.parse<CredentialRequest>(ctx.body()) ?: throw BadRequestResponse("Could not parse credential request body")
+            klaxonWithConverters.parse<CredentialRequest>(ctx.body())
+                ?: throw BadRequestResponse("Could not parse credential request body")
 
         val credential = IssuerManager.fulfillIssuanceSession(session, credentialRequest)
         if (credential.isNullOrEmpty()) {
