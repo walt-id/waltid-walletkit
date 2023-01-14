@@ -1,8 +1,8 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.dto.AssetParameter
-import id.walt.gateway.dto.TickerData
-import id.walt.gateway.dto.TickerParameter
+import id.walt.gateway.dto.tickers.TickerData
+import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.providers.metaco.CoinMapper.map
 import id.walt.gateway.providers.metaco.repositories.TickerRepository

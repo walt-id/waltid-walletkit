@@ -1,10 +1,10 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders
 
-import id.walt.gateway.dto.trades.TradeParameter
+import id.walt.gateway.dto.trades.TransferParameter
 import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 
 interface ParameterBuilder {
-    fun build(params: TradeParameter): Parameters
+    fun build(params: TransferParameter): Parameters
 
     companion object {
         fun getBuilder(type: String): ParameterBuilder = when (type) {

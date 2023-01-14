@@ -1,6 +1,6 @@
 package id.walt.gateway.providers.coingecko
 
-import id.walt.gateway.dto.CoinData
+import id.walt.gateway.dto.coins.CoinData
 
 class SimplePriceParser : ResponseParser<CoinData> {
     private val coinRegex = "\"%s\":( *)\\{(.|\n)*},?"

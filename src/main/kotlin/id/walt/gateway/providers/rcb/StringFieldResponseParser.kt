@@ -1,7 +1,7 @@
 package id.walt.gateway.providers.rcb
 
 import com.beust.klaxon.Klaxon
-import id.walt.gateway.dto.CoinData
+import id.walt.gateway.dto.coins.CoinData
 
 class StringFieldResponseParser : ResponseParser<CoinData> {
 

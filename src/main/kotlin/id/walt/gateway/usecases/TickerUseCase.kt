@@ -1,7 +1,7 @@
 package id.walt.gateway.usecases
 
-import id.walt.gateway.dto.TickerData
-import id.walt.gateway.dto.TickerParameter
+import id.walt.gateway.dto.tickers.TickerData
+import id.walt.gateway.dto.tickers.TickerParameter
 
 interface TickerUseCase {
     fun get(parameter: TickerParameter): Result<TickerData>
