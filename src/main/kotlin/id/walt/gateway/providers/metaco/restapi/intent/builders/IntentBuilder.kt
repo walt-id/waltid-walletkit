@@ -1,6 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders
 
-import id.walt.gateway.dto.IntentBuilderParam
+import id.walt.gateway.dto.intents.IntentBuilderParam
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.providers.metaco.restapi.intent.model.Intent
 

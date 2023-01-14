@@ -1,6 +1,6 @@
 package id.walt.gateway.dto.transactions
 
-import id.walt.gateway.dto.TickerData
+import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.ValueWithChange
 import kotlinx.serialization.Serializable
 

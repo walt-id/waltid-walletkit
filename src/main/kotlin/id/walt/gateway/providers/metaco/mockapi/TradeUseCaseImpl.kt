@@ -8,9 +8,9 @@ import id.walt.gateway.usecases.TradeUseCase
 import java.util.*
 
 class TradeUseCaseImpl : TradeUseCase {
-    override fun sell(parameter: TradeData): Result<TradeResult> = Result.success(getTradeData())
+    override fun sell(spend: TradeData, receive: TradeData): Result<TradeResult> = Result.success(getTradeData())
 
-    override fun buy(parameter: TradeData): Result<TradeResult> = Result.success(getTradeData())
+    override fun buy(spend: TradeData, receive: TradeData): Result<TradeResult> = Result.success(getTradeData())
 
     override fun send(parameter: TradeData): Result<TradeResult> = Result.success(getTradeData())
 
