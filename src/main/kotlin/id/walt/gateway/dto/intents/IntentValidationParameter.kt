@@ -1,4 +1,4 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.intents
 
 data class IntentValidationParameter(
     val domainId: String,

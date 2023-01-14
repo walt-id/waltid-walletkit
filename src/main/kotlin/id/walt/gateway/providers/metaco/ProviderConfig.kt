@@ -14,4 +14,6 @@ object ProviderConfig {
     val signServiceUrl: String = System.getenv("SIGN_SERVICE_URL") ?: ""
     private val privateKeyPath: String = System.getenv("PRIVATE_KEY_PATH") ?: ""
     val privateKey: String = File(privateKeyPath).takeIf { it.exists() }?.readText() ?: ""
+    val nostroAccountId: String = System.getenv("NOSTRO_ACCOUNT_ID") ?: ""
+    val nostroAccountDomainId: String = System.getenv("NOSTRO_DOMAIN_ID") ?: ""
 }

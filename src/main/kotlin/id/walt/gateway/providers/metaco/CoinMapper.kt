@@ -1,6 +1,6 @@
 package id.walt.gateway.providers.metaco
 
-import id.walt.gateway.dto.CoinParameter
+import id.walt.gateway.dto.coins.CoinParameter
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 
 object CoinMapper {

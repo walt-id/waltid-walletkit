@@ -1,6 +1,10 @@
 package id.walt.gateway.controllers
 
-import id.walt.gateway.dto.*
+import id.walt.gateway.dto.balances.AccountBalance
+import id.walt.gateway.dto.balances.BalanceData
+import id.walt.gateway.dto.balances.BalanceParameter
+import id.walt.gateway.dto.profiles.ProfileData
+import id.walt.gateway.dto.profiles.ProfileParameter
 import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter

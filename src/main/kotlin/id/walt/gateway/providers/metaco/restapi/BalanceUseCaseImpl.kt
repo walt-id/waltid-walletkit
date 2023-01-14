@@ -1,9 +1,9 @@
 package id.walt.gateway.providers.metaco.restapi
 
-import id.walt.gateway.dto.AccountParameter
-import id.walt.gateway.dto.BalanceData
-import id.walt.gateway.dto.BalanceParameter
-import id.walt.gateway.dto.TickerParameter
+import id.walt.gateway.dto.accounts.AccountParameter
+import id.walt.gateway.dto.balances.BalanceData
+import id.walt.gateway.dto.balances.BalanceParameter
+import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.providers.metaco.repositories.BalanceRepository
 import id.walt.gateway.usecases.BalanceUseCase
 import id.walt.gateway.usecases.TickerUseCase
