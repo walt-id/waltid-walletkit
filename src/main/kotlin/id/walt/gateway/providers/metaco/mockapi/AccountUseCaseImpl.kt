@@ -2,6 +2,13 @@ package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
+import id.walt.gateway.dto.accounts.AccountData
+import id.walt.gateway.dto.balances.AccountBalance
+import id.walt.gateway.dto.balances.BalanceData
+import id.walt.gateway.dto.balances.BalanceParameter
+import id.walt.gateway.dto.profiles.ProfileData
+import id.walt.gateway.dto.profiles.ProfileParameter
+import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter

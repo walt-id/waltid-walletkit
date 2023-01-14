@@ -1,4 +1,4 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.accounts
 
 import com.beust.klaxon.Json
 import kotlinx.serialization.Serializable

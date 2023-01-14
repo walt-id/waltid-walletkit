@@ -1,5 +1,6 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.profiles
 
+import id.walt.gateway.dto.accounts.AccountData
 import kotlinx.serialization.Serializable
 
 @Serializable
