@@ -1,8 +1,8 @@
 package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
-import id.walt.gateway.dto.TickerData
-import id.walt.gateway.dto.TickerParameter
+import id.walt.gateway.dto.tickers.TickerData
+import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.usecases.TickerUseCase
 import java.util.*

@@ -1,6 +1,7 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.tickers
 
 import com.beust.klaxon.Json
+import id.walt.gateway.dto.ValueWithChange
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -1,7 +1,7 @@
 package id.walt.gateway.controllers
 
-import id.walt.gateway.dto.TickerData
-import id.walt.gateway.dto.TickerParameter
+import id.walt.gateway.dto.tickers.TickerData
+import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.usecases.TickerUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document

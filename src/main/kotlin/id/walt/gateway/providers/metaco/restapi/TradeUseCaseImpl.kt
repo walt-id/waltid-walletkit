@@ -1,7 +1,7 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import com.beust.klaxon.Klaxon
-import id.walt.gateway.dto.IntentBuilderParam
+import id.walt.gateway.dto.intents.IntentBuilderParam
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TradeResult
 import id.walt.gateway.dto.trades.TradeValidationParameter
@@ -16,7 +16,6 @@ import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPr
 import id.walt.gateway.providers.metaco.restapi.services.SignChallengeResponse
 import id.walt.gateway.providers.metaco.restapi.services.SignatureService
 import id.walt.gateway.usecases.TradeUseCase
-import kotlinx.coroutines.channels.ticker
 import java.util.*
 
 class TradeUseCaseImpl(
@@ -24,23 +23,26 @@ class TradeUseCaseImpl(
     private val tickerRepository: TickerRepository,
     private val intentSignatureService: SignatureService<NoSignatureIntent>,
 ) : TradeUseCase {
-    override fun sell(parameter: TradeData): Result<TradeResult> =
-        createTransactionOrder("v0_CreateTransactionOrder", parameter)
+    override fun sell(spend: TradeData, receive: TradeData): Result<TradeResult> =
+        createTransactionOrder("v0_CreateTransactionOrder", spend).also {
+            createTransactionOrder("v0_CreateTransactionOrder", receive)
+        }
 
-    override fun buy(parameter: TradeData): Result<TradeResult> =
-        createTransactionOrder("v0_CreateTransactionOrder", parameter)
+     override fun buy(spend: TradeData, receive: TradeData): Result<TradeResult> =
+        createTransactionOrder("v0_CreateTransactionOrder", spend).also {
+            createTransactionOrder("v0_CreateTransactionOrder", receive)
+        }
 
     override fun send(parameter: TradeData): Result<TradeResult> =
-        //TODO: v0_CreateTransferOrder?
         createTransactionOrder("v0_CreateTransactionOrder", parameter)
 
     override fun validate(parameter: TradeValidationParameter): Result<TradeResult> = runCatching {
         //TODO: don't use model here
         TransactionOrderPayload(
             id = UUID.randomUUID().toString(),
-            accountId = parameter.trade.sender,
+            accountId = parameter.transfer.sender,
             customProperties = CustomProperties(),
-            parameters = ParameterBuilder.getBuilder(getTickerType(parameter.trade.ticker)).build(parameter.trade)
+            parameters = ParameterBuilder.getBuilder(getTickerType(parameter.transfer.ticker)).build(parameter.transfer)
         ).run {
             intentRepository.validate(parameter.domainId, this).let {
                 TradeResult(

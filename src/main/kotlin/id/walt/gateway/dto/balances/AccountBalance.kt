@@ -1,4 +1,6 @@
-package id.walt.gateway.dto
+package id.walt.gateway.dto.balances
+
+import id.walt.gateway.dto.ValueWithChange
 
 data class AccountBalance(
     val balances: List<BalanceData>

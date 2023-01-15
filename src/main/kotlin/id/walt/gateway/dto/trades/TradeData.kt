@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TradeData(
     val domainId: String,
-    val trade: TradeParameter,
+    val trade: TransferParameter,
     val type: String,
 )
