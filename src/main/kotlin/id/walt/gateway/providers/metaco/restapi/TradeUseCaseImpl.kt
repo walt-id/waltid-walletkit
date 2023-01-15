@@ -24,10 +24,14 @@ class TradeUseCaseImpl(
     private val intentSignatureService: SignatureService<NoSignatureIntent>,
 ) : TradeUseCase {
     override fun sell(spend: TradeData, receive: TradeData): Result<TradeResult> =
-        createTransactionOrder("v0_CreateTransactionOrder", spend)
+        createTransactionOrder("v0_CreateTransactionOrder", spend).also {
+            createTransactionOrder("v0_CreateTransactionOrder", receive)
+        }
 
-    override fun buy(spend: TradeData, receive: TradeData): Result<TradeResult> =
-        createTransactionOrder("v0_CreateTransactionOrder", spend)
+     override fun buy(spend: TradeData, receive: TradeData): Result<TradeResult> =
+        createTransactionOrder("v0_CreateTransactionOrder", spend).also {
+            createTransactionOrder("v0_CreateTransactionOrder", receive)
+        }
 
     override fun send(parameter: TradeData): Result<TradeResult> =
         createTransactionOrder("v0_CreateTransactionOrder", parameter)
@@ -72,9 +76,5 @@ class TradeUseCaseImpl(
                     message = it.requestId ?: it.message ?: it.reason ?: "Unknown error"
                 )
             }
-    }
-
-    private fun createExchangeTransactionData(trade: TradeData){
-
     }
 }
