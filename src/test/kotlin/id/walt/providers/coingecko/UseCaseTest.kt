@@ -1,7 +1,7 @@
 package id.walt.providers.coingecko
 
-import id.walt.gateway.dto.CoinData
-import id.walt.gateway.dto.CoinParameter
+import id.walt.gateway.dto.coins.CoinData
+import id.walt.gateway.dto.coins.CoinParameter
 import id.walt.gateway.providers.coingecko.CoinRepository
 import id.walt.gateway.providers.coingecko.ResponseParser
 import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
