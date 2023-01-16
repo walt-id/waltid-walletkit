@@ -3,7 +3,7 @@ package id.walt.gateway.dto.trades
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ExchangeParameter(
+data class SwapParameter(
     val spend: TradeParameter,
     val receive: TradeParameter,
 )
