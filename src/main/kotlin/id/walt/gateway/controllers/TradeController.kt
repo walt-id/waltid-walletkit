@@ -21,7 +21,7 @@ class TradeController(
 //        )
 
     fun sell(ctx: Context) {
-        val parameters = ctx.bodyAsClass<ExchangeParameter>()
+        val parameters = ctx.bodyAsClass<SwapParameter>()
         tradeUseCase.sell(
             TradeData(ProviderConfig.domainId, TransferParameter(
                 parameters.spend.amount,
@@ -47,7 +47,7 @@ class TradeController(
     }
 
     fun buy(ctx: Context) {
-        val parameters = ctx.bodyAsClass<ExchangeParameter>()
+        val parameters = ctx.bodyAsClass<SwapParameter>()
         tradeUseCase.buy(
             TradeData(ProviderConfig.domainId, TransferParameter(
                 parameters.spend.amount,
@@ -98,13 +98,13 @@ class TradeController(
 
     fun sellDocs() = document().operation {
         it.summary("Returns the sell trade details").operationId("sell").addTagsItem("Trade Management")
-    }.body<ExchangeParameter> {
+    }.body<SwapParameter> {
         it.description("Sell parameters")
     }.json<TradeResult>("200") { it.description("The sell trade details") }
 
     fun buyDocs() = document().operation {
         it.summary("Returns the buy trade details").operationId("buy").addTagsItem("Trade Management")
-    }.body<ExchangeParameter> {
+    }.body<SwapParameter> {
         it.description("Buy parameters")
     }.json<TradeResult>("200") { it.description("The buy trade details") }
 
