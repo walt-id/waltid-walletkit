@@ -101,7 +101,14 @@ class TradeController(
     fun sendDocs() = document().operation {
         it.summary("Returns the send trade details").operationId("send").addTagsItem("Trade Management")
     }.body<TransferParameter> {
-        it.description("Send parameters")
+        it.description("Send parameters:<br/>" +
+                "{<br/>" +
+                "\"amount\": \"{value}\",<br/>" +
+                "\"ticker\": \"{ticker-id}\",<br/>" +
+                "\"maxFee\": \"{value}\",<br/>" +
+                "\"sender\": \"{account-id | address}\",<br/>" +
+                "\"recipient\": \"{account-id | address}\"<br/>" +
+                "}")
     }.json<TradeResult>("200") { it.description("The send trade details") }
 
     fun validateDocs() = document().operation {

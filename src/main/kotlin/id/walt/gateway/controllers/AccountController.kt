@@ -17,27 +17,6 @@ import io.javalin.plugin.openapi.dsl.document
 class AccountController(
     private val accountUseCase: AccountUseCase,
 ) {
-//    private val authService = AuthService(AuthSignatureService())
-//    private val tickerUseCase = TickerUseCaseImpl(
-//        TickerRepositoryImpl(authService),
-//        SimpleCoinUseCaseImpl(CoinRepositoryImpl(), SimplePriceParser()),
-//        LogoUseCaseImpl()
-//    )
-//    private val accountUseCase: AccountUseCase =
-////        AccountUseCaseImpl()
-//        AccountUseCaseImpl(
-//            AccountRepositoryImpl(authService),
-//            TransactionRepositoryImpl(authService),
-//            OrderRepositoryImpl(authService),
-//            TransferRepositoryImpl(authService),
-//            AddressRepositoryImpl(authService),
-//            BalanceUseCaseImpl(
-//                BalanceRepositoryImpl(authService),
-//                tickerUseCase,
-//            ),
-//            tickerUseCase
-//        )
-
     fun profile(ctx: Context) {
         val profile = ctx.bodyAsClass<ProfileParameter>()
         accountUseCase.profile(ProviderConfig.domainId, profile)
