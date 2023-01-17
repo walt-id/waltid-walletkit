@@ -1,7 +1,9 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.Common
-import id.walt.gateway.dto.*
+import id.walt.gateway.dto.AmountWithValue
+import id.walt.gateway.dto.TransferData
+import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.dto.accounts.AccountData
 import id.walt.gateway.dto.accounts.AccountParameter
 import id.walt.gateway.dto.balances.AccountBalance
@@ -20,13 +22,14 @@ import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionOrderTypeCustomProperties
 import id.walt.gateway.providers.metaco.restapi.transaction.model.OrderReference
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
+import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AddressTransferParty
-import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.TransferParty
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.BalanceUseCase
 import id.walt.gateway.usecases.TickerUseCase
+import id.walt.gateway.dto.accounts.AccountIdentifier
 
 class AccountUseCaseImpl(
     private val accountRepository: AccountRepository,
@@ -41,13 +44,13 @@ class AccountUseCaseImpl(
         ProfileData(
             profileId = parameter.id,
             accounts = getProfileAccounts(domainId, parameter).map {
-                buildProfileData(AccountParameter(domainId, parameter.id), it)
+                buildProfileData(AccountParameter(AccountIdentifier(domainId, parameter.id)), it)
             })
     }
 
     override fun balance(domainId: String, parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(domainId, parameter).flatMap {
-            balanceUseCase.list(AccountParameter(it.data.domainId, it.data.id)).getOrElse { emptyList() }
+            balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
         }.let { AccountBalance(it) }
     }
 
@@ -148,7 +151,7 @@ class AccountUseCaseImpl(
     }
 
     private fun buildProfileData(parameter: AccountParameter, account: Account) = AccountData(
-        accountId = account.data.id,
+        accountIdentifier = AccountIdentifier(account.data.domainId, account.data.id),
         alias = account.data.alias,
         addresses = emptyList(),
         tickers = getAccountTickers(parameter).map { it.ticker.id }

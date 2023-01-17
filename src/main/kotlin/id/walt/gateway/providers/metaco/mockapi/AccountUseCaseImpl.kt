@@ -2,6 +2,7 @@ package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.*
+import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.accounts.AccountData
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
@@ -40,7 +41,7 @@ class AccountUseCaseImpl(
         accounts = accountsPool,
     )
     private fun getAccount() = AccountData(
-        accountId = UUID.randomUUID().toString(),
+        accountIdentifier = AccountIdentifier(UUID.randomUUID().toString(), UUID.randomUUID().toString()),
         alias = Common.getRandomString(7, 1),
         addresses = listOf("0x${Common.getRandomString(40, 2)}"),
         tickers = (1..5).map { tickerUseCase.get(TickerParameter("")).getOrThrow().id }.distinct()
