@@ -12,6 +12,7 @@ import id.walt.gateway.providers.metaco.restapi.*
 import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.address.AddressRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.balance.BalanceRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.domain.DomainRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.intent.IntentRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.order.OrderRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
@@ -45,6 +46,7 @@ object MetacoRouter : Router {
     )
     private val accountUseCase: AccountUseCase =
         AccountUseCaseImpl(
+            DomainRepositoryImpl(authService),
             AccountRepositoryImpl(authService),
             TransactionRepositoryImpl(authService),
             OrderRepositoryImpl(authService),
