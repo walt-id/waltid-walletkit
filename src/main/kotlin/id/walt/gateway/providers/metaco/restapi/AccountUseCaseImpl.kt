@@ -32,6 +32,7 @@ import id.walt.gateway.usecases.TickerUseCase
 import id.walt.gateway.dto.accounts.AccountIdentifier
 
 class AccountUseCaseImpl(
+    private val domainRepository: DomainRepository,
     private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
     private val orderRepository: OrderRepository,
@@ -69,7 +70,7 @@ class AccountUseCaseImpl(
         ).items.filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId }.map {
             val ticker = getTickerData(parameter.tickerId ?: "")
             buildTransactionData(parameter, it.key!!, it.value, ticker)
-        }//.sortedByDescending { Instant.parse(it.date) }
+        }
     }
 
     override fun transaction(parameter: TransactionParameter): Result<TransactionTransferData> = runCatching {
@@ -96,12 +97,20 @@ class AccountUseCaseImpl(
     }
 
     private fun getProfileAccounts(profile: ProfileParameter): List<Account> = let {
-//        if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(profile.id)) {
-//            listOf(accountRepository.findById(domainId, profile.id))
-//        } else {
-//            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:${profile.id}")).items
-//        }
-        TODO()
+        val callback: (domainId: String, id: String) -> List<Account> = getProfileFetchCallback(profile.id)
+        domainRepository.findAll(emptyMap()).items.map {
+            runCatching { callback(it.data.id, profile.id) }.getOrDefault(emptyList())
+        }.filter {
+            it.isNotEmpty()
+        }.flatten()
+    }
+
+    private fun getProfileFetchCallback(id: String): (domainId: String, accountId: String) -> List<Account> = { domainId, accountId ->
+        if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
+            listOf(accountRepository.findById(domainId, accountId))
+        } else {
+            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId")).items
+        }
     }
 
     private fun getTickerData(tickerId: String) = tickerUseCase.get(TickerParameter(tickerId)).getOrThrow()
