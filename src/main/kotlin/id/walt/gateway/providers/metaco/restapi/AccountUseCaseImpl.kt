@@ -40,16 +40,16 @@ class AccountUseCaseImpl(
     private val balanceUseCase: BalanceUseCase,
     private val tickerUseCase: TickerUseCase,
 ) : AccountUseCase {
-    override fun profile(domainId: String, parameter: ProfileParameter): Result<ProfileData> = runCatching {
+    override fun profile(parameter: ProfileParameter): Result<ProfileData> = runCatching {
         ProfileData(
             profileId = parameter.id,
-            accounts = getProfileAccounts(domainId, parameter).map {
-                buildProfileData(AccountParameter(AccountIdentifier(domainId, parameter.id)), it)
+            accounts = getProfileAccounts(parameter).map {
+                buildProfileData(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id)), it)
             })
     }
 
     override fun balance(domainId: String, parameter: ProfileParameter): Result<AccountBalance> = runCatching {
-        getProfileAccounts(domainId, parameter).flatMap {
+        getProfileAccounts(parameter).flatMap {
             balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
         }.let { AccountBalance(it) }
     }
@@ -95,12 +95,13 @@ class AccountUseCaseImpl(
         }
     }
 
-    private fun getProfileAccounts(domainId: String, profile: ProfileParameter) = let {
-        if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(profile.id)) {
-            listOf(accountRepository.findById(domainId, profile.id))
-        } else {
-            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:${profile.id}")).items
-        }
+    private fun getProfileAccounts(profile: ProfileParameter): List<Account> = let {
+//        if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(profile.id)) {
+//            listOf(accountRepository.findById(domainId, profile.id))
+//        } else {
+//            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:${profile.id}")).items
+//        }
+        TODO()
     }
 
     private fun getTickerData(tickerId: String) = tickerUseCase.get(TickerParameter(tickerId)).getOrThrow()
