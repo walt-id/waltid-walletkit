@@ -26,6 +26,7 @@ import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.MultiCoinUseCaseImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
+import kotlinx.coroutines.channels.ticker
 import id.walt.gateway.providers.coingecko.CoinRepositoryImpl as CoingeckoImpl
 import id.walt.gateway.providers.rcb.CoinRepositoryImpl as RcbImpl
 
@@ -64,7 +65,7 @@ object MetacoRouter : Router {
     private val accountRouter = AccountRouter(AccountController(accountUseCase))
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))
     private val tickerRouter = TickerRouter(TickerController(tickerUseCase))
-    private val exchangeRouter = ExchangeRouter(ExchangeController(ExchangeUseCaseImpl(coinUseCase)))
+    private val exchangeRouter = ExchangeRouter(ExchangeController(ExchangeUseCaseImpl(tickerRepository, coinUseCase)))
 
     override fun routes() {
         ApiBuilder.path("") {
