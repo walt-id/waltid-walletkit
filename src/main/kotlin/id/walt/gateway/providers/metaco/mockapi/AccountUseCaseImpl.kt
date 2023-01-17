@@ -26,7 +26,7 @@ class AccountUseCaseImpl(
 ) : AccountUseCase {
     private val accountsPool = (1..5).map { getAccount() }
 
-    override fun profile(domainId: String, parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
+    override fun profile(parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
 
     override fun balance(domainId: String, parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
