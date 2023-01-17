@@ -10,32 +10,22 @@ import io.javalin.plugin.openapi.dsl.document
 class TradeController(
     private val tradeUseCase: TradeUseCase,
 ) {
-//    private val authService = AuthService(AuthSignatureService())
-//
-//    //    private val tradeUseCase: TradeUseCase = TradeUseCaseImpl()
-//    private val tradeUseCase: TradeUseCase =
-//        TradeUseCaseImpl(
-//            IntentRepositoryImpl(authService),
-//            TickerRepositoryImpl(authService),
-//            IntentSignatureService()
-//        )
-
     fun sell(ctx: Context) {
-        val parameters = ctx.bodyAsClass<SwapParameter>()
+        val swap = ctx.bodyAsClass<SwapParameter>()
         tradeUseCase.sell(
             TradeData(ProviderConfig.domainId, TransferParameter(
-                parameters.spend.amount,
-                parameters.spend.ticker,
-                parameters.spend.maxFee,
-                sender = parameters.spend.sender,
+                swap.spend.amount,
+                swap.spend.ticker,
+                swap.spend.maxFee,
+                sender = swap.spend.sender,
                 recipient = ProviderConfig.nostroAccountId,
             ), "Sell"),
             TradeData(ProviderConfig.domainId, TransferParameter(
-                parameters.receive.amount,
-                parameters.receive.ticker,
-                parameters.receive.maxFee,
+                swap.receive.amount,
+                swap.receive.ticker,
+                swap.receive.maxFee,
                 sender = ProviderConfig.nostroAccountId,
-                recipient = parameters.receive.sender
+                recipient = swap.receive.sender
             ), "Buy"),
         ).onSuccess {
             ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
@@ -47,21 +37,21 @@ class TradeController(
     }
 
     fun buy(ctx: Context) {
-        val parameters = ctx.bodyAsClass<SwapParameter>()
+        val swap = ctx.bodyAsClass<SwapParameter>()
         tradeUseCase.buy(
             TradeData(ProviderConfig.domainId, TransferParameter(
-                parameters.spend.amount,
-                parameters.spend.ticker,
-                parameters.spend.maxFee,
-                sender = parameters.spend.sender,
+                amount = swap.spend.amount,
+                ticker = swap.spend.ticker,
+                maxFee = swap.spend.maxFee,
+                sender = swap.spend.sender,
                 recipient = ProviderConfig.nostroAccountId,
             ), "Buy"),
             TradeData(ProviderConfig.domainId, TransferParameter(
-                parameters.receive.amount,
-                parameters.receive.ticker,
-                parameters.receive.maxFee,
+                amount = swap.receive.amount,
+                ticker = swap.receive.ticker,
+                maxFee = swap.receive.maxFee,
                 sender = ProviderConfig.nostroAccountId,
-                recipient = parameters.receive.sender,
+                recipient = swap.receive.sender,
             ), "Receive"),
         ).onSuccess {
             ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
