@@ -15,5 +15,5 @@ object ProviderConfig {
     private val privateKeyPath: String = System.getenv("PRIVATE_KEY_PATH") ?: ""
     val privateKey: String = File(privateKeyPath).takeIf { it.exists() }?.readText() ?: ""
     val nostroAccountId: String = System.getenv("NOSTRO_ACCOUNT_ID") ?: ""
-    val nostroAccountDomainId: String = System.getenv("NOSTRO_DOMAIN_ID") ?: ""
+    val nostroDomainId: String = System.getenv("NOSTRO_DOMAIN_ID") ?: ""
 }

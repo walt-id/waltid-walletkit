@@ -6,6 +6,6 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.intent.model.result.IntentResult
 
 interface IntentRepository {
-    fun create(domainId: String, intent: SignatureIntent): IntentResult
+    fun create(intent: SignatureIntent): IntentResult
     fun validate(domainId: String, payload: Payload): ValidationResponse
 }

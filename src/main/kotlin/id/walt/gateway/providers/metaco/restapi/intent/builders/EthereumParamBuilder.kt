@@ -11,6 +11,6 @@ class EthereumParamBuilder : ParameterBuilder {
         amount = params.amount,
         maximumFee = params.maxFee,
         feeStrategy = PriorityFeeStrategy("Medium"),//TODO: fix hard-code
-        destination = Destination.parse(params.recipient)
+        destination = Destination.parse(params.recipient.accountId)
     )
 }
