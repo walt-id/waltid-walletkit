@@ -1,17 +1,14 @@
 package id.walt.gateway.routers
 
 import id.walt.gateway.controllers.AccountController
+import id.walt.gateway.controllers.ExchangeController
 import id.walt.gateway.controllers.TickerController
 import id.walt.gateway.controllers.TradeController
-import id.walt.gateway.usecases.MultiCoinUseCaseImpl
-import id.walt.gateway.providers.coingecko.CoinRepositoryImpl as CoingeckoImpl
 import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.AccountUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.BalanceUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.TickerUseCaseImpl
-import id.walt.gateway.providers.metaco.restapi.TradeUseCaseImpl
+import id.walt.gateway.providers.metaco.mockapi.RBITokensMockUseCaseImpl
+import id.walt.gateway.providers.metaco.restapi.*
 import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.address.AddressRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.balance.BalanceRepositoryImpl
@@ -23,24 +20,27 @@ import id.walt.gateway.providers.metaco.restapi.services.IntentSignatureService
 import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transaction.TransactionRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transfer.TransferRepositoryImpl
-import id.walt.gateway.providers.metaco.mockapi.RBITokensMockUseCaseImpl
-import id.walt.gateway.providers.rcb.CoinRepositoryImpl as RcbImpl
 import id.walt.gateway.providers.rcb.CoinUseCaseImpl
 import id.walt.gateway.providers.rcb.DoubleFieldResponseParser
 import id.walt.gateway.usecases.AccountUseCase
+import id.walt.gateway.usecases.MultiCoinUseCaseImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
+import kotlinx.coroutines.channels.ticker
+import id.walt.gateway.providers.coingecko.CoinRepositoryImpl as CoingeckoImpl
+import id.walt.gateway.providers.rcb.CoinRepositoryImpl as RcbImpl
 
 object MetacoRouter : Router {
     private val authService = AuthService(AuthSignatureService())
     private val tickerRepository = TickerRepositoryImpl(authService)
+    private val coinUseCase = MultiCoinUseCaseImpl(
+        CoinUseCaseImpl(RcbImpl(), DoubleFieldResponseParser()),
+        SimpleCoinUseCaseImpl(CoingeckoImpl(), SimplePriceParser()),
+        RBITokensMockUseCaseImpl(),
+    )
     private val tickerUseCase = TickerUseCaseImpl(
         tickerRepository,
-        MultiCoinUseCaseImpl(
-            CoinUseCaseImpl(RcbImpl(), DoubleFieldResponseParser()),
-            SimpleCoinUseCaseImpl(CoingeckoImpl(), SimplePriceParser()),
-            RBITokensMockUseCaseImpl(),
-        ),
+        coinUseCase,
         LogoUseCaseImpl()
     )
     private val accountUseCase: AccountUseCase =
@@ -65,12 +65,14 @@ object MetacoRouter : Router {
     private val accountRouter = AccountRouter(AccountController(accountUseCase))
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))
     private val tickerRouter = TickerRouter(TickerController(tickerUseCase))
+    private val exchangeRouter = ExchangeRouter(ExchangeController(ExchangeUseCaseImpl(tickerRepository, coinUseCase)))
 
     override fun routes() {
         ApiBuilder.path("") {
             accountRouter.routes()
             transactionRouter.routes()
             tickerRouter.routes()
+            exchangeRouter.routes()
         }
     }
 }
