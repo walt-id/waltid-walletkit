@@ -1,6 +1,5 @@
 package id.walt.gateway.providers.metaco.restapi
 
-import id.walt.gateway.dto.coins.CoinParameter
 import id.walt.gateway.dto.exchanges.ExchangeData
 import id.walt.gateway.dto.exchanges.ExchangeParameter
 import id.walt.gateway.providers.metaco.CoinMapper
@@ -17,8 +16,8 @@ class ExchangeUseCaseImpl(
     override fun exchange(parameter: ExchangeParameter): Result<ExchangeData> = runCatching {
         val fromName = getTokenName(URLDecoder.decode(parameter.from, "utf-8"))
         val toName = getTokenName(URLDecoder.decode(parameter.to, "utf-8"))
-        coinUseCase.metadata(CoinMapper.mapTickerNameToCoinParameter(fromName, "eur")).getOrNull()?.price?.let { from ->
-            coinUseCase.metadata(CoinMapper.mapTickerNameToCoinParameter(toName, "eur")).getOrNull()?.price?.let { to ->
+        coinUseCase.metadata(CoinMapper.mapNameToCoinParameter(fromName, "eur")).getOrNull()?.price?.let { from ->
+            coinUseCase.metadata(CoinMapper.mapNameToCoinParameter(toName, "eur")).getOrNull()?.price?.let { to ->
                 parameter.amount.toDoubleOrNull()?.let { amount ->
                     if (to == .0) throw IllegalArgumentException("Division by zero.")
                     if (from == .0) throw IllegalArgumentException("Division by zero.")

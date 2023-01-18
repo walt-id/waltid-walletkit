@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AccountData(
-    val accountId: String,
+    val accountIdentifier: AccountIdentifier,
     val tickers: List<String>,
     val addresses: List<String>,
     @Json(serializeNull = false)

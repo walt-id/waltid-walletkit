@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.account.model
+package id.walt.gateway.providers.metaco.restapi.models.metadata
 
 import kotlinx.serialization.Serializable
 

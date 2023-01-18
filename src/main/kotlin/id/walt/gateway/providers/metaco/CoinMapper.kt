@@ -4,9 +4,9 @@ import id.walt.gateway.dto.coins.CoinParameter
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 
 object CoinMapper {
-    fun Ticker.map(currency: String): CoinParameter = mapTickerNameToCoinParameter(this.data.name, currency)
+    fun Ticker.map(currency: String): CoinParameter = mapNameToCoinParameter(this.data.name, currency)
 
-    fun mapTickerNameToCoinParameter(name: String, currency: String) = when (name.lowercase()) {
+    fun mapNameToCoinParameter(name: String, currency: String) = when (name.lowercase()) {
         "bitcoin" -> "bitcoin"
         "ethereum" -> "ethereum"
         "polygon" -> "matic-network"

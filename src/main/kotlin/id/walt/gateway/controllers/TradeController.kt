@@ -1,5 +1,6 @@
 package id.walt.gateway.controllers
 
+import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.trades.*
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.usecases.TradeUseCase
@@ -13,20 +14,20 @@ class TradeController(
     fun sell(ctx: Context) {
         val swap = ctx.bodyAsClass<SwapParameter>()
         tradeUseCase.sell(
-            TradeData(ProviderConfig.domainId, TransferParameter(
+            TradeData(TransferParameter(
                 swap.spend.amount,
                 swap.spend.ticker,
                 swap.spend.maxFee,
                 sender = swap.spend.sender,
-                recipient = ProviderConfig.nostroAccountId,
-            ), "Sell"),
-            TradeData(ProviderConfig.domainId, TransferParameter(
+                recipient = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
+            ), "Sale"),
+            TradeData(TransferParameter(
                 swap.receive.amount,
                 swap.receive.ticker,
                 swap.receive.maxFee,
-                sender = ProviderConfig.nostroAccountId,
+                sender = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
                 recipient = swap.receive.sender
-            ), "Buy"),
+            ), "Purchase"),
         ).onSuccess {
             ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
             ctx.json(it)
@@ -39,20 +40,20 @@ class TradeController(
     fun buy(ctx: Context) {
         val swap = ctx.bodyAsClass<SwapParameter>()
         tradeUseCase.buy(
-            TradeData(ProviderConfig.domainId, TransferParameter(
+            TradeData(TransferParameter(
                 amount = swap.spend.amount,
                 ticker = swap.spend.ticker,
                 maxFee = swap.spend.maxFee,
                 sender = swap.spend.sender,
-                recipient = ProviderConfig.nostroAccountId,
-            ), "Buy"),
-            TradeData(ProviderConfig.domainId, TransferParameter(
+                recipient = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
+            ), "Purchase"),
+            TradeData(TransferParameter(
                 amount = swap.receive.amount,
                 ticker = swap.receive.ticker,
                 maxFee = swap.receive.maxFee,
-                sender = ProviderConfig.nostroAccountId,
+                sender = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
                 recipient = swap.receive.sender,
-            ), "Receive"),
+            ), "Sale"),
         ).onSuccess {
             ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
             ctx.json(it)
@@ -64,7 +65,7 @@ class TradeController(
 
     fun send(ctx: Context) {
         val parameters = ctx.bodyAsClass<TransferParameter>()
-        tradeUseCase.send(TradeData(ProviderConfig.domainId, parameters, "Transfer"))
+        tradeUseCase.send(TradeData(parameters, "Transfer"))
             .onSuccess {
                 ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
@@ -76,7 +77,7 @@ class TradeController(
 
     fun validate(ctx: Context) {
         val parameters = ctx.bodyAsClass<TransferParameter>()
-        tradeUseCase.validate(TradeValidationParameter(ProviderConfig.domainId, parameters))
+        tradeUseCase.validate(TradeValidationParameter(parameters.sender.domainId, parameters))
             .onSuccess {
                 ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
@@ -89,24 +90,98 @@ class TradeController(
     fun sellDocs() = document().operation {
         it.summary("Returns the sell trade details").operationId("sell").addTagsItem("Trade Management")
     }.body<SwapParameter> {
-        it.description("Sell parameters")
+        it.description("Sell parameters:<br/>" +
+        "{<br/>" +
+        "    \"spend\":<br/>" +
+        "    {<br/>" +
+        "        \"amount\": \"{amount}\",<br/>" +
+        "        \"ticker\": \"{ticker-id}\",<br/>" +
+        "        \"maxFee\": \"{maxFee}\",<br/>" +
+        "        \"sender\":<br/>" +
+        "        {<br/>" +
+        "            \"domainId\": \"{domain-id}\",<br/>" +
+        "            \"accountId\": \"{account-id}\"<br/>" +
+        "        }<br/>" +
+        "    },<br/>" +
+        "    \"receive\":<br/>" +
+        "    {<br/>" +
+        "        \"amount\": \"{amount}\",<br/>" +
+        "        \"ticker\": \"{ticker-id}\",<br/>" +
+        "        \"maxFee\": \"{maxFee}\",<br/>" +
+        "        \"sender\":<br/>" +
+        "        {<br/>" +
+        "            \"domainId\": \"{domain-id | empty-string}\",<br/>" +
+        "            \"accountId\": \"{account-id | address}\"<br/>" +
+        "        }<br/>" +
+        "    }<br/>" +
+        "}")
     }.json<TradeResult>("200") { it.description("The sell trade details") }
 
     fun buyDocs() = document().operation {
         it.summary("Returns the buy trade details").operationId("buy").addTagsItem("Trade Management")
     }.body<SwapParameter> {
-        it.description("Buy parameters")
+        it.description("Buy parameters:<br/>" +
+        "{<br/>" +
+        "    \"spend\":<br/>" +
+        "    {<br/>" +
+        "        \"amount\": \"{amount}\",<br/>" +
+        "        \"ticker\": \"{ticker-id}\",<br/>" +
+        "        \"maxFee\": \"{maxFee}\",<br/>" +
+        "        \"sender\":<br/>" +
+        "        {<br/>" +
+        "            \"domainId\": \"{domain-id}\",<br/>" +
+        "            \"accountId\": \"{account-id}\"<br/>" +
+        "        }<br/>" +
+        "    },<br/>" +
+        "    \"receive\":<br/>" +
+        "    {<br/>" +
+        "        \"amount\": \"{amount}\",<br/>" +
+        "        \"ticker\": \"{ticker-id}\",<br/>" +
+        "        \"maxFee\": \"{maxFee}\",<br/>" +
+        "        \"sender\":<br/>" +
+        "        {<br/>" +
+        "            \"domainId\": \"{domain-id | empty-string}\",<br/>" +
+        "            \"accountId\": \"{account-id | address}\"<br/>" +
+        "        }<br/>" +
+        "    }<br/>" +
+        "}")
     }.json<TradeResult>("200") { it.description("The buy trade details") }
 
     fun sendDocs() = document().operation {
         it.summary("Returns the send trade details").operationId("send").addTagsItem("Trade Management")
     }.body<TransferParameter> {
-        it.description("Send parameters")
+        it.description("Send parameters:<br/>" +
+                "{<br/>" +
+                "\"amount\": \"{value}\",<br/>" +
+                "\"ticker\": \"{ticker-id}\",<br/>" +
+                "\"maxFee\": \"{value}\",<br/>" +
+                "\"sender\": {<br/>" +
+                "\"domainId\": \"{domain-id}\",<br/>" +
+                "\"accountId\": \"{account-id}\"<br/>" +
+                "},<br/>" +
+                "\"recipient\": {<br/>" +
+                "\"domainId\": \"{domain-id}\",<br/>" +
+                "\"accountId\": \"{account-id}\"<br/>" +
+                "}<br/>" +
+                "}")
     }.json<TradeResult>("200") { it.description("The send trade details") }
 
     fun validateDocs() = document().operation {
         it.summary("Returns the trade validation details").operationId("validate").addTagsItem("Trade Management")
     }.body<TransferParameter> {
-        it.description("Trade preview parameters")
+        it.description("Trade preview parameters:<br/>" +
+                "{<br/>" +
+                "\"amount\": \"{value}\",<br/>" +
+                "\"ticker\": \"{ticker-id}\",<br/>" +
+                "\"maxFee\": \"{value}\",<br/>" +
+                "\"sender\": {<br/>" +
+                "\"domain-id\": \"{domain-id}\",<br/>" +
+                "\"account-id\": \"{account-id}\"<br/>" +
+                "},<br/>" +
+                "\"recipient\": {<br/>" +
+                "\"domainId\": \"{domain-id}\",<br/>" +
+                "\"accountId\": \"{account-id}\"<br/>" +
+                "}<br/>" +
+                "}")
     }.json<TradeResult>("200") { it.description("The trade validation details") }
 }
