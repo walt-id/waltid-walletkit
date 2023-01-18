@@ -21,7 +21,6 @@ import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionOrderTypeCustomProperties
-import id.walt.gateway.providers.metaco.restapi.transaction.model.OrderReference
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
@@ -134,7 +133,7 @@ class AccountUseCaseImpl(
                 date = transaction.registeredAt,
                 amount = amount,
                 ticker = ticker,
-                type = getTransactionOrderType(transaction.orderReference),
+                type = getTransactionOrderType(parameter.accountId, transaction),
                 status = getTransactionStatus(transaction),
                 price = ValueWithChange(
                     Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
@@ -167,14 +166,17 @@ class AccountUseCaseImpl(
         tickers = getAccountTickers(parameter).map { it.ticker.id }
     )
 
-    private fun getTransactionOrderType(order: OrderReference?) = order?.let {
-        runCatching {
-            orderRepository.findById(it.domainId, it.id).data
-        }.fold(onSuccess = {
-            (it.metadata.customProperties as? TransactionOrderTypeCustomProperties)?.transactionType ?: "Outgoing"
-        }, onFailure = {
-            "Unknown"
-        })
-    } ?: "Receive"
+    private fun getTransactionOrderType(accountId: String, transaction: Transaction) =
+        transaction.orderReference?.let {
+            runCatching {
+                orderRepository.findById(it.domainId, it.id).data
+            }.fold(onSuccess = {
+                (it.metadata.customProperties as? TransactionOrderTypeCustomProperties)?.transactionType
+                    ?: transaction.relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }
+                        ?.let { "Receive" } ?: "Outgoing"
+            }, onFailure = {
+                "Unknown"
+            })
+        } ?: "Receive"
 }
 
