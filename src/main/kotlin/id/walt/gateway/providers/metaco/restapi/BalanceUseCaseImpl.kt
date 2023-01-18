@@ -13,7 +13,7 @@ class BalanceUseCaseImpl(
     private val tickerUseCase: TickerUseCase,
 ) : BalanceUseCase {
     override fun list(parameter: AccountParameter): Result<List<BalanceData>> = runCatching {
-        balanceRepository.findAll(parameter.domainId, parameter.accountId, parameter.criteria).items.map {
+        balanceRepository.findAll(parameter.accountIdentifier.domainId, parameter.accountIdentifier.accountId, parameter.criteria).items.map {
             BalanceData(
                 amount = it.totalAmount,
                 ticker = tickerUseCase.get(TickerParameter(it.tickerId)).getOrThrow()

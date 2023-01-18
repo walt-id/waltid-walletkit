@@ -1,8 +1,10 @@
 package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
-import id.walt.gateway.dto.*
+import id.walt.gateway.dto.AmountWithValue
+import id.walt.gateway.dto.TransferData
 import id.walt.gateway.dto.accounts.AccountData
+import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
 import id.walt.gateway.dto.balances.BalanceParameter
@@ -25,9 +27,9 @@ class AccountUseCaseImpl(
 ) : AccountUseCase {
     private val accountsPool = (1..5).map { getAccount() }
 
-    override fun profile(domainId: String, parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
+    override fun profile(parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
 
-    override fun balance(domainId: String, parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
+    override fun balance(parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
     override fun transactions(parameter: TransactionListParameter) =
@@ -40,7 +42,7 @@ class AccountUseCaseImpl(
         accounts = accountsPool,
     )
     private fun getAccount() = AccountData(
-        accountId = UUID.randomUUID().toString(),
+        accountIdentifier = AccountIdentifier(UUID.randomUUID().toString(), UUID.randomUUID().toString()),
         alias = Common.getRandomString(7, 1),
         addresses = listOf("0x${Common.getRandomString(40, 2)}"),
         tickers = (1..5).map { tickerUseCase.get(TickerParameter("")).getOrThrow().id }.distinct()

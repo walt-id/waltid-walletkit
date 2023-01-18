@@ -1,7 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.order.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.order.model.Data
 import kotlinx.serialization.Serializable
 
 @Serializable

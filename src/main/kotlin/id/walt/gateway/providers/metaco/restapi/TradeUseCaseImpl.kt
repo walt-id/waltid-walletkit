@@ -2,9 +2,12 @@ package id.walt.gateway.providers.metaco.restapi
 
 import com.beust.klaxon.Klaxon
 import id.walt.gateway.dto.intents.IntentBuilderParam
+import id.walt.gateway.dto.intents.IntentParameter
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TradeResult
 import id.walt.gateway.dto.trades.TradeValidationParameter
+import id.walt.gateway.dto.users.UserIdentifier
+import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.IntentRepository
 import id.walt.gateway.providers.metaco.repositories.TickerRepository
 import id.walt.gateway.providers.metaco.restapi.intent.builders.IntentBuilder
@@ -40,7 +43,7 @@ class TradeUseCaseImpl(
         //TODO: don't use model here
         TransactionOrderPayload(
             id = UUID.randomUUID().toString(),
-            accountId = parameter.transfer.sender,
+            accountId = parameter.transfer.sender.accountId,
             customProperties = CustomProperties(),
             parameters = ParameterBuilder.getBuilder(getTickerType(parameter.transfer.ticker)).build(parameter.transfer)
         ).run {
@@ -62,19 +65,20 @@ class TradeUseCaseImpl(
     })
 
     private fun createTransactionOrder(type: String, data: TradeData) = runCatching {
-        IntentBuilder.getBuilder(IntentBuilderParam(type, getTickerType(data.trade.ticker))).build(data)
-            .let { intent ->
-                SignatureIntent(
-                    request = intent.request,
-                    signature = Klaxon().parse<SignChallengeResponse>(intentSignatureService.sign(intent as NoSignatureIntent))!!.signature,
-                )
-            }.run {
-                intentRepository.create(data.domainId, this)
-            }.let {
-                TradeResult(
-                    result = it.requestId != null,
-                    message = it.requestId ?: it.message ?: it.reason ?: "Unknown error"
-                )
-            }
+        IntentBuilder.getBuilder(IntentBuilderParam(type, getTickerType(data.trade.ticker))).build(
+            IntentParameter(data, UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId), "Propose")
+        ).let { intent ->
+            SignatureIntent(
+                request = intent.request,
+                signature = Klaxon().parse<SignChallengeResponse>(intentSignatureService.sign(intent as NoSignatureIntent))!!.signature,
+            )
+        }.run {
+            intentRepository.create(this)
+        }.let {
+            TradeResult(
+                result = it.requestId != null,
+                message = it.requestId ?: it.message ?: it.reason ?: "Unknown message"
+            )
+        }
     }
 }

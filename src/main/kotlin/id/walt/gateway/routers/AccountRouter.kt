@@ -11,9 +11,9 @@ class AccountRouter(
         ApiBuilder.path("accounts") {
             ApiBuilder.post("login", documented(accountController.profileDoc(), accountController::profile))
             ApiBuilder.get("{profileId}/balance", documented(accountController.balanceDoc(), accountController::balance))
-            ApiBuilder.get("{accountId}/balance/{tickerId}", documented(accountController.tickerBalanceDoc(), accountController::tickerBalance))
-            ApiBuilder.get("{accountId}/transactions", documented(accountController.transactionsDoc(), accountController::transactions))
-            ApiBuilder.get("{accountId}/transactions/{transactionId}", documented(accountController.transactionDoc(), accountController::transaction))
+            ApiBuilder.get("{accountId}/domain/{domainId}/balance/{tickerId}", documented(accountController.tickerBalanceDoc(), accountController::tickerBalance))
+            ApiBuilder.get("{accountId}/domain/{domainId}/transactions", documented(accountController.transactionsDoc(), accountController::transactions))
+            ApiBuilder.get("{accountId}/domain/{domainId}/transactions/{transactionId}", documented(accountController.transactionDoc(), accountController::transaction))
         }
     }
 }

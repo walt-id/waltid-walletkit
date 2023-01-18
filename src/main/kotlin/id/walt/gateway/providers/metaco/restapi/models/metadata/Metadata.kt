@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.order.model
+package id.walt.gateway.providers.metaco.restapi.models.metadata
 
 import com.beust.klaxon.Json
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomProperties
@@ -7,12 +7,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Metadata(
     val createdAt: String,
-    val createdBy: CreatedBy?,
+    @Json(serializeNull = false)
+    val createdBy: CreatedBy? = null,
     val customProperties: CustomProperties,
     @Json(serializeNull = false)
-    val description: String?,
+    val description: String? = null,
     val lastModifiedAt: String,
     @Json(serializeNull = false)
-    val lastModifiedBy: LastModifiedBy?,
-    val revision: Int
+    val lastModifiedBy: LastModifiedBy? = null,
+    val revision: Int,
 )
