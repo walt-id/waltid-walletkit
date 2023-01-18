@@ -9,7 +9,6 @@ import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter
 import id.walt.gateway.dto.transactions.TransactionTransferData
-import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.usecases.AccountUseCase
 import io.javalin.http.Context
 import io.javalin.plugin.openapi.dsl.document
@@ -29,7 +28,7 @@ class AccountController(
 
     fun balance(ctx: Context) {
         val profileId = ctx.pathParam("profileId")
-        accountUseCase.balance(ProviderConfig.domainId, ProfileParameter(profileId))
+        accountUseCase.balance(ProfileParameter(profileId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -39,8 +38,9 @@ class AccountController(
 
     fun tickerBalance(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
+        val domainId = ctx.pathParam("domainId")
         val tickerId = ctx.pathParam("tickerId")
-        accountUseCase.balance(BalanceParameter(ProviderConfig.domainId, accountId, tickerId))
+        accountUseCase.balance(BalanceParameter(domainId, accountId, tickerId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -50,8 +50,9 @@ class AccountController(
 
     fun transactions(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
+        val domainId = ctx.pathParam("domainId")
         val tickerId = ctx.queryParam("tickerId")
-        accountUseCase.transactions(TransactionListParameter(ProviderConfig.domainId, accountId, tickerId))
+        accountUseCase.transactions(TransactionListParameter(domainId, accountId, tickerId))
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -61,10 +62,11 @@ class AccountController(
 
     fun transaction(ctx: Context) {
         val accountId = ctx.pathParam("accountId")
+        val domainId = ctx.pathParam("domainId")
         val transactionId = ctx.pathParam("transactionId")
         accountUseCase.transaction(
             TransactionParameter(
-                ProviderConfig.domainId, transactionId, mapOf("accountId" to accountId)
+                domainId, transactionId, mapOf("accountId" to accountId)
             )
         ).onSuccess {
             ctx.json(it)
