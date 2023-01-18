@@ -15,7 +15,7 @@ class BitcoinParamBuilder : ParameterBuilder {
             Output(
                 amount = params.amount,
                 paysFee = false,
-                destination = Destination.parse(params.recipient)
+                destination = Destination.parse(params.recipient.accountId)
             )
         )
     )

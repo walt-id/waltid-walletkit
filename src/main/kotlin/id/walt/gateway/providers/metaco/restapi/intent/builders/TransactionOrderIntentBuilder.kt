@@ -1,7 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders
 
-import id.walt.gateway.dto.trades.TradeData
-import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.dto.intents.IntentParameter
 import id.walt.gateway.providers.metaco.restapi.intent.model.Author
 import id.walt.gateway.providers.metaco.restapi.intent.model.NoSignatureIntent
 import id.walt.gateway.providers.metaco.restapi.intent.model.Request
@@ -16,21 +15,20 @@ import java.util.*
 class TransactionOrderIntentBuilder(
     private val parametersType: String,
 ) : IntentBuilder {
-    override fun build(data: TradeData) = NoSignatureIntent(
+    override fun build(parameter: IntentParameter) = NoSignatureIntent(
         Request(
-            //TODO: use another model for params to contain all required data (including domainId, userId, etc.)
-            Author(domainId = ProviderConfig.domainId, id = ProviderConfig.userId),
+            author = Author(domainId = parameter.author.domainId, id = parameter.author.userId),
             expiryAt = Instant.now().plus(Duration.ofHours(1)).truncatedTo(ChronoUnit.SECONDS).toString(),
-            targetDomainId = ProviderConfig.domainId,
+            targetDomainId = parameter.data.trade.sender.domainId,
             id = UUID.randomUUID().toString(),
             payload = TransactionOrderPayload(
                 id = UUID.randomUUID().toString(),
-                accountId = data.trade.sender,
-                customProperties = TransactionOrderTypeCustomProperties(data.type),
-                parameters = ParameterBuilder.getBuilder(parametersType).build(data.trade),
+                accountId = parameter.data.trade.sender.accountId,
+                customProperties = TransactionOrderTypeCustomProperties(parameter.data.type),
+                parameters = ParameterBuilder.getBuilder(parametersType).build(parameter.data.trade),
             ),
             customProperties = CustomProperties(),
-            type = "Propose",
+            type = parameter.type,
         )
     )
 }

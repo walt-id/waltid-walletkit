@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model.payload
 
+import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomProperties
 import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 import kotlinx.serialization.Serializable

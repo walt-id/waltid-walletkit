@@ -16,7 +16,7 @@ class IntentRepositoryImpl(
     private val dryRunEndpoint = "/v1/domains/%s/transactions/dry-run"
     private val createEndpoint = "/v1/intents"
 
-    override fun create(domainId: String, intent: SignatureIntent): IntentResult = let {
+    override fun create(intent: SignatureIntent): IntentResult = let {
         val result = CommonHttp.post(
             client,
             String.format(CommonHttp.buildUrl(baseUrl, createEndpoint)),
