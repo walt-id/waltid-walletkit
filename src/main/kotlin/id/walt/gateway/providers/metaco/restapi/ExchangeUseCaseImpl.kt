@@ -1,6 +1,5 @@
 package id.walt.gateway.providers.metaco.restapi
 
-import id.walt.gateway.dto.coins.CoinParameter
 import id.walt.gateway.dto.exchanges.ExchangeData
 import id.walt.gateway.dto.exchanges.ExchangeParameter
 import id.walt.gateway.providers.metaco.CoinMapper

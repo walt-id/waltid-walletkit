@@ -5,6 +5,7 @@ import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.TransferData
 import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.dto.accounts.AccountData
+import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.accounts.AccountParameter
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
@@ -29,7 +30,6 @@ import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.Tra
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.BalanceUseCase
 import id.walt.gateway.usecases.TickerUseCase
-import id.walt.gateway.dto.accounts.AccountIdentifier
 
 class AccountUseCaseImpl(
     private val domainRepository: DomainRepository,
@@ -49,7 +49,7 @@ class AccountUseCaseImpl(
             })
     }
 
-    override fun balance(domainId: String, parameter: ProfileParameter): Result<AccountBalance> = runCatching {
+    override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
             balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
         }.let { AccountBalance(it) }
