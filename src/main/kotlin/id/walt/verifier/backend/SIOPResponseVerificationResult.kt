@@ -1,7 +1,6 @@
 package id.walt.verifier.backend
 
 import id.walt.auditor.VerificationResult
-import id.walt.common.SingleVC
 import id.walt.common.SingleVCObject
 import id.walt.common.VCObjectList
 import id.walt.credentials.w3c.VerifiableCredential
