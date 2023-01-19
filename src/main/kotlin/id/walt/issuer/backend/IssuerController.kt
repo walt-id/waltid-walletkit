@@ -69,8 +69,8 @@ object IssuerController {
                         post("gen", documented(KeyController.genDocs().describeTenantId(), KeyController::gen))
                         post("import", documented(KeyController.importDocs().describeTenantId(), KeyController::import))
                         post("export", documented(KeyController.exportDocs().describeTenantId(), KeyController::export))
-                        post("delete", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
-                        post("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
+                        delete("delete", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
+                        get("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
                         post("load", documented(KeyController.loadDocs().describeTenantId(), KeyController::load))
                     }
 
