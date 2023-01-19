@@ -116,9 +116,11 @@ object RestAPI {
         }
     }.apply {
 
-        fun Context.reportRequestException(exception: Exception) =
-            this.json(mapOf("error" to true, "error_type" to exception::class.simpleName, "message" to exception.message, "url" to this.fullUrl()))
+        fun Context.reportRequestException(exception: Exception): Context {
+            exception.printStackTrace()
+            return this.json(mapOf("error" to true, "error_type" to exception::class.simpleName, "message" to exception.message, "url" to this.fullUrl()))
                 .status(HttpCode.BAD_REQUEST)
+        }
 
         exception(IllegalArgumentException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(MismatchedInputException::class.java) { e, ctx -> ctx.reportRequestException(e) }
