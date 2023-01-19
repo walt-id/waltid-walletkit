@@ -167,13 +167,13 @@ class AccountUseCaseImpl(
     )
 
     private fun getTransactionOrderType(accountId: String, transaction: Transaction) =
-        transaction.orderReference?.let {
+        transaction.relatedAccounts.filter { it.id == accountId }.any { it.sender }.takeIf { it }?.let {
+            "Outgoing"
+        } ?: transaction.orderReference?.let {
             runCatching {
                 orderRepository.findById(it.domainId, it.id).data
             }.fold(onSuccess = {
-                (it.metadata.customProperties as? TransactionOrderTypeCustomProperties)?.transactionType
-                    ?: transaction.relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }
-                        ?.let { "Receive" } ?: "Outgoing"
+                (it.metadata.customProperties as? TransactionOrderTypeCustomProperties)?.transactionType ?: "Outgoing"
             }, onFailure = {
                 "Unknown"
             })
