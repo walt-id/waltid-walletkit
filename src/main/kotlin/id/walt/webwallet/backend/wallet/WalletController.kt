@@ -12,6 +12,7 @@ import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
 import id.walt.model.DidMethod
+import id.walt.model.DidUrl
 import id.walt.model.oidc.IssuanceInitiationRequest
 import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
@@ -27,6 +28,7 @@ import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
+import io.ipfs.multibase.Multibase
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.ContentType
@@ -55,6 +57,13 @@ object WalletController {
                                 .jsonArray<String>("200"),
                                 WalletController::listDids
                             ), UserRole.AUTHORIZED
+                        )
+                    }
+                    path("ebsiVersion") {
+                        get(documented(document().operation {
+                            it.summary("Get version of did:ebsi").addTagsItem("DIDs")
+                        }.queryParam<String>("did").result<Int>("200"), WalletController::ebsiVersion),
+                            UserRole.AUTHORIZED
                         )
                     }
                     // load DID
@@ -307,6 +316,15 @@ object WalletController {
             }
         }
 
+    private fun ebsiVersion(context: Context) {
+        val did = context.queryParam("did") ?: throw BadRequestResponse("Missing did parameter")
+        if(DidUrl.isDidUrl(did) && DidUrl.from(did).method == "ebsi") {
+            context.result(Multibase.decode(DidUrl.from(did).identifier).first().toInt().toString())
+        } else {
+            throw BadRequestResponse("Invalid did:ebsi")
+        }
+    }
+
     fun oidcProviderMeta(ctx: Context) {
         ctx.json(
             OIDCProviderMetadata(
@@ -339,17 +357,19 @@ object WalletController {
 
         when (req.method) {
             DidMethod.ebsi -> {
-                if (req.didEbsiBearerToken.isNullOrEmpty()) {
+                if (req.didEbsiVersion == 1 && req.didEbsiBearerToken.isNullOrEmpty()) {
                     ctx.status(HttpCode.BAD_REQUEST)
-                        .result("ebsiBearerToken form parameter is required for EBSI DID registration.")
+                        .result("ebsiBearerToken form parameter is required for EBSI DID v1 registration.")
                     return
                 }
 
                 val did =
-                    DidService.create(req.method, keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id)
-                EssifClient.onboard(did, req.didEbsiBearerToken)
-                EssifClient.authApi(did)
-                DidEbsiService.getService().registerDid(did, did)
+                    DidService.create(req.method, keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id, DidService.DidEbsiOptions(version = req.didEbsiVersion))
+                if(req.didEbsiVersion == 1) {
+                    EssifClient.onboard(did, req.didEbsiBearerToken)
+                    EssifClient.authApi(did)
+                    DidEbsiService.getService().registerDid(did, did)
+                }
                 ctx.result(did)
             }
 
