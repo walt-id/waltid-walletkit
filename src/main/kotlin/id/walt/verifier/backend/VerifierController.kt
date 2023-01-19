@@ -5,9 +5,7 @@ import id.walt.auditor.VerificationPolicy
 import id.walt.auditor.dynamic.DynamicPolicyArg
 import id.walt.common.klaxonWithConverters
 import id.walt.issuer.backend.IssuerConfig
-import id.walt.issuer.backend.IssuerController
-import id.walt.issuer.backend.IssuerManager
-import id.walt.issuer.backend.IssuerTenant
+import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.SIOPv2Response
 import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
@@ -63,6 +61,7 @@ object VerifierController {
                             .queryParam<String>("walletId")
                             .queryParam<String>("schemaUri", isRepeatable = true)
                             .queryParam<String>("vcType", isRepeatable = true)
+                            .queryParam<Boolean>("pdByReference") { it.description("true: include presentation definition by reference, else by value (default: false)") }
                             .result<String>("302"),
                         VerifierController::presentCredential
                     ))
@@ -77,10 +76,18 @@ object VerifierController {
                             .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("schemaUri", isRepeatable = true)
                             .queryParam<String>("vcType", isRepeatable = true)
+                            .queryParam<Boolean>("pdByReference") { it.description("true: include presentation definition by reference, else by value (default: false)") }
                             .result<PresentationRequestInfo>("200"),
                         VerifierController::presentCredentialXDevice
                     ))
                 }
+                get("pd/{id}", documented(document().operation {
+                    it.summary("Get presentation definition from cache").operationId("pdFromCache").addTagsItem("Verifier")
+                }
+                    .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                    .pathParam<String>("id")
+                    .json<PresentationDefinition>("200"),
+                    VerifierController::getPresentationDefinitionFromCache))
                 path("verify") {
                     post(documented(
                         document().operation {
@@ -181,6 +188,12 @@ object VerifierController {
                 }
             }
 
+    private fun getPresentationDefinitionFromCache(context: Context) {
+        val id = context.pathParam("id")
+        val pd = VerifierTenant.state.presentationDefinitionCache.getIfPresent(id) ?: throw BadRequestResponse("Presentation definition id invalid or expired")
+        context.contentType(ContentType.APPLICATION_JSON).result(klaxonWithConverters.toJsonString(pd))
+    }
+
     private fun getConfiguration(context: Context) {
         try {
             context.json(VerifierTenant.config)
@@ -198,7 +211,7 @@ object VerifierController {
     }
 
     private fun getPresentationCustomQueryParams(queryParamMap: Map<String, List<String>>): String {
-        val standardQueryParams = listOf("walletId", "schemaUri", "vcType", "verificationCallbackUrl")
+        val standardQueryParams = listOf("walletId", "schemaUri", "vcType", "verificationCallbackUrl", "pdByReference")
 
         val customQueryParams = queryParamMap
             .filter { it.key !in standardQueryParams }
@@ -237,7 +250,8 @@ object VerifierController {
             vcTypes = vcTypes.toSet(),
             redirectCustomUrlQuery = customQueryParams,
             responseMode = ResponseMode.FORM_POST,
-            verificationCallbackUrl = verificationCallbackUrl
+            verificationCallbackUrl = verificationCallbackUrl,
+            presentationDefinitionByReference = ctx.queryParam("pdByReference")?.toBoolean() ?: false
         )
 
         ctx.status(HttpCode.FOUND).header("Location", req.toURI().toString())
@@ -254,7 +268,8 @@ object VerifierController {
             vcTypes = vcTypes.toSet(),
             redirectCustomUrlQuery = customQueryParams,
             responseMode = ResponseMode("post"),
-            verificationCallbackUrl = verificationCallbackUrl
+            verificationCallbackUrl = verificationCallbackUrl,
+            presentationDefinitionByReference = ctx.queryParam("pdByReference")?.toBoolean() ?: false
         )
 
         ctx.json(PresentationRequestInfo(req.state.value, req.toURI().toString()))

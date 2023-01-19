@@ -3,6 +3,7 @@ package id.walt.verifier.backend
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
 import com.google.common.cache.CacheBuilder
+import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.id.State
@@ -38,6 +39,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import mu.KotlinLogging
 import java.net.URI
+import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -48,14 +50,22 @@ abstract class VerifierManager : BaseService() {
 
     private val log = KotlinLogging.logger { }
 
+    private  fun convertUUIDToBytes(uuid: UUID): ByteArray?{
+        val bb: ByteBuffer = ByteBuffer.wrap(ByteArray(16))
+        bb.putLong(uuid.mostSignificantBits)
+        bb.putLong(uuid.leastSignificantBits)
+        return bb.array()
+    }
+
     open fun newRequest(
         walletUrl: URI,
         presentationDefinition: PresentationDefinition,
         state: String? = null,
         redirectCustomUrlQuery: String = "",
-        responseMode: ResponseMode = ResponseMode.FORM_POST
+        responseMode: ResponseMode = ResponseMode.FORM_POST,
+        presentationDefinitionByReference: Boolean = false
     ): AuthorizationRequest {
-        val nonce = UUID.randomUUID().toString()
+        val nonce = Base64URL.encode(convertUUIDToBytes(UUID.randomUUID())).toString()
         val requestId = state ?: nonce
         val redirectQuery = if (redirectCustomUrlQuery.isEmpty()) "" else "?$redirectCustomUrlQuery"
         val req = OIDC4VPService.createOIDC4VPRequest(
@@ -63,7 +73,11 @@ abstract class VerifierManager : BaseService() {
             redirect_uri = URI.create("${VerifierTenant.config.verifierApiUrl}/verify$redirectQuery"),
             response_mode = responseMode,
             nonce = Nonce(nonce),
-            presentation_definition = presentationDefinition,
+            presentation_definition = if(presentationDefinitionByReference) null else presentationDefinition,
+            presentation_definition_uri = if(presentationDefinitionByReference)
+                URI.create("${VerifierTenant.config.verifierApiUrl}/pd/$requestId").also {
+                    VerifierTenant.state.presentationDefinitionCache.put(requestId, presentationDefinition)
+                } else null,
             state = State(requestId)
         )
         VerifierTenant.state.reqCache.put(requestId, req)
@@ -89,7 +103,8 @@ abstract class VerifierManager : BaseService() {
         state: String? = null,
         redirectCustomUrlQuery: String = "",
         responseMode: ResponseMode = ResponseMode.FORM_POST,
-        verificationCallbackUrl: String? = null
+        verificationCallbackUrl: String? = null,
+        presentationDefinitionByReference: Boolean = false
     ): AuthorizationRequest {
         val request = when {
             schemaUris.isNotEmpty() -> newRequestBySchemaUris(
@@ -97,10 +112,11 @@ abstract class VerifierManager : BaseService() {
                 schemaUris,
                 state,
                 redirectCustomUrlQuery,
-                responseMode
+                responseMode,
+                presentationDefinitionByReference
             )
 
-            else -> newRequestByVcTypes(walletUrl, vcTypes, state, redirectCustomUrlQuery, responseMode)
+            else -> newRequestByVcTypes(walletUrl, vcTypes, state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference)
         }
 
         if (verificationCallbackUrl != null) {
@@ -121,7 +137,8 @@ abstract class VerifierManager : BaseService() {
         schemaUris: Set<String>,
         state: String? = null,
         redirectCustomUrlQuery: String = "",
-        responseMode: ResponseMode = ResponseMode.FORM_POST
+        responseMode: ResponseMode = ResponseMode.FORM_POST,
+        presentationDefinitionByReference: Boolean = false
     ): AuthorizationRequest {
         return newRequest(
             walletUrl, PresentationDefinition(
@@ -132,7 +149,7 @@ abstract class VerifierManager : BaseService() {
                         schema = VCSchema(uri = schemaUri)
                     )
                 }.toList()
-            ), state, redirectCustomUrlQuery, responseMode
+            ), state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference
         )
     }
 
@@ -141,7 +158,8 @@ abstract class VerifierManager : BaseService() {
         vcTypes: Set<String>,
         state: String? = null,
         redirectCustomUrlQuery: String = "",
-        responseMode: ResponseMode = ResponseMode.FORM_POST
+        responseMode: ResponseMode = ResponseMode.FORM_POST,
+        presentationDefinitionByReference: Boolean = false
     ): AuthorizationRequest {
         return newRequest(
             walletUrl, PresentationDefinition(
@@ -161,7 +179,7 @@ abstract class VerifierManager : BaseService() {
                         )
                     )
                 }.toList()
-            ), state, redirectCustomUrlQuery, responseMode
+            ), state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference
         )
     }
 
@@ -169,7 +187,10 @@ abstract class VerifierManager : BaseService() {
         return listOf(
             SignaturePolicy(),
             ChallengePolicy(req.getCustomParameter("nonce")!!.first(), applyToVC = false, applyToVP = true),
-            PresentationDefinitionPolicy(OIDC4VPService.getPresentationDefinition(req)),
+            PresentationDefinitionPolicy(
+                VerifierTenant.state.presentationDefinitionCache.getIfPresent(req.state.value)
+                ?: OIDC4VPService.getPresentationDefinition(req)
+            ),
             *(VerifierTenant.config.additionalPolicies?.map { p ->
                 PolicyRegistry.getPolicyWithJsonArg(p.policy, p.argument?.let { JsonObject(it) })
             }?.toList() ?: listOf()).toTypedArray()

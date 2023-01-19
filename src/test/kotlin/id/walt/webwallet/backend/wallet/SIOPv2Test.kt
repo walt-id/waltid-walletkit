@@ -1,5 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
+import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.util.URLUtils
 import id.walt.BaseApiTest
 import id.walt.common.klaxonWithConverters
@@ -25,6 +26,7 @@ import id.walt.webwallet.backend.context.UserContext
 import id.walt.webwallet.backend.context.UserContextLoader
 import id.walt.webwallet.backend.context.WalletContextManager
 import io.javalin.apibuilder.ApiBuilder
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.common.runBlocking
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
@@ -189,5 +191,32 @@ class SIOPv2Test : BaseApiTest() {
         session.credentials shouldNotBe null
         session.credentials!!.size shouldBe 1
         session.credentials!!.first().type shouldContain "VerifiableId"
+    }
+
+    @Test
+    fun testPresentationDefinitionByReference() {
+        val req = ContextManager.runWith(VerifierManager.getService().getVerifierContext(TenantId.DEFAULT_TENANT)) {
+            // create req with pd by ref
+            VerifierManager.getService().newRequestByVcTypes(
+                URI.create("openid:///"),
+                setOf("VerifiableId"),
+                responseMode = ResponseMode("post"),
+                presentationDefinitionByReference = true
+            )
+        }
+        val reqUri = req.toURI()
+
+        // try to parse OIDC4VP request
+        val parsedReq = shouldNotThrowAny {
+            OIDC4VPService.parseOIDC4VPRequestUri(reqUri)
+        }
+
+        // try to get presentation definition from URL:
+        val pd = shouldNotThrowAny {
+            OIDC4VPService.getPresentationDefinition(parsedReq)
+        }
+        pd.input_descriptors.flatMap { id -> id.constraints?.fields ?: listOf() }.firstOrNull { fd ->
+            fd.path.contains("$.type") && fd.filter != null && fd.filter!!.containsKey("const") && fd.filter!!["const"] == "VerifiableId"
+        } shouldNotBe null
     }
 }
