@@ -215,5 +215,8 @@ class SIOPv2Test : BaseApiTest() {
         val pd = shouldNotThrowAny {
             OIDC4VPService.getPresentationDefinition(parsedReq)
         }
+        pd.input_descriptors.flatMap { id -> id.constraints?.fields ?: listOf() }.firstOrNull { fd ->
+            fd.path.contains("$.type") && fd.filter != null && fd.filter!!.containsKey("const") && fd.filter!!["const"] == "VerifiableId"
+        } shouldNotBe null
     }
 }
