@@ -6,7 +6,6 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.common.VCList
 import id.walt.common.VCObjectList
 import id.walt.credentials.w3c.VerifiableCredential
 import id.walt.credentials.w3c.templates.VcTemplateManager
@@ -135,8 +134,15 @@ object CredentialIssuanceManager {
             DidMethod.ebsi.name -> "jwt_vc"
             else -> "jwt_vc"
         }
+        log.debug { "Checking if $credentialTypeId is supported (supported: $supportedCredentials)" }
         if (supportedCredentials.containsKey(credentialTypeId)) {
-            if (supportedCredentials[credentialTypeId]!!.formats.containsKey(preferredByEcosystem) == false) {
+            log.debug { "Credential $credentialTypeId is supported!" }
+            log.debug { "Credential: ${supportedCredentials[credentialTypeId]}" }
+
+            println(supportedCredentials[credentialTypeId]!!::class.java.name)
+
+            if (!supportedCredentials[credentialTypeId]!!.formats.containsKey(preferredByEcosystem)) {
+                log.debug { "Format $preferredByEcosystem is supported (${supportedCredentials[credentialTypeId]!!.formats})" }
                 // ecosystem preference is explicitly not supported, check if ldp_vc or jwt_vc is
                 return supportedCredentials[credentialTypeId]!!.formats.keys.firstOrNull { fmt ->
                     setOf(
@@ -144,6 +150,8 @@ object CredentialIssuanceManager {
                         "ldp_vc"
                     ).contains(fmt)
                 }
+            } else {
+                log.debug { "Format $preferredByEcosystem is NOT supported (${supportedCredentials[credentialTypeId]!!.formats})" }
             }
         }
         return preferredByEcosystem
@@ -246,6 +254,7 @@ object CredentialIssuanceManager {
         }
 
         val supportedCredentials = OIDC4CIService.getSupportedCredentials(issuer)
+        log.info { "Supported credentials are: $supportedCredentials" }
 
         ContextManager.runWith(WalletContextManager.getUserContext(user)) {
             session.credentials = session.credentialTypes.map { typeId ->
@@ -283,10 +292,11 @@ object CredentialIssuanceManager {
         val matchingTemplates = findMatchingVCTemplates(presentationDefinition)
 
         return WalletConfig.config.issuers.keys.map { issuerCache[it] }.filter { issuer ->
-            log.info { "Finding issuer for: ${issuer.id} ${issuer.url}" }
+            log.info { "Finding issuer for: ${issuer.id} (url = ${issuer.url})" }
             val supportedTypeLists = OIDC4CIService.getSupportedCredentials(issuer).values
                 .flatMap { credentialMetadata -> credentialMetadata.formats.values }
                 .map { fmt -> fmt.types }
+            log.info { "Got supported type list: $supportedTypeLists" }
             matchingTemplates.map { it.type }.all { reqTypeList ->
                 supportedTypeLists.any { typeList ->
                     reqTypeList.size == typeList.size &&
