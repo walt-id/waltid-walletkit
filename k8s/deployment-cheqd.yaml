@@ -40,7 +40,7 @@ data:
       "issuers": {
         "walt.id": {
           "id": "walt.id",
-          "url": "https://issuer.cheqd.walt-test.cloud/issuer-api/oidc",
+          "url": "https://issuer.cheqd.walt-test.cloud/issuer-api/default/oidc",
           "description": "walt.id Issuer Portal"
         },
         "yes.com": {
