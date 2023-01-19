@@ -283,7 +283,7 @@ object CredentialIssuanceManager {
         val matchingTemplates = findMatchingVCTemplates(presentationDefinition)
 
         return WalletConfig.config.issuers.keys.map { issuerCache[it] }.filter { issuer ->
-            log.info { "Finding issuer for: $issuer" }
+            log.info { "Finding issuer for: ${issuer.id} ${issuer.url}" }
             val supportedTypeLists = OIDC4CIService.getSupportedCredentials(issuer).values
                 .flatMap { credentialMetadata -> credentialMetadata.formats.values }
                 .map { fmt -> fmt.types }
