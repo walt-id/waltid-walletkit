@@ -65,7 +65,7 @@ class TradeUseCaseImpl(
     })
 
     private fun createTransactionOrder(type: String, data: TradeData) = runCatching {
-        IntentBuilder.getBuilder(IntentBuilderParam(type, getTickerType(data.trade.ticker))).build(
+        (IntentBuilder.getBuilder(IntentBuilderParam(type, getTickerType(data.trade.ticker))) as IntentBuilder<TradeData>).build(
             IntentParameter(data, UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId), "Propose")
         ).let { intent ->
             SignatureIntent(

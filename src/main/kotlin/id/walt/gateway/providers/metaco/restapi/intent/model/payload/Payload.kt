@@ -15,6 +15,8 @@ class PayloadTypeAdapter : TypeAdapter<Payload> {
     override fun classFor(type: Any): KClass<out Payload> =
         when (type as String) {
             "v0_CreateTransactionOrder" -> TransactionOrderPayload::class
+            "v0_CreateTransferOrder" -> TransferOrderPayload::class
+            "v0_ValidateTickers" -> ValidateTickersPayload::class
             else -> throw IllegalArgumentException("Unknown type: $type")
         }
 }
