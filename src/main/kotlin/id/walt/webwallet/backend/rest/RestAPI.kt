@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import id.walt.gateway.routers.GatewayRouter
 import id.walt.issuer.backend.IssuerController
+import id.walt.multitenancy.Tenant.TenantNotFoundException
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
@@ -20,7 +21,6 @@ import io.javalin.core.security.AccessManager
 import io.javalin.core.util.RouteOverviewPlugin
 import io.javalin.http.Context
 import io.javalin.http.HttpCode
-import io.javalin.http.NotFoundResponse
 import io.javalin.plugin.json.JavalinJackson
 import io.javalin.plugin.json.JsonMapper
 import io.javalin.plugin.openapi.InitialConfigurationCreator
@@ -33,6 +33,7 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 import mu.KotlinLogging
+import java.security.InvalidKeyException
 
 object RestAPI {
 
@@ -126,6 +127,8 @@ object RestAPI {
         exception(MismatchedInputException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(JsonParseException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(KlaxonException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(InvalidKeyException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(TenantNotFoundException::class.java) { e, ctx -> ctx.reportRequestException(e) }
     }
 
     fun start(bindAddress: String, port: Int, accessManager: AccessManager, routes: () -> Unit = DEFAULT_ROUTES): Javalin {
