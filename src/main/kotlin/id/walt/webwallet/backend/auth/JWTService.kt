@@ -45,8 +45,9 @@ object JWTService : AccessManager {
 
     override fun manage(handler: Handler, ctx: Context, routeRoles: MutableSet<RouteRole>) {
         // if context contains decoded JWT, it was already validated by jwtHandler
-        if ((JavalinJWT.containsJWT(ctx) && routeRoles.contains(UserRole.AUTHORIZED)) ||
-            !routeRoles.contains(UserRole.AUTHORIZED)
+        if (
+            (JavalinJWT.containsJWT(ctx) && routeRoles.contains(UserRole.AUTHORIZED))
+            || !routeRoles.contains(UserRole.AUTHORIZED)
         ) {
             handler.handle(ctx)
         } else {
