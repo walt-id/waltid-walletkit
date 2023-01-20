@@ -5,6 +5,7 @@ import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.providers.metaco.CoinMapper.map
+import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.TickerRepository
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC20LedgerProperties
@@ -25,7 +26,7 @@ class TickerUseCaseImpl(
     }
 
     override fun list(currency: String): Result<List<TickerData>> = runCatching {
-        tickerRepository.findAll(emptyMap()).items.map {
+        tickerRepository.findAll(emptyMap()).items.filter { !ProviderConfig.tickersIgnore.contains(it.data.id) }.map {
             buildTickerData(it, currency)
         }
     }
