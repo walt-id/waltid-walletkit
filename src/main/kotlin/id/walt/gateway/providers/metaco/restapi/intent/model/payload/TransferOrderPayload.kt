@@ -16,4 +16,4 @@ class TransferOrderPayload(
     @Json(serializeNull = false)
     val description: String? = null,
     val customProperties: CustomProperties,
-) : Payload("v0_CreateTransferOrder")
+) : Payload(Types.CreateTransferOrder.value)
