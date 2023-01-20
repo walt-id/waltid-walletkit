@@ -16,4 +16,9 @@ object ProviderConfig {
     val privateKey: String = File(privateKeyPath).takeIf { it.exists() }?.readText() ?: ""
     val nostroAccountId: String = System.getenv("NOSTRO_ACCOUNT_ID") ?: ""
     val nostroDomainId: String = System.getenv("NOSTRO_DOMAIN_ID") ?: ""
+    val tickerIgnorePath: String = System.getenv("TICKER_IGNORE_PATH") ?: ""
+
+    val tickersIgnore: List<String> by lazy {
+        runCatching { File(tickerIgnorePath).readLines() }.getOrElse { emptyList() }
+    }
 }

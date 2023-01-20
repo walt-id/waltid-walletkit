@@ -18,6 +18,7 @@ import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter
 import id.walt.gateway.dto.transactions.TransactionTransferData
+import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionOrderTypeCustomProperties
@@ -51,7 +52,7 @@ class AccountUseCaseImpl(
     override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
             balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
-        }.let { AccountBalance(it) }
+        }.filter { !ProviderConfig.tickersIgnore.contains(it.ticker.id) }.let { AccountBalance(it) }
     }
 
     override fun balance(parameter: BalanceParameter): Result<BalanceData> = runCatching {
