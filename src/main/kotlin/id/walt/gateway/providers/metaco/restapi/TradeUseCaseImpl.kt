@@ -1,8 +1,8 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import com.beust.klaxon.Klaxon
-import id.walt.gateway.dto.intents.IntentBuilderParam
 import id.walt.gateway.dto.intents.IntentParameter
+import id.walt.gateway.dto.intents.PayloadParameter
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TradeResult
 import id.walt.gateway.dto.trades.TradeValidationParameter
@@ -10,8 +10,9 @@ import id.walt.gateway.dto.users.UserIdentifier
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.IntentRepository
 import id.walt.gateway.providers.metaco.repositories.TickerRepository
-import id.walt.gateway.providers.metaco.restapi.intent.builders.IntentBuilder
-import id.walt.gateway.providers.metaco.restapi.intent.builders.ParameterBuilder
+import id.walt.gateway.providers.metaco.restapi.intent.builders.*
+import id.walt.gateway.providers.metaco.restapi.intent.builders.parameters.ParameterBuilder
+import id.walt.gateway.providers.metaco.restapi.intent.builders.payload.PayloadBuilder
 import id.walt.gateway.providers.metaco.restapi.intent.model.NoSignatureIntent
 import id.walt.gateway.providers.metaco.restapi.intent.model.SignatureIntent
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.TransactionOrderPayload
@@ -65,8 +66,18 @@ class TradeUseCaseImpl(
     })
 
     private fun createTransactionOrder(type: String, data: TradeData) = runCatching {
-        (IntentBuilder.getBuilder(IntentBuilderParam(type, getTickerType(data.trade.ticker))) as IntentBuilder<TradeData>).build(
-            IntentParameter(data, UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId), "Propose")
+        IntentBuilder.build(
+            IntentParameter(
+                targetDomainId = data.trade.sender.domainId,
+                author = UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId),
+                type = "Propose",
+            ), PayloadBuilder.create(
+                PayloadParameter(
+                    type = type,
+                    parametersType = getTickerType(data.trade.ticker),
+                    data = data,
+                )
+            )
         ).let { intent ->
             SignatureIntent(
                 request = intent.request,
