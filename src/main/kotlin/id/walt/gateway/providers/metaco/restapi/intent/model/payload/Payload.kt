@@ -8,15 +8,21 @@ import kotlin.reflect.KClass
 @Serializable
 @TypeFor(field = "type", adapter = PayloadTypeAdapter::class)
 sealed class Payload(
-    val type: String
-)
+    val type: String,
+) {
+    enum class Types(val value: String) {
+        CreateTransactionOrder("v0_CreateTransactionOrder"),
+        CreateTransferOrder("v0_CreateTransferOrder"),
+        ValidateTickers("v0_ValidateTickers"),
+    }
+}
 
 class PayloadTypeAdapter : TypeAdapter<Payload> {
     override fun classFor(type: Any): KClass<out Payload> =
         when (type as String) {
-            "v0_CreateTransactionOrder" -> TransactionOrderPayload::class
-            "v0_CreateTransferOrder" -> TransferOrderPayload::class
-            "v0_ValidateTickers" -> ValidateTickersPayload::class
+            Payload.Types.CreateTransactionOrder.value -> TransactionOrderPayload::class
+            Payload.Types.CreateTransferOrder.value -> TransferOrderPayload::class
+            Payload.Types.ValidateTickers.value -> ValidateTickersPayload::class
             else -> throw IllegalArgumentException("Unknown type: $type")
         }
 }
