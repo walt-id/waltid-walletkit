@@ -1,4 +1,4 @@
-package id.walt.gateway.providers.metaco.restapi.intent.builders
+package id.walt.gateway.providers.metaco.restapi.intent.builders.parameters
 
 import id.walt.gateway.dto.trades.TransferParameter
 import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
@@ -8,8 +8,8 @@ interface ParameterBuilder {
 
     companion object {
         fun getBuilder(type: String): ParameterBuilder = when (type) {
-            "Ethereum" -> EthereumParamBuilder()
-            "Bitcoin" -> BitcoinParamBuilder()
+            "Ethereum" -> EthereumParametersBuilder()
+            "Bitcoin" -> BitcoinParametersBuilder()
             else -> throw IllegalArgumentException("No builder for type $type")
         }
     }

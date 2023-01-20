@@ -1,9 +1,8 @@
 package id.walt.gateway.dto.tickers
 
-import id.walt.gateway.dto.intents.IntentData
+import id.walt.gateway.dto.intents.PayloadData
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.ValidateTickersPayload
 
-data class TickerIntentData(
-    val targetDomainId: String,
+data class TickerPayloadData(
     val ticker: ValidateTickersPayload.TickerData,
-) : IntentData
+) : PayloadData
