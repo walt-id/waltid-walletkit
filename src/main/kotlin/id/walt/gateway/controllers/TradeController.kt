@@ -19,14 +19,20 @@ class TradeController(
                 swap.spend.ticker,
                 swap.spend.maxFee,
                 sender = swap.spend.sender,
-                recipient = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
+                recipient = swap.receive.sender.takeIf { !it.isEmpty() } ?: AccountIdentifier(
+                    ProviderConfig.nostroDomainId,
+                    ProviderConfig.nostroAccountId
+                ),
             ), "Sale"),
             TradeData(TransferParameter(
                 swap.receive.amount,
                 swap.receive.ticker,
                 swap.receive.maxFee,
-                sender = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
-                recipient = swap.receive.sender
+                sender = swap.receive.sender.takeIf { !it.isEmpty() } ?: AccountIdentifier(
+                    ProviderConfig.nostroDomainId,
+                    ProviderConfig.nostroAccountId
+                ),
+                recipient = swap.spend.sender
             ), "Purchase"),
         ).onSuccess {
             ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
@@ -45,14 +51,20 @@ class TradeController(
                 ticker = swap.spend.ticker,
                 maxFee = swap.spend.maxFee,
                 sender = swap.spend.sender,
-                recipient = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
+                recipient = swap.receive.sender.takeIf { !it.isEmpty() } ?: AccountIdentifier(
+                    ProviderConfig.nostroDomainId,
+                    ProviderConfig.nostroAccountId
+                ),
             ), "Purchase"),
             TradeData(TransferParameter(
                 amount = swap.receive.amount,
                 ticker = swap.receive.ticker,
                 maxFee = swap.receive.maxFee,
-                sender = AccountIdentifier(ProviderConfig.nostroDomainId, ProviderConfig.nostroAccountId),
-                recipient = swap.receive.sender,
+                sender = swap.receive.sender.takeIf { !it.isEmpty() } ?: AccountIdentifier(
+                    ProviderConfig.nostroDomainId,
+                    ProviderConfig.nostroAccountId
+                ),
+                recipient = swap.spend.sender,
             ), "Sale"),
         ).onSuccess {
             ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
@@ -115,7 +127,7 @@ class TradeController(
         "        }<br/>" +
         "    }<br/>" +
         "}")
-    }.json<TradeResult>("200") { it.description("The sell trade details") }
+    }.json<OrderResult>("200") { it.description("The sell trade details") }
 
     fun buyDocs() = document().operation {
         it.summary("Returns the buy trade details").operationId("buy").addTagsItem("Trade Management")
@@ -145,7 +157,7 @@ class TradeController(
         "        }<br/>" +
         "    }<br/>" +
         "}")
-    }.json<TradeResult>("200") { it.description("The buy trade details") }
+    }.json<OrderResult>("200") { it.description("The buy trade details") }
 
     fun sendDocs() = document().operation {
         it.summary("Returns the send trade details").operationId("send").addTagsItem("Trade Management")
@@ -164,7 +176,7 @@ class TradeController(
                 "\"accountId\": \"{account-id}\"<br/>" +
                 "}<br/>" +
                 "}")
-    }.json<TradeResult>("200") { it.description("The send trade details") }
+    }.json<OrderResult>("200") { it.description("The send trade details") }
 
     fun validateDocs() = document().operation {
         it.summary("Returns the trade validation details").operationId("validate").addTagsItem("Trade Management")
@@ -183,5 +195,5 @@ class TradeController(
                 "\"accountId\": \"{account-id}\"<br/>" +
                 "}<br/>" +
                 "}")
-    }.json<TradeResult>("200") { it.description("The trade validation details") }
+    }.json<OrderResult>("200") { it.description("The trade validation details") }
 }

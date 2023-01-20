@@ -6,4 +6,6 @@ import kotlinx.serialization.Serializable
 data class AccountIdentifier(
     val domainId: String,
     val accountId: String,
-)
+) {
+    fun isEmpty() = domainId.isEmpty() && accountId.isEmpty()
+}

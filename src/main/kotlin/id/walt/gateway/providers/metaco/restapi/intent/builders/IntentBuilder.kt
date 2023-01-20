@@ -1,16 +1,24 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders
 
-import id.walt.gateway.dto.intents.IntentBuilderParam
 import id.walt.gateway.dto.intents.IntentParameter
+import id.walt.gateway.providers.metaco.restapi.intent.model.Author
 import id.walt.gateway.providers.metaco.restapi.intent.model.Intent
+import id.walt.gateway.providers.metaco.restapi.intent.model.NoSignatureIntent
+import id.walt.gateway.providers.metaco.restapi.intent.model.Request
+import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomProperties
+import java.util.*
 
-interface IntentBuilder {
-    fun build(parameter: IntentParameter): Intent
-
-    companion object {
-        fun getBuilder(param: IntentBuilderParam): IntentBuilder = when (param.payloadType) {
-            "v0_CreateTransactionOrder" -> TransactionOrderIntentBuilder(param.parameterType)
-            else -> throw IllegalArgumentException("No builder for type ${param.payloadType}")
-        }
-    }
+object IntentBuilder {
+    fun build(parameter: IntentParameter, payload: Payload): Intent = NoSignatureIntent(
+        Request(
+            author = Author(domainId = parameter.author.domainId, id = parameter.author.userId),
+            expiryAt = parameter.expiry.toString(),
+            targetDomainId = parameter.targetDomainId,
+            id = UUID.randomUUID().toString(),
+            payload = payload,
+            customProperties = CustomProperties(),
+            type = parameter.type,
+        )
+    )
 }
