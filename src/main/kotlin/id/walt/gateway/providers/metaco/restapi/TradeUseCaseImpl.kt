@@ -93,9 +93,7 @@ class TradeUseCaseImpl(
 
     private fun orderTrade(data: TradeData): Result<OrderResult> =
         tickerRepository.findById(data.trade.ticker).let { ticker ->
-            if (checkTickerValidationRequired(ticker)) {
-                validateTicker(ticker)
-            }//TODO: check for success and proceed accordingly
+            if (checkTickerValidationRequired(ticker)) validateTicker(ticker)//TODO: check for success and proceed accordingly
             createIntentRequest(
                 getPayloadType(ticker),
                 data.trade.sender.domainId,
