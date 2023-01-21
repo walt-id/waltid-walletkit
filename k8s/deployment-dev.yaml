@@ -102,6 +102,9 @@ spec:
               mountPath: "/waltid/wallet/metaco/privkey.pem"
               subPath: privkey.pem
               readOnly: true
+            - name: ticker-ignore-configmap
+              mountPath: "/waltid/wallet/metaco/config/"
+              readOnly: true
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
@@ -141,6 +144,9 @@ spec:
             items:
               - key: privkey.pem
                 path: privkey.pem
+        - name: ticker-ignore-configmap
+          configMap:
+            name: ticker-ignore-configmap
 ---
 kind: Service
 apiVersion: v1
