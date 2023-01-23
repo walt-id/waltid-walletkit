@@ -11,6 +11,7 @@ class TickerRouter(
         ApiBuilder.path("tickers") {
             ApiBuilder.get("", documented(tickerController.listDoc(), tickerController::list))
             ApiBuilder.get("{tickerId}", documented(tickerController.getDoc(), tickerController::get))
+            ApiBuilder.get("{tickerId}/fee", documented(tickerController.feeDoc(), tickerController::fee))
         }
     }
 }
