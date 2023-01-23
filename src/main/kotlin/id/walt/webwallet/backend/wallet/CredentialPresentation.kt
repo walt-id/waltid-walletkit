@@ -94,7 +94,7 @@ object CredentialPresentationManager {
     }
 
     fun continueCredentialPresentationFor(sessionId: String, did: String): CredentialPresentationSession {
-        val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
+        val session = sessionCache.getIfPresent(sessionId) ?: throw IllegalArgumentException("No session found for id $sessionId")
         session.sessionInfo.did = did
         session.sessionInfo.presentableCredentials = getPresentableCredentials(session)
         session.sessionInfo.availableIssuers = null
@@ -110,8 +110,8 @@ object CredentialPresentationManager {
     }
 
     fun fulfillPresentation(sessionId: String, selectedCredentials: List<PresentableCredential>): PresentationResponse {
-        val session = sessionCache.getIfPresent(sessionId) ?: throw Exception("No session found for id $sessionId")
-        val did = session.sessionInfo.did ?: throw Exception("Did not set for this session")
+        val session = sessionCache.getIfPresent(sessionId) ?: throw IllegalArgumentException("No session found for id $sessionId")
+        val did = session.sessionInfo.did ?: throw IllegalArgumentException("Did not set for this session")
 
         val myCredentials = Custodian.getService().listCredentials()
         val selectedCredentialIds = selectedCredentials.map { cred -> cred.credentialId }.toSet()
