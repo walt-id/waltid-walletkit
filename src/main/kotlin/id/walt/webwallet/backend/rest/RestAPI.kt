@@ -128,6 +128,7 @@ object RestAPI {
         exception(JsonParseException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(KlaxonException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(InvalidKeyException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(java.security.spec.InvalidKeySpecException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(TenantNotFoundException::class.java) { e, ctx -> ctx.reportRequestException(e) }
     }
 
