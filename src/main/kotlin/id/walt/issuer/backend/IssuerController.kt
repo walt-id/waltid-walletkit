@@ -20,7 +20,10 @@ import id.walt.signatory.rest.SignatoryController
 import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
+import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.context.WalletContextManager
+import id.walt.webwallet.backend.wallet.DidCreationRequest
+import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.OpenApiDocumentation
@@ -60,6 +63,17 @@ object IssuerController {
 
                     path("did") {
                         post("create", documented(DidController.createDocs().describeTenantId(), DidController::create))
+                        post("createAdvanced",
+                            documented(document().operation {
+                                it.summary("Create new DID")
+                                    .description("Creates and registers a DID. Currently the DID methods: key, web, ebsi (v1/v2) and iota are supported. For EBSI v1: a  bearer token is required.")
+                                    .operationId("createAdvanced").addTagsItem("Issuer Configuration").addTagsItem("Decentralized Identifiers")
+                            }
+                                .body<DidCreationRequest>()
+                                .result<String>("200"),
+                                WalletController::createDid
+                            )
+                        )
                         post("import", documented(DidController.importDocs().describeTenantId(), DidController::import))
                         get("list", documented(DidController.listDocs().describeTenantId(), DidController::list))
                         post("delete", documented(DidController.deleteDocs().describeTenantId(), DidController::delete))

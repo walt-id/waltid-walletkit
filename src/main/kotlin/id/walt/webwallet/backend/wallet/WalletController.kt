@@ -76,7 +76,7 @@ object WalletController {
                         post(
                             documented(document().operation {
                                 it.summary("Create new DID")
-                                    .description("Creates and registers a DID. Currently the DID methods: key, web and ebsi are supported. For EBSI: a  bearer token is required.")
+                                    .description("Creates and registers a DID. Currently the DID methods: key, web, ebsi (v1/v2) and iota are supported. For EBSI v1: a  bearer token is required.")
                                     .operationId("createDid").addTagsItem("DIDs")
                             }
                                 .body<DidCreationRequest>()
