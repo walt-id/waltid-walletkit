@@ -61,9 +61,11 @@ object MetacoRouter : Router {
         )
     private val tradeUseCase: TradeUseCase =
         TradeUseCaseImpl(
-            IntentRepositoryImpl(authService),
             tickerRepository,
-            IntentSignatureService()
+            RequestUseCaseImpl(
+                IntentRepositoryImpl(authService),
+                IntentSignatureService(),
+            ),
         )
     private val accountRouter = AccountRouter(AccountController(accountUseCase))
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))

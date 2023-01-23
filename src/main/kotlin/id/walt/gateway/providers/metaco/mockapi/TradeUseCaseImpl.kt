@@ -1,31 +1,30 @@
 package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
+import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.trades.TradeData
-import id.walt.gateway.dto.trades.OrderResult
-import id.walt.gateway.dto.trades.TradeValidationParameter
 import id.walt.gateway.usecases.TradeUseCase
 import java.util.*
 
 class TradeUseCaseImpl : TradeUseCase {
-    override fun sell(spend: TradeData, receive: TradeData): Result<OrderResult> = Result.success(getTradeData())
+    override fun sell(spend: TradeData, receive: TradeData): Result<RequestResult> = Result.success(getTradeData())
 
-    override fun buy(spend: TradeData, receive: TradeData): Result<OrderResult> = Result.success(getTradeData())
+    override fun buy(spend: TradeData, receive: TradeData): Result<RequestResult> = Result.success(getTradeData())
 
-    override fun send(parameter: TradeData): Result<OrderResult> = Result.success(getTradeData())
+    override fun send(send: TradeData): Result<RequestResult> = Result.success(getTradeData())
 
-    override fun validate(parameter: TradeValidationParameter): Result<OrderResult> =
+    override fun validate(parameter: TradeData): Result<RequestResult> =
         Result.success(getTradeValidation())
 
     private fun getTradeData() = (Common.getRandomInt(from = 0, to = 2) % 2 == 0).let {
-        OrderResult(
+        RequestResult(
             result = it,
             message = if (!it) "Error occurred." else UUID.randomUUID().toString()
         )
     }
 
     private fun getTradeValidation() = (Common.getRandomInt(from = 0, to = 2) % 2 == 0).let {
-        OrderResult(
+        RequestResult(
             result = it,
             message = if (!it) messages[Common.getRandomInt(0, messages.size)] else "Validation passed successfully."
         )
