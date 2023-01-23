@@ -1,7 +1,10 @@
 package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.accounts.AccountIdentifier
-import id.walt.gateway.dto.trades.*
+import id.walt.gateway.dto.requests.RequestResult
+import id.walt.gateway.dto.trades.SwapParameter
+import id.walt.gateway.dto.trades.TradeData
+import id.walt.gateway.dto.trades.TransferParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.http.Context
@@ -89,7 +92,7 @@ class TradeController(
 
     fun validate(ctx: Context) {
         val parameters = ctx.bodyAsClass<TransferParameter>()
-        tradeUseCase.validate(TradeValidationParameter(parameters.sender.domainId, parameters))
+        tradeUseCase.validate(TradeData(parameters, "Transfer"))
             .onSuccess {
                 ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
@@ -127,7 +130,7 @@ class TradeController(
         "        }<br/>" +
         "    }<br/>" +
         "}")
-    }.json<OrderResult>("200") { it.description("The sell trade details") }
+    }.json<RequestResult>("200") { it.description("The sell trade details") }
 
     fun buyDocs() = document().operation {
         it.summary("Returns the buy trade details").operationId("buy").addTagsItem("Trade Management")
@@ -157,7 +160,7 @@ class TradeController(
         "        }<br/>" +
         "    }<br/>" +
         "}")
-    }.json<OrderResult>("200") { it.description("The buy trade details") }
+    }.json<RequestResult>("200") { it.description("The buy trade details") }
 
     fun sendDocs() = document().operation {
         it.summary("Returns the send trade details").operationId("send").addTagsItem("Trade Management")
@@ -176,7 +179,7 @@ class TradeController(
                 "\"accountId\": \"{account-id}\"<br/>" +
                 "}<br/>" +
                 "}")
-    }.json<OrderResult>("200") { it.description("The send trade details") }
+    }.json<RequestResult>("200") { it.description("The send trade details") }
 
     fun validateDocs() = document().operation {
         it.summary("Returns the trade validation details").operationId("validate").addTagsItem("Trade Management")
@@ -195,5 +198,5 @@ class TradeController(
                 "\"accountId\": \"{account-id}\"<br/>" +
                 "}<br/>" +
                 "}")
-    }.json<OrderResult>("200") { it.description("The trade validation details") }
+    }.json<RequestResult>("200") { it.description("The trade validation details") }
 }
