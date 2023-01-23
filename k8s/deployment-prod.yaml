@@ -132,6 +132,12 @@ spec:
             items:
               - key: servercert.p12
                 path: servercert.p12
+        - name: metaco-key-secret
+          secret:
+            secretName: metaco-key-secret
+            items:
+              - key: privkey.pem
+                path: privkey.pem
         - name: ticker-ignore-configmap
           configMap:
             name: ticker-ignore-configmap
