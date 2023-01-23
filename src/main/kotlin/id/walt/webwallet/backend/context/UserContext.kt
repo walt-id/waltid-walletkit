@@ -1,9 +1,11 @@
 package id.walt.webwallet.backend.context
 
 import id.walt.services.context.Context
+import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.HKVStoreService
 import id.walt.services.keystore.KeyStoreService
 import id.walt.services.vcstore.VcStoreService
+import kotlin.io.path.deleteIfExists
 
 class UserContext(
     val contextId: String,
@@ -13,5 +15,13 @@ class UserContext(
 ) : Context {
     override fun toString(): String {
         return contextId
+    }
+
+    fun resetAllData() {
+        if(hkvStore is FileSystemHKVStore) {
+            hkvStore.configuration.dataDirectory.toFile().deleteRecursively()
+        } else {
+            throw Exception("Unsupported type of hkv store for data reset")
+        }
     }
 }
