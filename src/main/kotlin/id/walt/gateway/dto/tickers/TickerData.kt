@@ -14,7 +14,6 @@ data class TickerData(
     val imageUrl: String? = null,
     val decimals: Int,
     val symbol: String,
-    val maxFee: Long,
     val type: String,
     @Json(serializeNull = false)
     val address: String? = null,
