@@ -14,6 +14,7 @@ import id.walt.gateway.providers.metaco.restapi.address.AddressRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.balance.BalanceRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.domain.DomainRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.intent.IntentRepositoryImpl
+import id.walt.gateway.providers.metaco.restapi.ledger.LedgerRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.order.OrderRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.services.AuthSignatureService
@@ -27,7 +28,6 @@ import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.MultiCoinUseCaseImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
-import kotlinx.coroutines.channels.ticker
 import id.walt.gateway.providers.coingecko.CoinRepositoryImpl as CoingeckoImpl
 import id.walt.gateway.providers.rcb.CoinRepositoryImpl as RcbImpl
 
@@ -41,6 +41,7 @@ object MetacoRouter : Router {
     )
     private val tickerUseCase = TickerUseCaseImpl(
         tickerRepository,
+        LedgerRepositoryImpl(authService),
         coinUseCase,
         LogoUseCaseImpl()
     )

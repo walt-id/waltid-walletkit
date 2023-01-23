@@ -4,9 +4,14 @@ import id.walt.gateway.dto.AssetParameter
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.ValueWithChange
+import id.walt.gateway.dto.tickers.FeeData
 import id.walt.gateway.providers.metaco.CoinMapper.map
 import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.providers.metaco.repositories.LedgerRepository
 import id.walt.gateway.providers.metaco.repositories.TickerRepository
+import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.Fees
+import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.bitcoin.BitcoinFees
+import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.ethereum.EthereumFees
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC20LedgerProperties
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC721LedgerProperties
@@ -18,6 +23,7 @@ import id.walt.gateway.usecases.TickerUseCase
 
 class TickerUseCaseImpl(
     private val tickerRepository: TickerRepository,
+    private val ledgerRepository: LedgerRepository,
     private val coinUseCase: CoinUseCase,
     private val logoUseCase: LogoUseCase,
 ) : TickerUseCase {
@@ -29,6 +35,18 @@ class TickerUseCaseImpl(
         tickerRepository.findAll(emptyMap()).items.filter { !ProviderConfig.tickersIgnore.contains(it.data.id) }.map {
             buildTickerData(it, currency)
         }
+    }
+
+    override fun fee(id: String): Result<FeeData> = runCatching {
+        tickerRepository.findById(id).data.ledgerId.let {
+            getFeeData(ledgerRepository.fees(it))
+        }
+    }
+
+    private fun getFeeData(fees: Fees): FeeData = when (fees) {
+        is EthereumFees -> FeeData(fee = fees.medium.gasPrice)
+        is BitcoinFees -> FeeData(fee = fees.medium.satoshiPerVbyte)
+        else -> throw IllegalArgumentException("Unknown fees type")
     }
 
     private fun buildTickerData(ticker: Ticker, currency: String) = TickerData(
