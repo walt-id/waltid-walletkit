@@ -1,13 +1,11 @@
 package id.walt.gateway.usecases
 
+import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.trades.TradeData
-import id.walt.gateway.dto.trades.OrderResult
-import id.walt.gateway.dto.trades.TradeValidationParameter
 
 interface TradeUseCase {
-    fun sell(spend: TradeData, receive: TradeData): Result<OrderResult>
-    fun buy(spend: TradeData, receive: TradeData): Result<OrderResult>
-    fun send(parameter: TradeData): Result<OrderResult>
-
-    fun validate(parameter: TradeValidationParameter): Result<OrderResult>
+    fun sell(spend: TradeData, receive: TradeData): Result<RequestResult>
+    fun buy(spend: TradeData, receive: TradeData): Result<RequestResult>
+    fun send(send: TradeData): Result<RequestResult>
+    fun validate(parameter: TradeData): Result<RequestResult>
 }
