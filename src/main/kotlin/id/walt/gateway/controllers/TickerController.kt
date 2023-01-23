@@ -1,5 +1,6 @@
 package id.walt.gateway.controllers
 
+import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.FeeData
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
@@ -45,6 +46,16 @@ class TickerController(
             }
     }
 
+    fun validate(ctx: Context) {
+        val tickerId = ctx.pathParam("tickerId")
+        tickerUseCase.validate(tickerId)
+            .onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
+    }
+
     fun getDoc() = document().operation {
         it.summary("Returns the ticker data").operationId("get").addTagsItem("Ticker Management")
     }.json<TickerData>("200") { it.description("The ticker data") }
@@ -56,4 +67,8 @@ class TickerController(
     fun feeDoc() = document().operation {
         it.summary("Returns the ticker fee data").operationId("fee").addTagsItem("Ticker Management")
     }.json<FeeData>("200") { it.description("The ticker fee data") }
+
+    fun validateDoc() = document().operation {
+        it.summary("Returns the ticker validation request result").operationId("fee").addTagsItem("Ticker Management")
+    }.json<RequestResult>("200") { it.description("The ticker validation request result") }
 }
