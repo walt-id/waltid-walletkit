@@ -28,6 +28,8 @@ import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.config.WalletConfig
+import id.walt.webwallet.backend.context.UserContext
+import id.walt.webwallet.backend.context.WalletContextManager
 import io.ipfs.multibase.Multibase
 import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.BadRequestResponse
@@ -257,6 +259,7 @@ object WalletController {
                         .result<String>("200"), WalletController::detectOIDCRequestType
                     ), UserRole.AUTHORIZED)
                 }
+                post("resetUserData", documented(document().operation { it.summary("Reset all user data") }, WalletController::resetUserData), UserRole.AUTHORIZED)
             }
             path("siop") {
                 get(".well-known/openid-configuration", documented(
@@ -315,6 +318,10 @@ object WalletController {
                 ), UserRole.UNAUTHORIZED)
             }
         }
+
+    private fun resetUserData(context: Context) {
+        (WalletContextManager.currentContext as UserContext).resetAllData()
+    }
 
     private fun ebsiVersion(context: Context) {
         val did = context.queryParam("did") ?: throw BadRequestResponse("Missing did parameter")
