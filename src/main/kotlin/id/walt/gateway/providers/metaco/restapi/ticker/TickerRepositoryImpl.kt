@@ -5,6 +5,7 @@ import id.walt.gateway.providers.metaco.repositories.TickerRepository
 import id.walt.gateway.providers.metaco.restapi.BaseRestRepository
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
+import id.walt.gateway.providers.metaco.restapi.ticker.model.TickerList
 
 class TickerRepositoryImpl(
     override val authService: AuthService,
@@ -13,7 +14,7 @@ class TickerRepositoryImpl(
     private val detailEndpoint = "/v1/tickers/%s"
 
     override fun findAll(criteria: Map<String, String>): List<Ticker> =
-        findAllLoopPages(CommonHttp.buildUrl(baseUrl, listEndpoint), criteria)
+        findAllLoopPages<TickerList, Ticker>(CommonHttp.buildUrl(baseUrl, listEndpoint), criteria)
 
     override fun findById(tickerId: String) = CommonHttp.get<Ticker>(
         client,

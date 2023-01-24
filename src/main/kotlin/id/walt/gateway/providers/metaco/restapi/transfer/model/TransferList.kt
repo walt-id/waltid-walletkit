@@ -1,15 +1,15 @@
 package id.walt.gateway.providers.metaco.restapi.transfer.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
+import id.walt.gateway.providers.metaco.restapi.models.EntityList
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class TransferList(
-    val items: List<Transfer>,
-    val count: Int,
+    override val items: List<Transfer>,
+    override val count: Int,
     @Json(serializeNull = false)
-    val currentStartingAfter: String?,
+    override val currentStartingAfter: String?,
     @Json(serializeNull = false)
-    val nextStartingAfter: String?
-)
+    override val nextStartingAfter: String?
+) : EntityList<Transfer>()
