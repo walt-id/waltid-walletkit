@@ -18,7 +18,7 @@ abstract class BaseRestRepository(
     protected val baseUrl = ProviderConfig.gatewayUrl
     private val bearerTokenStorage = mutableListOf<BearerTokens>()
 
-    protected val client = HttpClient(CIO) {
+    val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json()
         }
@@ -38,12 +38,12 @@ abstract class BaseRestRepository(
         }
     }
 
-    protected fun <T> findAllLoopPages(url: String, criteria: Map<String, String>): List<T> = let {
+    inline fun <reified K: EntityList<T>, T> findAllLoopPages(url: String, criteria: Map<String, String>): List<T> = let {
         val list = mutableListOf<T>()
-        var entityList = CommonHttp.get<EntityList<T>>(client, url)
+        var entityList = CommonHttp.get<K>(client, url)
         do {
             list.addAll(entityList.items)
-            entityList = CommonHttp.get<EntityList<T>>(
+            entityList = CommonHttp.get<K>(
                 client,
                 String.format(
                     url,
