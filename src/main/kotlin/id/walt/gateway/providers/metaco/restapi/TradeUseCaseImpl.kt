@@ -9,6 +9,7 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.usecases.RequestUseCase
 import id.walt.gateway.usecases.TickerUseCase
 import id.walt.gateway.usecases.TradeUseCase
+import kotlinx.coroutines.channels.ticker
 
 class TradeUseCaseImpl(
     private val tickerUseCase: TickerUseCase,
@@ -26,7 +27,14 @@ class TradeUseCaseImpl(
 
     override fun send(send: TradeData): Result<RequestResult> = orderTrade(send)
 
-    override fun validate(parameter: TradeData): Result<RequestResult> = orderTrade(parameter, true)
+    override fun validate(parameter: TradeData): Result<RequestResult> = requestUseCase.validate(
+        RequestParameter(
+            payloadType = Payload.Types.CreateTransactionOrder.value,
+            targetDomainId = parameter.trade.sender.domainId,
+            data = parameter,
+            ledgerType = tickerUseCase.get(TickerParameter(parameter.trade.ticker)).getOrThrow().type
+        )
+    )
 
     private fun getPayloadType(ticker: TickerData) = when (ticker.kind) {
         "Contract" -> Payload.Types.CreateTransferOrder.value
