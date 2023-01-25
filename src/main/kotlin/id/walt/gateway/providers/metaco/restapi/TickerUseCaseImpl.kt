@@ -40,7 +40,7 @@ class TickerUseCaseImpl(
     }
 
     override fun list(currency: String): Result<List<TickerData>> = runCatching {
-        tickerRepository.findAll(emptyMap()).items.filter { !ProviderConfig.tickersIgnore.contains(it.data.id) }.map {
+        tickerRepository.findAll(emptyMap()).filter { !ProviderConfig.tickersIgnore.contains(it.data.id) }.map {
             buildTickerData(it, currency)
         }
     }

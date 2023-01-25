@@ -4,11 +4,11 @@ import com.beust.klaxon.Json
 import kotlinx.serialization.Serializable
 
 @Serializable
-abstract class EntityList<T> {
-    abstract val items: List<T>
-    abstract val count: Int
+data class EntityList<T>(
+    val items: List<T>,
+    val count: Int,
     @Json(serializeNull = false)
-    abstract val currentStartingAfter: String?
+    val currentStartingAfter: String? = null,
     @Json(serializeNull = false)
-    abstract val nextStartingAfter: String?
-}
+    val nextStartingAfter: String? = null,
+)
