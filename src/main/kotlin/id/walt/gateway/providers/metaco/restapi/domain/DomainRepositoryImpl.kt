@@ -13,13 +13,8 @@ class DomainRepositoryImpl(
     private val listEndpoint = "/v1/domains"
     private val detailEndpoint = "/v1/domains/%s"
 
-    override fun findAll(criteria: Map<String, String>): DomainList = CommonHttp.get<DomainList>(
-        client,
-        String.format(
-            CommonHttp.buildUrl(baseUrl, listEndpoint),
-            CommonHttp.buildQueryList(criteria)
-        )
-    )
+    override fun findAll(criteria: Map<String, String>): List<Domain> =
+        findAllLoopPages<DomainList, Domain>(CommonHttp.buildUrl(baseUrl, listEndpoint), criteria)
 
     override fun findById(domainId: String): Domain = CommonHttp.get<Domain>(
         client,

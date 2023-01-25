@@ -13,14 +13,8 @@ class AddressRepositoryImpl(
     private val listEndpoint = "/v1/domains/%s/accounts/%s/addresses"
     private val detailEndpoint = "/v1/domains/%s/accounts/%s/addresses/%s"
 
-    override fun findAll(domainId: String, accountId: String): AddressList = CommonHttp.get<AddressList>(
-        client,
-        String.format(
-            CommonHttp.buildUrl(baseUrl, listEndpoint),
-            domainId,
-            accountId
-        )
-    )
+    override fun findAll(domainId: String, accountId: String, criteria: Map<String, String>): List<Address> =
+        findAllLoopPages<AddressList, Address>(String.format(CommonHttp.buildUrl(baseUrl, listEndpoint), domainId, accountId), criteria)
 
     override fun findById(domainId: String, accountId: String, addressId: String): Address = CommonHttp.get<Address>(
         client,

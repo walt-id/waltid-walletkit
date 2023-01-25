@@ -13,10 +13,8 @@ class TickerRepositoryImpl(
     private val listEndpoint = "/v1/tickers"
     private val detailEndpoint = "/v1/tickers/%s"
 
-    override fun findAll(criteria: Map<String, String>) = CommonHttp.get<TickerList>(
-        client,
-        CommonHttp.buildUrl(baseUrl, listEndpoint)
-    )
+    override fun findAll(criteria: Map<String, String>): List<Ticker> =
+        findAllLoopPages<TickerList, Ticker>(CommonHttp.buildUrl(baseUrl, listEndpoint), criteria)
 
     override fun findById(tickerId: String) = CommonHttp.get<Ticker>(
         client,
