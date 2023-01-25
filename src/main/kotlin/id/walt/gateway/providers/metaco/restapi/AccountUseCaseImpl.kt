@@ -137,8 +137,8 @@ class AccountUseCaseImpl(
                 type = getTransactionOrderType(parameter.accountId, transaction),
                 status = getTransactionStatus(transaction),
                 price = ValueWithChange(
-                    Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
-                    Common.computeAmount(amount, ticker.decimals) * ticker.price.change
+                    Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.value,
+                    Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.change
                 ),
                 relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
             )
