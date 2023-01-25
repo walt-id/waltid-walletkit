@@ -100,23 +100,39 @@ class TickerUseCaseImpl(
         else -> throw IllegalArgumentException("Unknown fees type")
     }
 
-    private fun buildTickerData(ticker: Ticker, currency: String) = TickerData(
-        id = ticker.data.id,
-        kind = ticker.data.kind,
-        chain = ticker.data.ledgerId,
-        imageUrl = logoUseCase.get(AssetParameter(ticker.data.ledgerId, ticker.data.symbol?:ticker.data.ledgerDetails.type)).data,
-        name = ticker.data.name,
-        price = coinUseCase.metadata(ticker.map(currency)).fold(
-            onSuccess = {
-                ValueWithChange(it.price, it.change, currency)
-            }, onFailure = {
+    private fun buildTickerData(ticker: Ticker, currency: String) = coinUseCase.metadata(ticker.map(currency)).fold(
+        onSuccess = {
+            Pair(
+                ValueWithChange(it.askPrice, it.change, currency),
+                ValueWithChange(
+                    it.bidPrice ?: it.askPrice, it.change, currency
+                )
+            )
+        }, onFailure = {
+            Pair(
+                ValueWithChange(),
                 ValueWithChange()
-            }),
-        decimals = ticker.data.decimals ?: 0,
-        symbol = ticker.data.symbol ?: ticker.data.name,
-        type = ticker.data.ledgerDetails.type,
-        address = extractTickerAddress(ticker.data.ledgerDetails.properties)
-    )
+            )
+        }).let {
+        TickerData(
+            id = ticker.data.id,
+            kind = ticker.data.kind,
+            chain = ticker.data.ledgerId,
+            imageUrl = logoUseCase.get(
+                AssetParameter(
+                    ticker.data.ledgerId,
+                    ticker.data.symbol ?: ticker.data.ledgerDetails.type
+                )
+            ).data,
+            name = ticker.data.name,
+            askPrice = it.first,
+            bidPrice = it.second,
+            decimals = ticker.data.decimals ?: 0,
+            symbol = ticker.data.symbol ?: ticker.data.name,
+            type = ticker.data.ledgerDetails.type,
+            address = extractTickerAddress(ticker.data.ledgerDetails.properties)
+        )
+    }
 
     private fun extractTickerAddress(properties: LedgerProperties) = properties.let {
         when (it) {
