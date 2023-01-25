@@ -4,7 +4,7 @@ import com.beust.klaxon.Json
 import com.google.common.cache.CacheBuilder
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
-import id.walt.common.klaxonWithConverters
+import id.walt.common.KlaxonWithConverters
 import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.credentials.w3c.toVerifiablePresentation
 import id.walt.custodian.Custodian
@@ -50,7 +50,7 @@ data class PresentationResponse(
         fun fromSiopResponse(siopResp: SIOPv2Response, fulfilled: Boolean, rp_response: String?): PresentationResponse {
             return PresentationResponse(
                 OIDCUtils.toVpToken(siopResp.vp_token),
-                klaxonWithConverters.toJsonString(siopResp.presentation_submission),
+                KlaxonWithConverters.toJsonString(siopResp.presentation_submission),
                 siopResp.id_token,
                 siopResp.state, fulfilled, rp_response
             )
