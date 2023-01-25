@@ -7,7 +7,7 @@ import com.nimbusds.oauth2.sdk.util.URLUtils
 import com.nimbusds.openid.connect.sdk.OIDCScopeValue
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
-import id.walt.common.klaxonWithConverters
+import id.walt.common.KlaxonWithConverters
 import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.crypto.KeyAlgorithm
 import id.walt.custodian.Custodian
@@ -454,7 +454,7 @@ object WalletController {
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
         val did = ctx.queryParam("did") ?: throw BadRequestResponse("did not specified")
         ctx.contentType(ContentType.APPLICATION_JSON).result(
-            klaxonWithConverters.toJsonString(
+            KlaxonWithConverters.toJsonString(
                 CredentialPresentationManager.continueCredentialPresentationFor(
                     sessionId = sessionId,
                     did = did
@@ -466,7 +466,7 @@ object WalletController {
     fun fulfillPresentation(ctx: Context) {
         println("fulfillPresentation")
         val sessionId = ctx.queryParam("sessionId") ?: throw BadRequestResponse("sessionId not specified")
-        val selectedCredentials = ctx.body().let { klaxonWithConverters.parseArray<PresentableCredential>(it) }
+        val selectedCredentials = ctx.body().let { KlaxonWithConverters.parseArray<PresentableCredential>(it) }
             ?: throw BadRequestResponse("No selected credentials given")
 
         ctx.json(
@@ -562,7 +562,7 @@ object WalletController {
             ctx.status(HttpCode.BAD_REQUEST).result("Invalid or expired session id given")
             return
         }
-        ctx.contentType(ContentType.JSON).result(klaxonWithConverters.toJsonString(issuanceSession))
+        ctx.contentType(ContentType.JSON).result(KlaxonWithConverters.toJsonString(issuanceSession))
     }
 
     fun onboardGaiaX(ctx: Context) {
