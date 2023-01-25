@@ -1,15 +1,15 @@
 package id.walt.gateway.providers.metaco.restapi.order.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.order.model.Order
+import id.walt.gateway.providers.metaco.restapi.models.EntityList
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class OrderList(
-    val items: List<Order>,
-    val count: Int,
+    override val items: List<Order>,
+    override val count: Int,
     @Json(serializeNull = false)
-    val currentStartingAfter: String?,
+    override val currentStartingAfter: String?,
     @Json(serializeNull = false)
-    val nextStartingAfter: String?
-)
+    override val nextStartingAfter: String?
+) : EntityList<Order>()

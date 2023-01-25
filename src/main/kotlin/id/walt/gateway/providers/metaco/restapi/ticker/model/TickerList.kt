@@ -1,15 +1,15 @@
 package id.walt.gateway.providers.metaco.restapi.ticker.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
+import id.walt.gateway.providers.metaco.restapi.models.EntityList
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class TickerList(
-    val items: List<Ticker>,
-    val count: Int,
+    override val items: List<Ticker>,
+    override val count: Int,
     @Json(serializeNull = false)
-    val currentStartingAfter: String?,
+    override val currentStartingAfter: String?,
     @Json(serializeNull = false)
-    val nextStartingAfter: String?
-)
+    override val nextStartingAfter: String?
+) : EntityList<Ticker>()
