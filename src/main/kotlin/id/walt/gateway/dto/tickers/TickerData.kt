@@ -10,6 +10,7 @@ data class TickerData(
     val name: String,
     val kind: String,
     val chain: String,
+    val price: ValueWithChange,
     val askPrice: ValueWithChange,
     val bidPrice: ValueWithChange,
     val imageUrl: String? = null,
