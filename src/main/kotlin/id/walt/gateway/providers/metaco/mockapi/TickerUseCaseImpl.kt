@@ -28,6 +28,7 @@ class TickerUseCaseImpl : TickerUseCase {
             kind = it.second,
             symbol = it.third,
             chain = Common.getRandomString(10, 1),
+            price = getPrice(),
             askPrice = getPrice(),
             bidPrice = getPrice(),
             imageUrl = if (it.third == "eth") "https://cryptologos.cc/logos/ethereum-eth-logo.png" else "https://cryptologos.cc/logos/pax-gold-paxg-logo.png",

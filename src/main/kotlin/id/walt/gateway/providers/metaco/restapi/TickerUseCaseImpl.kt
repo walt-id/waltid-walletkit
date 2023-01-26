@@ -95,8 +95,8 @@ class TickerUseCaseImpl(
     )
 
     private fun getFeeData(fees: Fees): FeeData = when (fees) {
-        is EthereumFees -> FeeData(fee = fees.medium.gasPrice)
-        is BitcoinFees -> FeeData(fee = fees.medium.satoshiPerVbyte)
+        is EthereumFees -> FeeData(gasPrice = fees.high.gasPrice, level = "High")
+        is BitcoinFees -> FeeData(gasPrice = fees.high.satoshiPerVbyte, level = "High")
         else -> throw IllegalArgumentException("Unknown fees type")
     }
 
@@ -125,6 +125,7 @@ class TickerUseCaseImpl(
                 )
             ).data,
             name = ticker.data.name,
+            price = it.first,
             askPrice = it.first,
             bidPrice = it.second,
             decimals = ticker.data.decimals ?: 0,

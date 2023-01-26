@@ -92,7 +92,15 @@ class TradeController(
 
     fun validate(ctx: Context) {
         val parameters = ctx.bodyAsClass<TransferParameter>()
-        tradeUseCase.validate(TradeData(parameters, "Transfer"))
+        tradeUseCase.validate(TradeData(TransferParameter(
+            amount = parameters.amount,
+            ticker = parameters.ticker,
+            maxFee = parameters.maxFee,
+            sender = parameters.sender,
+            recipient = AccountIdentifier(
+                domainId = parameters.recipient.domainId.takeIf { it.isNotEmpty() }?:ProviderConfig.nostroDomainId,
+                accountId = parameters.recipient.accountId.takeIf { it.isNotEmpty() }?:ProviderConfig.nostroAccountId,
+            )),"Transfer"))
             .onSuccess {
                 ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
