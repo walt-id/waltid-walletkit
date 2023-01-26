@@ -7,9 +7,9 @@ data class FeeData(
     val gasPrice: String,
     val level: String = "Medium",
 ) {
-    val fee: String = when (level) {
-        "Medium" -> computeFee(72238U)
-        "High" -> computeFee(97888U)
+    val fee: String = when (level.lowercase()) {
+        "medium" -> computeFee(72238U)
+        "high" -> computeFee(97888U)
         else -> computeFee(21000U)
     }
 
