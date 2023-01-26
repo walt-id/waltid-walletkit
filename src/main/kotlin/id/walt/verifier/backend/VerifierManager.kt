@@ -63,9 +63,10 @@ abstract class VerifierManager : BaseService() {
         state: String? = null,
         redirectCustomUrlQuery: String = "",
         responseMode: ResponseMode = ResponseMode.FORM_POST,
-        presentationDefinitionByReference: Boolean = false
+        presentationDefinitionByReference: Boolean = false,
+        nonce: String? = null
     ): AuthorizationRequest {
-        val nonce = Base64URL.encode(convertUUIDToBytes(UUID.randomUUID())).toString()
+        val nonce = nonce ?: Base64URL.encode(convertUUIDToBytes(UUID.randomUUID())).toString()
         val requestId = state ?: nonce
         val redirectQuery = if (redirectCustomUrlQuery.isEmpty()) "" else "?$redirectCustomUrlQuery"
         val req = OIDC4VPService.createOIDC4VPRequest(
@@ -104,7 +105,8 @@ abstract class VerifierManager : BaseService() {
         redirectCustomUrlQuery: String = "",
         responseMode: ResponseMode = ResponseMode.FORM_POST,
         verificationCallbackUrl: String? = null,
-        presentationDefinitionByReference: Boolean = false
+        presentationDefinitionByReference: Boolean = false,
+        nonce: String? = null
     ): AuthorizationRequest {
         val request = when {
             schemaUris.isNotEmpty() -> newRequestBySchemaUris(
@@ -113,10 +115,11 @@ abstract class VerifierManager : BaseService() {
                 state,
                 redirectCustomUrlQuery,
                 responseMode,
-                presentationDefinitionByReference
+                presentationDefinitionByReference,
+                nonce
             )
 
-            else -> newRequestByVcTypes(walletUrl, vcTypes, state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference)
+            else -> newRequestByVcTypes(walletUrl, vcTypes, state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference, nonce)
         }
 
         if (verificationCallbackUrl != null) {
@@ -138,7 +141,8 @@ abstract class VerifierManager : BaseService() {
         state: String? = null,
         redirectCustomUrlQuery: String = "",
         responseMode: ResponseMode = ResponseMode.FORM_POST,
-        presentationDefinitionByReference: Boolean = false
+        presentationDefinitionByReference: Boolean = false,
+        nonce: String? = null
     ): AuthorizationRequest {
         return newRequest(
             walletUrl, PresentationDefinition(
@@ -149,7 +153,7 @@ abstract class VerifierManager : BaseService() {
                         schema = VCSchema(uri = schemaUri)
                     )
                 }.toList()
-            ), state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference
+            ), state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference, nonce
         )
     }
 
@@ -159,7 +163,8 @@ abstract class VerifierManager : BaseService() {
         state: String? = null,
         redirectCustomUrlQuery: String = "",
         responseMode: ResponseMode = ResponseMode.FORM_POST,
-        presentationDefinitionByReference: Boolean = false
+        presentationDefinitionByReference: Boolean = false,
+        nonce: String? = null
     ): AuthorizationRequest {
         return newRequest(
             walletUrl, PresentationDefinition(
@@ -179,7 +184,7 @@ abstract class VerifierManager : BaseService() {
                         )
                     )
                 }.toList()
-            ), state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference
+            ), state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference, nonce
         )
     }
 
