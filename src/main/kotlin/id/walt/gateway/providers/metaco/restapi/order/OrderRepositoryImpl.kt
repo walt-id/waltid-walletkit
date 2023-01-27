@@ -10,7 +10,7 @@ import id.walt.gateway.providers.metaco.restapi.services.AuthService
 class OrderRepositoryImpl(
     override val authService: AuthService
 ) : OrderRepository, BaseRestRepository(authService) {
-    private val listEndpoint = "/v1/domains/%s/transactions/orders%s"
+    private val listEndpoint = "/v1/domains/%s/transactions/orders"
     private val detailEndpoint = "/v1/domains/%s/transactions/orders/%s"
 
     override fun findAll(domainId: String, criteria: Map<String, String>): List<Order> =
