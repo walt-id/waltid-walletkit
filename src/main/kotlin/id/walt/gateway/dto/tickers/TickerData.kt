@@ -11,10 +11,11 @@ data class TickerData(
     val kind: String,
     val chain: String,
     val price: ValueWithChange,
+    val askPrice: ValueWithChange,
+    val bidPrice: ValueWithChange,
     val imageUrl: String? = null,
     val decimals: Int,
     val symbol: String,
-    val maxFee: Long,
     val type: String,
     @Json(serializeNull = false)
     val address: String? = null,

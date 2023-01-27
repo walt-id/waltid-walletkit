@@ -67,7 +67,7 @@ class AccountUseCaseImpl(
                 "sortOrder" to "DESC",
                 parameter.tickerId?.let { "tickerId" to it } ?: Pair("", ""),
             )
-        ).items.filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId }.map {
+        ).filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId }.map {
             val ticker = getTickerData(parameter.tickerId ?: "")
             buildTransactionData(parameter, it.key!!, it.value, ticker)
         }
@@ -78,7 +78,7 @@ class AccountUseCaseImpl(
             val transfers = transferRepository.findAll(
                 parameter.domainId,
                 mapOf("transactionId" to transaction.id)
-            ).items
+            )
             val ticker = getTickerData(transfers.first().tickerId)
             val amount = computeAmount(transfers)
             TransactionTransferData(
@@ -98,7 +98,7 @@ class AccountUseCaseImpl(
 
     private fun getProfileAccounts(profile: ProfileParameter): List<Account> = let {
         val callback: (domainId: String, id: String) -> List<Account> = getProfileFetchCallback(profile.id)
-        domainRepository.findAll(emptyMap()).items.map {
+        domainRepository.findAll(emptyMap()).map {
             runCatching { callback(it.data.id, profile.id) }.getOrDefault(emptyList())
         }.filter {
             it.isNotEmpty()
@@ -109,7 +109,7 @@ class AccountUseCaseImpl(
         if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
             listOf(accountRepository.findById(domainId, accountId))
         } else {
-            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId")).items
+            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId"))
         }
     }
 
@@ -137,8 +137,8 @@ class AccountUseCaseImpl(
                 type = getTransactionOrderType(parameter.accountId, transaction),
                 status = getTransactionStatus(transaction),
                 price = ValueWithChange(
-                    Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
-                    Common.computeAmount(amount, ticker.decimals) * ticker.price.change
+                    Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.value,
+                    Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.change
                 ),
                 relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
             )
@@ -155,9 +155,8 @@ class AccountUseCaseImpl(
     private fun getAddresses(domainId: String, transferParties: List<TransferParty>) = transferParties.flatMap {
         if (it is AddressTransferParty) listOf(it.address)
         else (it as AccountTransferParty).addressDetails?.let { listOf(it.address) } ?: addressRepository.findAll(
-            domainId,
-            it.accountId
-        ).items.map { it.address }
+            domainId, it.accountId, emptyMap()
+        ).map { it.address }
     }
 
     private fun buildProfileData(parameter: AccountParameter, account: Account) = AccountData(
