@@ -11,11 +11,11 @@ import io.javalin.plugin.openapi.dsl.documented
 object MultitenancyController {
     val routes
         get() = path("multitenancy") {
-            get("listTenants", documented(
+            get("listLoadedTenants", documented(
                 document().operation {
-                    it.summary("List multitenancy registered tenants")
+                    it.summary("List multitenancy *LOADED* tenants")
                         .addTagsItem("Multitenancy")
-                        .operationId("listTenants")
+                        .operationId("listLoadedTenants")
                 }
                     .json<List<TenantId>>("200"),
                 MultitenancyController::listTenants
