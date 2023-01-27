@@ -54,7 +54,7 @@ object WalletController {
                     path("list") {
                         get(
                             documented(document().operation {
-                                it.summary("List DIDs").operationId("listDids").addTagsItem("DIDs")
+                                it.summary("List DIDs").operationId("listDids").addTagsItem("Wallet / DIDs")
                             }
                                 .jsonArray<String>("200"),
                                 WalletController::listDids
@@ -62,15 +62,16 @@ object WalletController {
                         )
                     }
                     path("ebsiVersion") {
-                        get(documented(document().operation {
-                            it.summary("Get version of did:ebsi").addTagsItem("DIDs")
-                        }.queryParam<String>("did").result<Int>("200"), WalletController::ebsiVersion),
+                        get(
+                            documented(document().operation {
+                                it.summary("Get version of did:ebsi").addTagsItem("Wallet / DIDs")
+                            }.queryParam<String>("did").result<Int>("200"), WalletController::ebsiVersion),
                             UserRole.AUTHORIZED
                         )
                     }
                     // load DID
                     get("{id}", documented(document().operation {
-                        it.summary("Load DID").operationId("load").addTagsItem("DIDs")
+                        it.summary("Load DID").operationId("load").addTagsItem("Wallet / DIDs")
                     }
                         .json<String>("200"), DidController::load), UserRole.AUTHORIZED)
                     // create new DID
@@ -79,7 +80,7 @@ object WalletController {
                             documented(document().operation {
                                 it.summary("Create new DID")
                                     .description("Creates and registers a DID. Currently the DID methods: key, web, ebsi (v1/v2) and iota are supported. For EBSI v1: a  bearer token is required.")
-                                    .operationId("createDid").addTagsItem("DIDs")
+                                    .operationId("createDid").addTagsItem("Wallet / DIDs")
                             }
                                 .body<DidCreationRequest>()
                                 .result<String>("200"),
@@ -132,7 +133,7 @@ object WalletController {
                     post("startPresentation", documented(
                         document().operation {
                             it.summary("Start a presentation session from an OIDC URL, that could be scanned from a QR code (cross device)")
-                                .addTagsItem("Presentation")
+                                .addTagsItem("Wallet / Presentation")
                                 .operationId("startPresentation")
                         }
                             .body<CrossDeviceIssuanceInitiationRequest>()
@@ -141,9 +142,9 @@ object WalletController {
                     ), UserRole.AUTHORIZED)
                     get("continue", documented(
                         document().operation {
-                            it.summary("Continue presentation requested by verifer, returns CredentialPresentationSession")
+                            it.summary("Continue presentation requested by verifier, returns CredentialPresentationSession")
                                 .operationId("continuePresentation")
-                                .addTagsItem("Presentation")
+                                .addTagsItem("Wallet / Presentation")
                         }
                             .queryParam<String>("sessionId")
                             .queryParam<String>("did")
@@ -153,9 +154,9 @@ object WalletController {
                     // called by wallet UI
                     post("fulfill", documented(
                         document().operation {
-                            it.summary("Fullfil credentials presentation with selected credentials")
+                            it.summary("Fulfill credentials presentation with selected credentials")
                                 .operationId("fulfillPresentation")
-                                .addTagsItem("Presentation")
+                                .addTagsItem("Wallet / Presentation")
                         }
                             .queryParam<String>("sessionId")
                             .body<List<PresentableCredential>>()
@@ -167,7 +168,7 @@ object WalletController {
                     get(
                         "list", documented(
                             document().operation {
-                                it.summary("List known credential issuers").addTagsItem("Issuers")
+                                it.summary("List known credential issuer (portals)").addTagsItem("Wallet / Issuers")
                                     .operationId("listIssuers")
                             },
                             WalletController::listIssuers
@@ -176,7 +177,7 @@ object WalletController {
                     )
                     get("metadata", documented(
                         document().operation {
-                            it.summary("get issuer meta data").addTagsItem("Issuers").operationId("issuerMeta")
+                            it.summary("View credential issuer (portal) meta data").addTagsItem("Wallet / Issuers").operationId("issuerMeta")
                         }
                             .queryParam<String>("issuerId"),
                         WalletController::issuerMeta),
@@ -185,7 +186,7 @@ object WalletController {
                 path("issuance") {
                     post("start", documented(
                         document().operation {
-                            it.summary("Initialize credential issuance from selected issuer").addTagsItem("Issuance")
+                            it.summary("Initialize credential issuance from selected issuer").addTagsItem("Wallet / Issuance")
                                 .operationId("initIssuance")
                         }
                             .body<CredentialIssuanceRequest>()
@@ -194,7 +195,7 @@ object WalletController {
                     ), UserRole.AUTHORIZED)
                     post("startForPresentation", documented(
                         document().operation {
-                            it.summary("Initialize credential issuance from selected issuer").addTagsItem("Issuance")
+                            it.summary("Initialize credential issuance from selected issuer").addTagsItem("Wallet / Issuance")
                                 .operationId("initIssuance")
                         }
                             .body<CredentialIssuance4PresentationRequest>()
@@ -204,7 +205,7 @@ object WalletController {
                     // called by wallet UI
                     get("info", documented(
                         document().operation {
-                            it.summary("Get issuance session info, including issued credentials").addTagsItem("Issuance")
+                            it.summary("Get issuance session info, including issued credentials").addTagsItem("Wallet / Issuance")
                                 .operationId("issuanceSessionInfo")
                         }
                             .queryParam<String>("sessionId")
@@ -214,7 +215,7 @@ object WalletController {
                     post("startIssuerInitiatedIssuance", documented(
                         document().operation {
                             it.summary("Start an issuer-initiated issuance session from an OIDC URL, that could be scanned from a QR code (cross device)")
-                                .addTagsItem("Issuance")
+                                .addTagsItem("Wallet / Issuance")
                                 .operationId("startIssuerInitiatedIssuance")
                         }
                             .body<CrossDeviceIssuanceInitiationRequest>()
@@ -224,7 +225,7 @@ object WalletController {
                     get("continueIssuerInitiatedIssuance", documented(
                         document().operation {
                             it.summary("Continue an issuer-initiated issuance session, after user accepted the issuance request")
-                                .addTagsItem("Issuance")
+                                .addTagsItem("Wallet / Issuance")
                                 .operationId("continueIssuerInitiatedIssuance")
                         }
                             .queryParam<String>("sessionId")
@@ -240,7 +241,7 @@ object WalletController {
                             documented(document().operation {
                                 it.summary("Onboard legal person")
                                     .description("Creates a gaia-x compliant credential from the given self-description.")
-                                    .operationId("onboardGaiaX").addTagsItem("DIDs")
+                                    .operationId("onboardGaiaX").addTagsItem("Wallet / DID Onboarding")
                             }
                                 .body<String>()
                                 .result<String>("200"),
@@ -253,13 +254,17 @@ object WalletController {
                     get("detectRequestType", documented(document().operation {
                         it.summary("Detect OIDC request type")
                             .description("Detect OIDC request type: initiate-issuance, presentation")
-                            .operationId("detectRequestType").addTagsItem("OIDC")
+                            .operationId("detectRequestType").addTagsItem("Wallet / OIDC")
                     }
                         .queryParam<String>("uri")
                         .result<String>("200"), WalletController::detectOIDCRequestType
                     ), UserRole.AUTHORIZED)
                 }
-                post("resetUserData", documented(document().operation { it.summary("Reset all user data") }, WalletController::resetUserData), UserRole.AUTHORIZED)
+                post(
+                    "resetUserData",
+                    documented(document().operation { it.summary("Reset all user data").addTagsItem("Wallet / Account") }, WalletController::resetUserData),
+                    UserRole.AUTHORIZED
+                )
             }
             path("siop") {
                 get(".well-known/openid-configuration", documented(
@@ -325,7 +330,7 @@ object WalletController {
 
     private fun ebsiVersion(context: Context) {
         val did = context.queryParam("did") ?: throw BadRequestResponse("Missing did parameter")
-        if(DidUrl.isDidUrl(did) && DidUrl.from(did).method == "ebsi") {
+        if (DidUrl.isDidUrl(did) && DidUrl.from(did).method == "ebsi") {
             context.result(Multibase.decode(DidUrl.from(did).identifier).first().toInt().toString())
         } else {
             throw BadRequestResponse("Invalid did:ebsi")
@@ -371,8 +376,12 @@ object WalletController {
                 }
 
                 val did =
-                    DidService.create(req.method, keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id, DidService.DidEbsiOptions(version = req.didEbsiVersion))
-                if(req.didEbsiVersion == 1) {
+                    DidService.create(
+                        req.method,
+                        keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id,
+                        DidService.DidEbsiOptions(version = req.didEbsiVersion)
+                    )
+                if (req.didEbsiVersion == 1) {
                     EssifClient.onboard(did, req.didEbsiBearerToken)
                     EssifClient.authApi(did)
                     DidEbsiService.getService().registerDid(did, did)
