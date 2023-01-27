@@ -10,11 +10,16 @@ import id.walt.gateway.providers.metaco.restapi.transaction.model.TransactionLis
 class TransactionRepositoryImpl(
     override val authService: AuthService
 ) : TransactionRepository, BaseRestRepository(authService) {
-    private val listEndpoint = "/v1/domains/%s/transactions%s"
+    private val listEndpoint = "/v1/domains/%s/transactions"
     private val detailEndpoint = "/v1/domains/%s/transactions/%s"
 
     override fun findAll(domainId: String, criteria: Map<String, String>): List<Transaction> =
-        findAllLoopPages<TransactionList, Transaction>(String.format(CommonHttp.buildUrl(baseUrl, listEndpoint), domainId), criteria)
+        findAllLoopPages<TransactionList, Transaction>(
+            String.format(
+                CommonHttp.buildUrl(baseUrl, listEndpoint),
+                domainId
+            ), criteria
+        )
 
     override fun findById(domainId: String, transactionId: String) = CommonHttp.get<Transaction>(
         client,

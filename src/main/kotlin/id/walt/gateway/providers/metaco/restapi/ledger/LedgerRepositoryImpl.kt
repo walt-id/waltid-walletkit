@@ -18,11 +18,8 @@ class LedgerRepositoryImpl(
     override fun findAll(criteria: Map<String, String>): List<Ledger> =
         findAllLoopPages<LedgerList, Ledger>(CommonHttp.buildUrl(baseUrl, listEndpoint), criteria)
 
-    override fun findById(id: String): Ledger = CommonHttp.get<Ledger>(
-        client, String.format(
-            CommonHttp.buildUrl(baseUrl, detailEndpoint), id
-        )
-    )
+    override fun findById(id: String): Ledger =
+        CommonHttp.get<Ledger>(client, String.format(CommonHttp.buildUrl(baseUrl, detailEndpoint), id))
 
     override fun fees(id: String): Fees = CommonHttp.get<Fees>(
         client, String.format(
