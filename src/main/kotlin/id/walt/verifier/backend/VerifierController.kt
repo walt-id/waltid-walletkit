@@ -191,7 +191,7 @@ object VerifierController {
     private fun getPresentationDefinitionFromCache(context: Context) {
         val id = context.pathParam("id")
         val pd = VerifierTenant.state.presentationDefinitionCache.getIfPresent(id) ?: throw BadRequestResponse("Presentation definition id invalid or expired")
-        context.contentType(ContentType.APPLICATION_JSON).result(KlaxonWithConverters.toJsonString(pd))
+        context.contentType(ContentType.APPLICATION_JSON).result(KlaxonWithConverters().toJsonString(pd))
     }
 
     private fun getConfiguration(context: Context) {
@@ -329,7 +329,7 @@ object VerifierController {
             ctx.status(HttpCode.FORBIDDEN)
             return
         }
-        ctx.contentType(ContentType.JSON).result(KlaxonWithConverters.toJsonString(result))
+        ctx.contentType(ContentType.JSON).result(KlaxonWithConverters().toJsonString(result))
     }
 
     fun getProtectedData(ctx: Context) {

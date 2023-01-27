@@ -50,7 +50,7 @@ data class PresentationResponse(
         fun fromSiopResponse(siopResp: SIOPv2Response, fulfilled: Boolean, rp_response: String?): PresentationResponse {
             return PresentationResponse(
                 OIDCUtils.toVpToken(siopResp.vp_token),
-                KlaxonWithConverters.toJsonString(siopResp.presentation_submission),
+                KlaxonWithConverters().toJsonString(siopResp.presentation_submission),
                 siopResp.id_token,
                 siopResp.state, fulfilled, rp_response
             )

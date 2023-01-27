@@ -128,7 +128,7 @@ class SIOPv2Test : BaseApiTest() {
         val presentationSessionInfo = client.get("$url/api/wallet/presentation/continue?sessionId=$sessionId&did=$did") {
             header("Authorization", "Bearer ${userInfo.token}")
         }.bodyAsText().let {
-            KlaxonWithConverters.parse<CredentialPresentationSessionInfo>(it)
+            KlaxonWithConverters().parse<CredentialPresentationSessionInfo>(it)
         }
         presentationSessionInfo!!.id shouldBe sessionId
         presentationSessionInfo.did shouldBe did
@@ -142,8 +142,8 @@ class SIOPv2Test : BaseApiTest() {
         val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
-            setBody(KlaxonWithConverters.parseArray<Map<String, Any>?>(KlaxonWithConverters.toJsonString(presentableCredentials)))
-        }.bodyAsText().let { KlaxonWithConverters.parse<PresentationResponse>(it) }
+            setBody(KlaxonWithConverters().parseArray<Map<String, Any>?>(KlaxonWithConverters().toJsonString(presentableCredentials)))
+        }.bodyAsText().let { KlaxonWithConverters().parse<PresentationResponse>(it) }
         
         presentationResponse!!.id_token shouldBe null
         presentationResponse.vp_token shouldNotBe null
@@ -164,7 +164,7 @@ class SIOPv2Test : BaseApiTest() {
         val redirectToVerifierUILocation = redirectToVerifierUIResponse.headers["Location"]
         val accessToken = URLUtils.parseParameters(URI.create(redirectToVerifierUILocation!!).query).get("access_token")!!.first()
 
-        val verificationResult = client.get("${VerifierTenant.config.verifierApiUrl}/auth?access_token=$accessToken") {}.bodyAsText().let { KlaxonWithConverters.parse<SIOPResponseVerificationResult>(it) }
+        val verificationResult = client.get("${VerifierTenant.config.verifierApiUrl}/auth?access_token=$accessToken") {}.bodyAsText().let { KlaxonWithConverters().parse<SIOPResponseVerificationResult>(it) }
         verificationResult!!.isValid shouldBe true
         verificationResult.subject shouldBe did
         verificationResult.vps shouldHaveSize 1
