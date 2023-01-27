@@ -147,12 +147,12 @@ class AccountUseCaseImpl(
     private fun getRelatedAccount(domainId: String, isSender: Boolean, transfers: List<Transfer>) =
         transfers.filter { it.kind == "Transfer" }.let {
             if (isSender) {
-                getAddresses(domainId, it.mapNotNull { it.recipient })
+                getTransferAddresses(domainId, it.mapNotNull { it.recipient })
             } else
-                getAddresses(domainId, it.flatMap { it.senders })
+                getTransferAddresses(domainId, it.flatMap { it.senders })
         }.firstOrNull() ?: "Unknown"
 
-    private fun getAddresses(domainId: String, transferParties: List<TransferParty>) = transferParties.flatMap {
+    private fun getTransferAddresses(domainId: String, transferParties: List<TransferParty>) = transferParties.flatMap {
         if (it is AddressTransferParty) listOf(it.address)
         else (it as AccountTransferParty).addressDetails?.let { listOf(it.address) } ?: addressRepository.findAll(
             domainId, it.accountId, emptyMap()
@@ -162,7 +162,7 @@ class AccountUseCaseImpl(
     private fun buildProfileData(parameter: AccountParameter, account: Account) = AccountData(
         accountIdentifier = AccountIdentifier(account.data.domainId, account.data.id),
         alias = account.data.alias,
-        addresses = emptyList(),
+        addresses = addressRepository.findAll(account.data.domainId, account.data.id, emptyMap()).map { it.address },
         tickers = getAccountTickers(parameter).map { it.ticker.id }
     )
 
