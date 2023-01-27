@@ -3,7 +3,7 @@ package id.walt.verifier.backend
 import com.nimbusds.oauth2.sdk.ResponseMode
 import id.walt.auditor.VerificationPolicy
 import id.walt.auditor.dynamic.DynamicPolicyArg
-import id.walt.common.klaxonWithConverters
+import id.walt.common.KlaxonWithConverters
 import id.walt.issuer.backend.IssuerConfig
 import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.SIOPv2Response
@@ -191,7 +191,7 @@ object VerifierController {
     private fun getPresentationDefinitionFromCache(context: Context) {
         val id = context.pathParam("id")
         val pd = VerifierTenant.state.presentationDefinitionCache.getIfPresent(id) ?: throw BadRequestResponse("Presentation definition id invalid or expired")
-        context.contentType(ContentType.APPLICATION_JSON).result(klaxonWithConverters.toJsonString(pd))
+        context.contentType(ContentType.APPLICATION_JSON).result(KlaxonWithConverters.toJsonString(pd))
     }
 
     private fun getConfiguration(context: Context) {
@@ -329,7 +329,7 @@ object VerifierController {
             ctx.status(HttpCode.FORBIDDEN)
             return
         }
-        ctx.contentType(ContentType.JSON).result(klaxonWithConverters.toJsonString(result))
+        ctx.contentType(ContentType.JSON).result(KlaxonWithConverters.toJsonString(result))
     }
 
     fun getProtectedData(ctx: Context) {

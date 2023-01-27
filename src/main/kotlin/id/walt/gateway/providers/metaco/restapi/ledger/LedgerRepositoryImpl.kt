@@ -15,11 +15,8 @@ class LedgerRepositoryImpl(
     private val detailEndpoint = "/v1/ledgers/%s"
     private val feesEndpoint = "/v1/ledgers/%s/fees"
 
-    override fun findAll(criteria: Map<String, String>): LedgerList = CommonHttp.get<LedgerList>(
-        client, String.format(
-            CommonHttp.buildUrl(baseUrl, listEndpoint), CommonHttp.buildQueryList(criteria)
-        )
-    )
+    override fun findAll(criteria: Map<String, String>): List<Ledger> =
+        findAllLoopPages<LedgerList, Ledger>(CommonHttp.buildUrl(baseUrl, listEndpoint), criteria)
 
     override fun findById(id: String): Ledger = CommonHttp.get<Ledger>(
         client, String.format(

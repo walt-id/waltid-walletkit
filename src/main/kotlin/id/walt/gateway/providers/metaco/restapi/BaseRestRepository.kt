@@ -1,6 +1,8 @@
 package id.walt.gateway.providers.metaco.restapi
 
+import id.walt.gateway.CommonHttp
 import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.providers.metaco.restapi.models.EntityList
 import id.walt.gateway.providers.metaco.restapi.services.AuthService
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -16,7 +18,7 @@ abstract class BaseRestRepository(
     protected val baseUrl = ProviderConfig.gatewayUrl
     private val bearerTokenStorage = mutableListOf<BearerTokens>()
 
-    protected val client = HttpClient(CIO) {
+    val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json()
         }
@@ -34,6 +36,22 @@ abstract class BaseRestRepository(
                 }
             }
         }
+    }
+
+    inline fun <reified K: EntityList<T>, T> findAllLoopPages(url: String, criteria: Map<String, String>): List<T> = let {
+        val list = mutableListOf<T>()
+        var entityList = CommonHttp.get<K>(client, url)
+        do {
+            list.addAll(entityList.items)
+            entityList = CommonHttp.get<K>(
+                client,
+                String.format(
+                    url,
+                    CommonHttp.buildQueryList(criteria.plus("startingAfter" to entityList.nextStartingAfter!!))
+                )
+            )
+        } while (entityList.nextStartingAfter == null)
+        list
     }
 
     private fun fetchAuthToken(): BearerTokens {

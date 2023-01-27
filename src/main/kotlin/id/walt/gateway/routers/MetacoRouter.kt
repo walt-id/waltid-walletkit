@@ -39,11 +39,16 @@ object MetacoRouter : Router {
         SimpleCoinUseCaseImpl(CoingeckoImpl(), SimplePriceParser()),
         RBITokensMockUseCaseImpl(),
     )
+    private val requestUseCase = RequestUseCaseImpl(
+        IntentRepositoryImpl(authService),
+        IntentSignatureService(),
+    )
     private val tickerUseCase = TickerUseCaseImpl(
         tickerRepository,
         LedgerRepositoryImpl(authService),
         coinUseCase,
-        LogoUseCaseImpl()
+        LogoUseCaseImpl(),
+        requestUseCase,
     )
     private val accountUseCase: AccountUseCase =
         AccountUseCaseImpl(
@@ -61,11 +66,8 @@ object MetacoRouter : Router {
         )
     private val tradeUseCase: TradeUseCase =
         TradeUseCaseImpl(
-            tickerRepository,
-            RequestUseCaseImpl(
-                IntentRepositoryImpl(authService),
-                IntentSignatureService(),
-            ),
+            tickerUseCase,
+            requestUseCase,
         )
     private val accountRouter = AccountRouter(AccountController(accountUseCase))
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))
