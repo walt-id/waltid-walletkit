@@ -362,7 +362,7 @@ object IssuerController {
             ?: throw ForbiddenResponse("Invalid or unknown access token")
 
         val credentialRequest =
-            KlaxonWithConverters.parse<CredentialRequest>(ctx.body())
+            KlaxonWithConverters().parse<CredentialRequest>(ctx.body())
                 ?: throw BadRequestResponse("Could not parse credential request body")
 
         val credential = IssuerManager.fulfillIssuanceSession(session, credentialRequest)
@@ -372,7 +372,7 @@ object IssuerController {
         }
         val credObj = credential.toVerifiableCredential()
         ctx.contentType(ContentType.JSON).result(
-            KlaxonWithConverters.toJsonString(
+            KlaxonWithConverters().toJsonString(
                 CredentialResponse(
                     if (credObj.jwt != null) "jwt_vc" else "ldp_vc",
                     credential.toVerifiableCredential()
