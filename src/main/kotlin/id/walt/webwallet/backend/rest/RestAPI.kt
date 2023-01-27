@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import id.walt.gateway.routers.GatewayRouter
 import id.walt.issuer.backend.IssuerController
+import id.walt.multitenancy.MultitenancyController
 import id.walt.multitenancy.Tenant.TenantNotFoundException
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.verifier.backend.VerifierController
@@ -45,6 +46,7 @@ object RestAPI {
             WalletController.routes
             DidWebRegistryController.routes
             GatewayRouter.routes()
+            MultitenancyController.routes
         }
         path("verifier-api") {
             VerifierController.routes
