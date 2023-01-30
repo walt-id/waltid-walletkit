@@ -3,7 +3,7 @@ package id.walt.gateway.providers.metaco.restapi.intent.builders.payload
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.providers.metaco.restapi.intent.builders.parameters.ParameterBuilder
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.TransactionOrderPayload
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.OrderTransactionTypeCustomProperties
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPropertiesModel
 import java.util.*
 
 class TransactionOrderPayloadBuilder(
@@ -12,7 +12,7 @@ class TransactionOrderPayloadBuilder(
     override fun build(data: TradeData) = TransactionOrderPayload(
         id = UUID.randomUUID().toString(),
         accountId = data.trade.sender.accountId,
-        customProperties = OrderTransactionTypeCustomProperties(data.type),
+        customProperties = CustomPropertiesModel(transactionType = data.type),
         parameters = ParameterBuilder.getBuilder(parametersType).build(data.trade),
     )
 }

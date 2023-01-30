@@ -1,6 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model.payload
 
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomProperties
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPropertiesModel
 import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 import kotlinx.serialization.Serializable
 
@@ -10,5 +10,5 @@ class TransactionOrderPayload(
     val accountId: String,
     val parameters: Parameters,
     val description: String? = null,
-    val customProperties: CustomProperties,
+    val customProperties: CustomPropertiesModel,
 ) : Payload(Types.CreateTransactionOrder.value)
