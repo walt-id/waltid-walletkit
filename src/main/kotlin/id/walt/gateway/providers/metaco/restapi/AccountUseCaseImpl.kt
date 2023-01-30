@@ -21,7 +21,7 @@ import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionOrderTypeCustomProperties
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.OrderTransactionTypeCustomProperties
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
@@ -171,7 +171,7 @@ class AccountUseCaseImpl(
             runCatching {
                 orderRepository.findById(it.domainId, it.id).data
             }.fold(onSuccess = {
-                (it.metadata.customProperties as? TransactionOrderTypeCustomProperties)?.transactionType
+                (it.metadata.customProperties as? OrderTransactionTypeCustomProperties)?.transactionType
                     ?: transaction.relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }
                         ?.let { "Receive" } ?: "Outgoing"
             }, onFailure = {
