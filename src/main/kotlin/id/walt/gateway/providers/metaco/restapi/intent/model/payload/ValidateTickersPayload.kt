@@ -1,9 +1,8 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model.payload
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomProperties
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPropertiesModel
 import id.walt.gateway.providers.metaco.restapi.ticker.model.LedgerDetails
-import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 
 class ValidateTickersPayload(
     val tickers: List<TickerData>,
@@ -21,6 +20,6 @@ class ValidateTickersPayload(
         val lock: String,
         @Json(serializeNull = false)
         val description: String? = null,
-        val customProperties: CustomProperties
+        val customProperties: CustomPropertiesModel
     )
 }
