@@ -11,8 +11,8 @@ interface PayloadBuilder<T : PayloadData> {
 
     companion object {
         fun <T : PayloadData> create(parameter: PayloadParameter<T>): Payload = when (parameter.type) {
-            "v0_CreateTransactionOrder" -> TransactionOrderPayloadBuilder(parameter.parametersType!!).build(parameter.data as TradeData)
-            "v0_CreateTransferOrder" -> TransferOrderPayloadBuilder().build(parameter.data as TradeData)
+            "v0_CreateTransactionOrder" -> TransactionOrderPayloadBuilder(parameter.parametersType, parameter.additionalInfo).build(parameter.data as TradeData)
+            "v0_CreateTransferOrder" -> TransferOrderPayloadBuilder(parameter.additionalInfo).build(parameter.data as TradeData)
             "v0_ValidateTickers" -> ValidateTickersPayloadBuilder().build(parameter.data as TickerPayloadData)
             else -> throw IllegalArgumentException("Unknown type: ${parameter.type}")
         }

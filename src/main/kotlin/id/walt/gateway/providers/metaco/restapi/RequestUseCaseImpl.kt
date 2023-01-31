@@ -22,15 +22,15 @@ class RequestUseCaseImpl(
     private val intentSignatureService: SignatureService<NoSignatureIntent>,
 ) : RequestUseCase {
 
-    override fun create(parameter: RequestParameter): Result<RequestResult> =
-        createIntentRequest(parameter.payloadType, parameter.targetDomainId, parameter.data, parameter.ledgerType)
+    override fun create(parameter: RequestParameter, additionalInfo: Map<String, String>): Result<RequestResult> =
+        createIntentRequest(parameter.payloadType, parameter.targetDomainId, parameter.data, parameter.ledgerType, additionalInfo)
 
     override fun validate(parameter: RequestParameter): Result<RequestResult> = runCatching {
         intentRepository.validate(
             parameter.targetDomainId, PayloadBuilder.create(
                 PayloadParameter(
                     type = parameter.payloadType,
-                    parametersType = parameter.ledgerType,
+                    parametersType = parameter.ledgerType ?: "",
                     data = parameter.data,
                 )
             )
@@ -46,7 +46,8 @@ class RequestUseCaseImpl(
         payloadType: String,
         targetDomainId: String,
         data: T,
-        ledgerType: String? = null
+        ledgerType: String? = null,
+        additionalInfo: Map<String, String>,
     ) = runCatching {
         IntentBuilder.build(
             IntentParameter(
@@ -56,8 +57,9 @@ class RequestUseCaseImpl(
             ), PayloadBuilder.create(
                 PayloadParameter(
                     type = payloadType,
-                    parametersType = ledgerType,
                     data = data,
+                    parametersType = ledgerType ?: "",
+                    additionalInfo = additionalInfo,
                 )
             )
         ).let { intent ->

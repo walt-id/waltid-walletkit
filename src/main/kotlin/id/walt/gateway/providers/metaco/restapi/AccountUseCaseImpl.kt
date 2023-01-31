@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi
 
+import com.beust.klaxon.Klaxon
 import id.walt.gateway.Common
 import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.TransferData
@@ -21,6 +22,8 @@ import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
+import id.walt.gateway.providers.metaco.restapi.transaction.model.OrderReference
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
@@ -107,7 +110,11 @@ class AccountUseCaseImpl(
     private fun getProfileFetchCallback(id: String): (domainId: String, accountId: String) -> List<Account> = { domainId, accountId ->
         if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
             listOf(accountRepository.findById(domainId, accountId))
-        } else {
+        } else if(Regex("[0-9]{2}").matches(id)){
+            accountRepository.findAll(domainId, emptyMap()).filter {
+                it.data.alias.equals(id)
+            }
+        }else {
             accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId"))
         }
     }
@@ -135,13 +142,27 @@ class AccountUseCaseImpl(
                 ticker = ticker,
                 type = getTransactionOrderType(parameter.accountId, transaction),
                 status = getTransactionStatus(transaction),
-                price = ValueWithChange(
-                    Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.value,
-                    Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.change
-                ),
+                price = getTransactionPrice(amount, ticker.decimals, ticker.price.value, ticker.price.change, transaction.orderReference),
                 relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
             )
         }
+
+    private fun getTransactionPrice(
+        amount: String,
+        decimals: Int,
+        price: Double,
+        change: Double,
+        orderReference: OrderReference? = null,
+    ) = orderReference?.let {
+        orderRepository.findById(it.domainId, it.id).data.metadata.customProperties["transactionProperties"]?.let{
+            Klaxon().parse<TransactionCustomProperties>(it)?.let{
+                ValueWithChange(it.value.toDoubleOrNull() ?: .0, it.change.toDoubleOrNull() ?: .0, it.currency)
+            }
+        }
+    } ?: ValueWithChange(
+        Common.computeAmount(amount, decimals) * price,
+        Common.computeAmount(amount, decimals) * change
+    )
 
     private fun getRelatedAccount(domainId: String, isSender: Boolean, transfers: List<Transfer>) =
         transfers.filter { it.kind == "Transfer" }.let {
@@ -171,7 +192,9 @@ class AccountUseCaseImpl(
                 orderRepository.findById(it.domainId, it.id).data
             }.fold(onSuccess = {
                 transaction.relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }
-                    ?.let { "Receive" } ?: it.metadata.customProperties.transactionType ?: "Outgoing"
+                    ?.let { "Receive" } ?: it.metadata.customProperties["transactionProperties"]?.let {
+                    Klaxon().parse<TransactionCustomProperties>(it)?.type
+                } ?: "Outgoing"
             }, onFailure = {
                 "Unknown"
             })

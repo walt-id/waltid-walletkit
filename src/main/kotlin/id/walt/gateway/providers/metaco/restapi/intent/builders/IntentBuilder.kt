@@ -6,7 +6,6 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.Intent
 import id.walt.gateway.providers.metaco.restapi.intent.model.NoSignatureIntent
 import id.walt.gateway.providers.metaco.restapi.intent.model.Request
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPropertiesModel
 import java.util.*
 
 object IntentBuilder {
@@ -17,7 +16,7 @@ object IntentBuilder {
             targetDomainId = parameter.targetDomainId,
             id = UUID.randomUUID().toString(),
             payload = payload,
-            customProperties = CustomPropertiesModel(),
+            customProperties = emptyMap(),
             type = parameter.type,
         )
     )
