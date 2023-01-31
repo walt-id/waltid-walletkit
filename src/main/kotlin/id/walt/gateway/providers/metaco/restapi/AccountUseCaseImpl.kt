@@ -142,7 +142,7 @@ class AccountUseCaseImpl(
                 ticker = ticker,
                 type = getTransactionOrderType(parameter.accountId, transaction),
                 status = getTransactionStatus(transaction),
-                price = getTransactionPrice(amount, ticker.decimals, ticker.bidPrice.value, ticker.bidPrice.change, transaction.orderReference),
+                price = getTransactionPrice(amount, ticker.decimals, ticker.price.value, ticker.price.change, transaction.orderReference),
                 relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
             )
         }

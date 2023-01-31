@@ -1,7 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model.payload
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPropertiesModel
 import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 import kotlinx.serialization.Serializable
 

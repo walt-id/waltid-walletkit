@@ -124,7 +124,7 @@ class TickerUseCaseImpl(
                 )
             ).data,
             name = ticker.data.name,
-            price = it.first,
+            price = it.second,
             askPrice = it.first,
             bidPrice = it.second,
             decimals = ticker.data.decimals ?: 0,
