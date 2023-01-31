@@ -54,9 +54,9 @@ class TradeUseCaseImpl(
                         ticker.type,
                     ),
                     mapOf(
-                        "value" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.bidPrice.value).toString(),
-                        "change" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.bidPrice.change).toString(),
-                        "currency" to ticker.bidPrice.currency
+                        "value" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.price.value).toString(),
+                        "change" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.price.change).toString(),
+                        "currency" to ticker.price.currency
                     )
                 )
             },

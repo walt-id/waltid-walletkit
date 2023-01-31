@@ -59,7 +59,7 @@ class AccountUseCaseImpl(
             relatedAccount = "0x${Common.getRandomString(40, 2)}",
             amount = Common.getRandomString(3, 0),
             ticker = it,
-            price = it.askPrice,
+            price = it.price,
             type = listOf("Transfer", "Sell", "Buy", "Receive")[Common.getRandomInt(to = 4)],
             status = getTransactionStatus(),
             date = getDate(),
