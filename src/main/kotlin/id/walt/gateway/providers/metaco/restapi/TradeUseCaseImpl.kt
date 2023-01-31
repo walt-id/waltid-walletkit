@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi
 
+import id.walt.gateway.Common
 import id.walt.gateway.dto.requests.RequestParameter
 import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerData
@@ -9,7 +10,6 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.usecases.RequestUseCase
 import id.walt.gateway.usecases.TickerUseCase
 import id.walt.gateway.usecases.TradeUseCase
-import kotlinx.coroutines.channels.ticker
 
 class TradeUseCaseImpl(
     private val tickerUseCase: TickerUseCase,
@@ -52,6 +52,11 @@ class TradeUseCaseImpl(
                         data.trade.sender.domainId,
                         data,
                         ticker.type,
+                    ),
+                    mapOf(
+                        "value" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.bidPrice.value).toString(),
+                        "change" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.bidPrice.change).toString(),
+                        "currency" to ticker.bidPrice.currency
                     )
                 )
             },
