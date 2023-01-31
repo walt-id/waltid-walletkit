@@ -11,9 +11,9 @@ data class BalanceData(
     val ticker: TickerData,
 ) {
     val price: ValueWithChange = ValueWithChange(
-        Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.value,
-        Common.computeAmount(amount, ticker.decimals) * ticker.askPrice.change,
-        ticker.askPrice.currency
+        Common.computeAmount(amount, ticker.decimals) * ticker.price.value,
+        Common.computeAmount(amount, ticker.decimals) * ticker.price.change,
+        ticker.price.currency
     )
 
 }
