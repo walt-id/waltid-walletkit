@@ -17,7 +17,6 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.payload.ValidateTic
 import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.Fees
 import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.bitcoin.BitcoinFees
 import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.ethereum.EthereumFees
-import id.walt.gateway.providers.metaco.restapi.models.customproperties.CustomPropertiesModel
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC20LedgerProperties
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC721LedgerProperties
@@ -91,7 +90,7 @@ class TickerUseCaseImpl(
         symbol = this.data.symbol,
         ledgerDetails = this.data.ledgerDetails,
         lock = this.data.lock,
-        customProperties = CustomPropertiesModel()
+        customProperties = emptyMap()
     )
 
     private fun getFeeData(fees: Fees): FeeData = when (fees) {
