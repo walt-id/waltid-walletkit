@@ -14,6 +14,7 @@ sealed class Payload(
         CreateTransactionOrder("v0_CreateTransactionOrder"),
         CreateTransferOrder("v0_CreateTransferOrder"),
         ValidateTickers("v0_ValidateTickers"),
+        ReleaseQuarantinedTransfers("v0_ReleaseQuarantinedTransfers"),
     }
 }
 

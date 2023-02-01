@@ -1,12 +1,16 @@
 package id.walt.gateway.providers.metaco.restapi
 
 import id.walt.gateway.Common
+import id.walt.gateway.dto.QuarantineTransferPayloadData
+import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.requests.RequestParameter
 import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.trades.TradeData
+import id.walt.gateway.providers.metaco.repositories.TransferRepository
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
+import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
 import id.walt.gateway.usecases.RequestUseCase
 import id.walt.gateway.usecases.TickerUseCase
 import id.walt.gateway.usecases.TradeUseCase
@@ -14,6 +18,7 @@ import id.walt.gateway.usecases.TradeUseCase
 class TradeUseCaseImpl(
     private val tickerUseCase: TickerUseCase,
     private val requestUseCase: RequestUseCase,
+    private val transferRepository: TransferRepository,
 ) : TradeUseCase {
     override fun sell(spend: TradeData, receive: TradeData): Result<RequestResult> =
         orderTrade(spend).also {
@@ -46,6 +51,7 @@ class TradeUseCaseImpl(
         runCatching { tickerUseCase.get(TickerParameter(data.trade.ticker)).getOrThrow() }.fold(
             onSuccess = { ticker ->
                 if (!dryRun) tickerUseCase.validate(data.trade.ticker)//TODO: check for success and proceed accordingly
+                orderReleaseQuarantine(data.trade.sender)
                 requestUseCase.create(
                     RequestParameter(
                         getPayloadType(ticker),
@@ -64,4 +70,26 @@ class TradeUseCaseImpl(
                 Result.failure(it)
             }
         )
+
+    private fun orderReleaseQuarantine(account: AccountIdentifier) = runCatching {
+        transferRepository.findAll(account.domainId, mapOf("accountId" to account.accountId, "quarantined" to "true"))
+            .filter {
+                it.senders.none {
+                    (it as? AccountTransferParty)?.accountId == account.accountId
+                }
+            }.takeIf {
+            it.isNotEmpty()
+        }?.let {
+            requestUseCase.create(
+                RequestParameter(
+                    payloadType = Payload.Types.ReleaseQuarantinedTransfers.value,
+                    targetDomainId = account.domainId,
+                    data = QuarantineTransferPayloadData(
+                        accountId = account.accountId,
+                        transfers = it.map { it.id },
+                    )
+                )
+            )
+        } ?: Result.success(RequestResult(true, "Nothing to release from quarantine"))
+    }
 }
