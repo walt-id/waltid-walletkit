@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.builders.payload
 
+import id.walt.gateway.dto.QuarantineTransferPayloadData
 import id.walt.gateway.dto.intents.PayloadData
 import id.walt.gateway.dto.intents.PayloadParameter
 import id.walt.gateway.dto.tickers.TickerPayloadData
@@ -14,6 +15,7 @@ interface PayloadBuilder<T : PayloadData> {
             "v0_CreateTransactionOrder" -> TransactionOrderPayloadBuilder(parameter.parametersType, parameter.additionalInfo).build(parameter.data as TradeData)
             "v0_CreateTransferOrder" -> TransferOrderPayloadBuilder(parameter.additionalInfo).build(parameter.data as TradeData)
             "v0_ValidateTickers" -> ValidateTickersPayloadBuilder().build(parameter.data as TickerPayloadData)
+            "v0_ReleaseQuarantinedTransfers" -> ReleaseQuarantinedTransfersPayloadBuilder().build(parameter.data as QuarantineTransferPayloadData)
             else -> throw IllegalArgumentException("Unknown type: ${parameter.type}")
         }
     }
