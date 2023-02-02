@@ -65,9 +65,7 @@ class AccountController(
         val domainId = ctx.pathParam("domainId")
         val transactionId = ctx.pathParam("transactionId")
         accountUseCase.transaction(
-            TransactionParameter(
-                domainId, transactionId, mapOf("accountId" to accountId)
-            )
+            TransactionParameter(domainId, accountId, transactionId)
         ).onSuccess {
             ctx.json(it)
         }.onFailure {

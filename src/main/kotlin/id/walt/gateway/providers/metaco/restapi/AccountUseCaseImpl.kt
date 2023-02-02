@@ -79,7 +79,7 @@ class AccountUseCaseImpl(
         transactionRepository.findById(parameter.domainId, parameter.transactionId).let { transaction ->
             val transfers = transferRepository.findAll(
                 parameter.domainId,
-                mapOf("transactionId" to transaction.id)
+                mapOf("transactionId" to parameter.transactionId, "accountId" to parameter.accountId)
             )
             val ticker = getTickerData(transfers.first().tickerId)
             val amount = computeAmount(transfers)
@@ -91,7 +91,7 @@ class AccountUseCaseImpl(
                     TransferData(
                         amount = it.value,
                         type = it.kind,
-                        address = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
+                        address = getRelatedAccount(parameter.domainId, parameter.accountId, transfers),
                     )
                 }
             )
@@ -143,7 +143,7 @@ class AccountUseCaseImpl(
                 type = getTransactionOrderType(parameter.accountId, transaction),
                 status = getTransactionStatus(transaction),
                 price = getTransactionPrice(amount, ticker.decimals, ticker.price.value, ticker.price.change, transaction.orderReference),
-                relatedAccount = getRelatedAccount(parameter.domainId, transaction.orderReference != null, transfers),
+                relatedAccount = getRelatedAccount(parameter.domainId, parameter.accountId, transfers),
             )
         }
 
@@ -164,18 +164,23 @@ class AccountUseCaseImpl(
         Common.computeAmount(amount, decimals) * change
     )
 
-    private fun getRelatedAccount(domainId: String, isSender: Boolean, transfers: List<Transfer>) =
-        transfers.filter { it.kind == "Transfer" }.let {
-            if (isSender) {
-                getTransferAddresses(domainId, it.mapNotNull { it.recipient })
-            } else
-                getTransferAddresses(domainId, it.flatMap { it.senders })
-        }.firstOrNull() ?: "Unknown"
+    private fun getRelatedAccount(domainId: String, accountId: String, transfers: List<Transfer>) = let {
+        val filtered = transfers.filter { it.kind == "Transfer" }
+        filtered.flatMap { it.senders }.takeIf {
+            it.any { (it as? AccountTransferParty)?.accountId == accountId }
+        }?.let {
+            filtered.mapNotNull { it.recipient }
+        } ?: let {
+            filtered.flatMap { it.senders }
+        }
+    }.let {
+        getTransferAddresses(domainId, it)
+    }.firstOrNull() ?: "Unknown"
 
     private fun getTransferAddresses(domainId: String, transferParties: List<TransferParty>) = transferParties.flatMap {
         if (it is AddressTransferParty) listOf(it.address)
         else (it as AccountTransferParty).addressDetails?.let { listOf(it.address) } ?: addressRepository.findAll(
-            domainId, it.accountId, emptyMap()
+            it.domainId, it.accountId, emptyMap()
         ).map { it.address }
     }
 
