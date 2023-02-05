@@ -74,8 +74,8 @@ class AccountUseCaseImpl(
                 parameter.tickerId?.let { "tickerId" to it } ?: Pair("", ""),
             )
         ).filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId!! }.map {
-            val transaction = transactions[it.key]!!.first()
-            val order = orders[transaction.orderReference?.id]?.first()
+            val transaction = transactions[it.key]?.first()
+            val order = orders[transaction?.orderReference?.id]?.first()
             buildTransactionData(
                 parameter,
                 tickerData ?: getTickerData(it.value.first().tickerId),
@@ -138,20 +138,20 @@ class AccountUseCaseImpl(
         transfers.filter { it.kind == "Transfer" }.map { it.value.toLongOrNull() ?: 0 }
             .fold(0L) { acc, d -> acc + d }.toString()
 
-    private fun getTransactionStatus(transaction: Transaction) =
-        transaction.ledgerTransactionData?.ledgerStatus ?: transaction.processing?.status ?: "Unknown"
+    private fun getTransactionStatus(transaction: Transaction?) =
+        transaction?.ledgerTransactionData?.ledgerStatus ?: transaction?.processing?.status ?: "Unknown"
 
     private fun buildTransactionData(
         parameter: TransactionListParameter,
         tickerData: TickerData,
         transfers: List<Transfer>,
-        transaction: Transaction,
+        transaction: Transaction?,
         order: Order?,
     ) = let {
         val amount = computeAmount(transfers)
         TransactionData(
-            id = transaction.id,
-            date = transaction.registeredAt,
+            id = transaction?.id ?: "",
+            date = transaction?.registeredAt ?: transfers.first().registeredAt,
             amount = amount,
             ticker = tickerData,
             type = getTransactionOrderType(parameter.accountId, transaction, order),
@@ -211,9 +211,9 @@ class AccountUseCaseImpl(
         tickers = getAccountTickers(parameter).map { it.ticker.id }
     )
 
-    private fun getTransactionOrderType(accountId: String, transaction: Transaction, order: Order? = null) =
+    private fun getTransactionOrderType(accountId: String, transaction: Transaction?, order: Order? = null) =
         order?.data?.let {
-            transaction.relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }
+            transaction?.relatedAccounts?.filter { it.id == accountId }?.none { it.sender }?.takeIf { it }
                 ?.let { "Receive" } ?: it.metadata.customProperties["transactionProperties"]?.let {
                 Klaxon().parse<TransactionCustomProperties>(it)?.type
             } ?: "Outgoing"
