@@ -9,8 +9,8 @@ data:
       "issuerApiUrl": "https://issuer.cheqd.walt-test.cloud/issuer-api/default",
       "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
-        "walt.id": {
-          "id": "walt.id",
+        "waltid": {
+          "id": "waltid",
           "url": "https://wallet.cheqd.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
@@ -23,8 +23,8 @@ data:
       "verifierUiUrl": "https://verifier.cheqd.walt-test.cloud",
       "verifierApiUrl": "https://verifier.cheqd.walt-test.cloud/verifier-api/default",
       "wallets": {
-        "walt.id": {
-          "id": "walt.id",
+        "waltid": {
+          "id": "waltid",
           "url": "https://wallet.cheqd.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
@@ -38,8 +38,8 @@ data:
       "walletUiUrl": "https://wallet.cheqd.walt-test.cloud",
       "walletApiUrl": "https://wallet.cheqd.walt-test.cloud/api",
       "issuers": {
-        "walt.id": {
-          "id": "walt.id",
+        "waltid": {
+          "id": "waltid",
           "url": "https://issuer.cheqd.walt-test.cloud/issuer-api/default/oidc",
           "description": "walt.id Issuer Portal"
         },

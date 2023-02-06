@@ -69,6 +69,7 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:2.2.1")
     implementation("io.ktor:ktor-client-cio:2.2.1")
     implementation("io.ktor:ktor-client-logging:2.2.1")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks.withType<KotlinCompile> {
@@ -115,4 +116,12 @@ publishing {
             }
         }
     }
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "16"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "16"
 }

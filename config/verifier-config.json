@@ -4,8 +4,8 @@
   "additionalPolicies": [
   ],
   "wallets": {
-    "walt.id": {
-      "id": "walt.id",
+    "waltid": {
+      "id": "waltid",
       "url": "http://localhost:3000",
       "presentPath": "api/siop/initiatePresentation/",
       "receivePath" : "api/siop/initiateIssuance/",
