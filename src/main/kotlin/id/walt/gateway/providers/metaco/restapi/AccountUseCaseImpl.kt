@@ -23,6 +23,7 @@ import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
+import id.walt.gateway.providers.metaco.restapi.order.model.Order
 import id.walt.gateway.providers.metaco.restapi.transaction.model.OrderReference
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
@@ -62,6 +63,9 @@ class AccountUseCaseImpl(
     }
 
     override fun transactions(parameter: TransactionListParameter): Result<List<TransactionData>> = runCatching {
+        val tickerData = parameter.tickerId?.let { getTickerData(it) }
+        val transactions = transactionRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.id }
+        val orders = orderRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.data.id }
         transferRepository.findAll(
             parameter.domainId, mapOf(
                 "accountId" to parameter.accountId,
@@ -69,9 +73,16 @@ class AccountUseCaseImpl(
                 "sortOrder" to "DESC",
                 parameter.tickerId?.let { "tickerId" to it } ?: Pair("", ""),
             )
-        ).filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId }.map {
-            val ticker = getTickerData(parameter.tickerId ?: "")
-            buildTransactionData(parameter, it.key!!, it.value, ticker)
+        ).filter { !it.transactionId.isNullOrEmpty() }.groupBy { it.transactionId!! }.map {
+            val transaction = transactions[it.key]?.first()
+            val order = orders[transaction?.orderReference?.id]?.first()
+            buildTransactionData(
+                parameter,
+                tickerData ?: getTickerData(it.value.first().tickerId),
+                it.value,
+                transaction,
+                order
+            )
         }
     }
 
@@ -91,7 +102,7 @@ class AccountUseCaseImpl(
                     TransferData(
                         amount = it.value,
                         type = it.kind,
-                        address = getRelatedAccount(parameter.domainId, parameter.accountId, transfers),
+                        address = getRelatedAccount(parameter.accountId, transfers),
                     )
                 }
             )
@@ -127,35 +138,44 @@ class AccountUseCaseImpl(
         transfers.filter { it.kind == "Transfer" }.map { it.value.toLongOrNull() ?: 0 }
             .fold(0L) { acc, d -> acc + d }.toString()
 
-    private fun getTransactionStatus(transaction: Transaction) =
-        transaction.ledgerTransactionData?.ledgerStatus ?: transaction.processing?.status ?: "Unknown"
+    private fun getTransactionStatus(transaction: Transaction?) =
+        transaction?.ledgerTransactionData?.ledgerStatus ?: transaction?.processing?.status ?: "Unknown"
 
-    private fun buildTransactionData(parameter: TransactionListParameter, transactionId: String, transfers: List<Transfer>, tickerData: TickerData? = null) =
-        let {
-            val transaction = transactionRepository.findById(parameter.domainId, transactionId)
-            val ticker = tickerData ?: getTickerData(parameter.tickerId ?: transfers.first().tickerId)
-            val amount = computeAmount(transfers)
-            TransactionData(
-                id = transaction.id,
-                date = transaction.registeredAt,
-                amount = amount,
-                ticker = ticker,
-                type = getTransactionOrderType(parameter.accountId, transaction),
-                status = getTransactionStatus(transaction),
-                price = getTransactionPrice(amount, ticker.decimals, ticker.price.value, ticker.price.change, transaction.orderReference),
-                relatedAccount = getRelatedAccount(parameter.domainId, parameter.accountId, transfers),
-            )
-        }
+    private fun buildTransactionData(
+        parameter: TransactionListParameter,
+        tickerData: TickerData,
+        transfers: List<Transfer>,
+        transaction: Transaction?,
+        order: Order?,
+    ) = let {
+        val amount = computeAmount(transfers)
+        TransactionData(
+            id = transaction?.id ?: "",
+            date = transaction?.registeredAt ?: transfers.first().registeredAt,
+            amount = amount,
+            ticker = tickerData,
+            type = getTransactionOrderType(parameter.accountId, transaction, order),
+            status = getTransactionStatus(transaction),
+            price = getTransactionPrice(
+                amount,
+                tickerData.decimals,
+                tickerData.price.value,
+                tickerData.price.change,
+                order,
+            ),
+            relatedAccount = getRelatedAccount(parameter.accountId, transfers),
+        )
+    }
 
     private fun getTransactionPrice(
         amount: String,
         decimals: Int,
         price: Double,
         change: Double,
-        orderReference: OrderReference? = null,
-    ) = orderReference?.let {
-        orderRepository.findById(it.domainId, it.id).data.metadata.customProperties["transactionProperties"]?.let{
-            Klaxon().parse<TransactionCustomProperties>(it)?.let{
+        order: Order? = null,
+    ) = order?.let {
+        it.data.metadata.customProperties["transactionProperties"]?.let {
+            Klaxon().parse<TransactionCustomProperties>(it)?.let {
                 ValueWithChange(it.value.toDoubleOrNull() ?: .0, it.change.toDoubleOrNull() ?: .0, it.currency)
             }
         }
@@ -164,7 +184,7 @@ class AccountUseCaseImpl(
         Common.computeAmount(amount, decimals) * change
     )
 
-    private fun getRelatedAccount(domainId: String, accountId: String, transfers: List<Transfer>) = let {
+    private fun getRelatedAccount(accountId: String, transfers: List<Transfer>) = let {
         val filtered = transfers.filter { it.kind == "Transfer" }
         filtered.flatMap { it.senders }.takeIf {
             it.any { (it as? AccountTransferParty)?.accountId == accountId }
@@ -174,10 +194,10 @@ class AccountUseCaseImpl(
             filtered.flatMap { it.senders }
         }
     }.let {
-        getTransferAddresses(domainId, it)
+        getTransferAddresses(it)
     }.firstOrNull() ?: "Unknown"
 
-    private fun getTransferAddresses(domainId: String, transferParties: List<TransferParty>) = transferParties.flatMap {
+    private fun getTransferAddresses(transferParties: List<TransferParty>) = transferParties.flatMap {
         if (it is AddressTransferParty) listOf(it.address)
         else (it as AccountTransferParty).addressDetails?.let { listOf(it.address) } ?: addressRepository.findAll(
             it.domainId, it.accountId, emptyMap()
@@ -191,18 +211,12 @@ class AccountUseCaseImpl(
         tickers = getAccountTickers(parameter).map { it.ticker.id }
     )
 
-    private fun getTransactionOrderType(accountId: String, transaction: Transaction) =
-        transaction.orderReference?.let {
-            runCatching {
-                orderRepository.findById(it.domainId, it.id).data
-            }.fold(onSuccess = {
-                transaction.relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }
-                    ?.let { "Receive" } ?: it.metadata.customProperties["transactionProperties"]?.let {
-                    Klaxon().parse<TransactionCustomProperties>(it)?.type
-                } ?: "Outgoing"
-            }, onFailure = {
-                "Unknown"
-            })
+    private fun getTransactionOrderType(accountId: String, transaction: Transaction?, order: Order? = null) =
+        order?.data?.let {
+            transaction?.relatedAccounts?.filter { it.id == accountId }?.none { it.sender }?.takeIf { it }
+                ?.let { "Receive" } ?: it.metadata.customProperties["transactionProperties"]?.let {
+                Klaxon().parse<TransactionCustomProperties>(it)?.type
+            } ?: "Outgoing"
         } ?: "Receive"
 }
 

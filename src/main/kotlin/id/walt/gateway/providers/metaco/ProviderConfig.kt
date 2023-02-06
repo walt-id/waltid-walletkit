@@ -17,6 +17,7 @@ object ProviderConfig {
     val nostroAccountId: String = System.getenv("NOSTRO_ACCOUNT_ID") ?: ""
     val nostroDomainId: String = System.getenv("NOSTRO_DOMAIN_ID") ?: ""
     private val tickerIgnorePath: String = System.getenv("TICKER_IGNORE_PATH") ?: ""
+    val preApprovedTransferAmount: String = System.getenv("PRE_APPROVED_TRANSFER_AMOUNT") ?: "0"
 
     val tickersIgnore: List<String> by lazy {
         runCatching { File(tickerIgnorePath).readLines() }.getOrElse { emptyList() }

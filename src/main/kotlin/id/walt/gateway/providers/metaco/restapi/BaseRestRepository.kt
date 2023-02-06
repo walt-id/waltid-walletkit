@@ -43,10 +43,9 @@ abstract class BaseRestRepository(
         var entityList = CommonHttp.get<K>(client, url.plus(CommonHttp.buildQueryList(criteria)))
         do {
             list.addAll(entityList.items)
-            entityList = CommonHttp.get<K>(
-                client,
-                url.plus(CommonHttp.buildQueryList(criteria.plus("startingAfter" to entityList.nextStartingAfter!!)))
-            )
+            entityList.nextStartingAfter?.let{
+                entityList = CommonHttp.get<K>(client, url.plus(CommonHttp.buildQueryList(criteria.plus("startingAfter" to it))))
+            }
         } while (entityList.nextStartingAfter != null)
         list
     }
