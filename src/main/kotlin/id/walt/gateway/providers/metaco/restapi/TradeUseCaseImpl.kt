@@ -8,6 +8,7 @@ import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.trades.TradeData
+import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.TransferRepository
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
@@ -74,22 +75,24 @@ class TradeUseCaseImpl(
     private fun orderReleaseQuarantine(account: AccountIdentifier) = runCatching {
         transferRepository.findAll(account.domainId, mapOf("accountId" to account.accountId, "quarantined" to "true"))
             .filter {
-                it.senders.none {
+                Common.computeAmount(
+                    it.value, tickerUseCase.get(TickerParameter(it.tickerId)).getOrNull()?.decimals ?: 0
+                ) <= ProviderConfig.preApprovedTransferAmount.toDouble() && it.senders.none {
                     (it as? AccountTransferParty)?.accountId == account.accountId
                 }
             }.takeIf {
-            it.isNotEmpty()
-        }?.let {
-            requestUseCase.create(
-                RequestParameter(
-                    payloadType = Payload.Types.ReleaseQuarantinedTransfers.value,
-                    targetDomainId = account.domainId,
-                    data = QuarantineTransferPayloadData(
-                        accountId = account.accountId,
-                        transfers = it.map { it.id },
+                it.isNotEmpty()
+            }?.let {
+                requestUseCase.create(
+                    RequestParameter(
+                        payloadType = Payload.Types.ReleaseQuarantinedTransfers.value,
+                        targetDomainId = account.domainId,
+                        data = QuarantineTransferPayloadData(
+                            accountId = account.accountId,
+                            transfers = it.map { it.id },
+                        )
                     )
                 )
-            )
-        } ?: Result.success(RequestResult(true, "Nothing to release from quarantine"))
+            } ?: Result.success(RequestResult(true, "Nothing to release from quarantine"))
     }
 }
