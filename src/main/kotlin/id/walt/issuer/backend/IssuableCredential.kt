@@ -27,8 +27,11 @@ data class IssuableCredential(
 data class Issuables(
     val credentials: List<IssuableCredential>
 ) {
+
+    /* DEPRECATED: Does not work for issuing two credentials of the same type (but with different data)
     val credentialsByType
         get() = credentials.associateBy { it.type }
+     */
 
     companion object {
         fun fromCredentialAuthorizationDetails(credentialDetails: List<CredentialAuthorizationDetails>): Issuables {
