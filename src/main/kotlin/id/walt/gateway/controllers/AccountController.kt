@@ -38,6 +38,19 @@ class AccountController(
             }
     }
 
+    fun createBulk(ctx: Context) {
+        val ledgerId = ctx.pathParam("ledgerId")
+        ctx.uploadedFiles().map {
+            it.content.bufferedReader().use { it.readText() }.split(Regex("[\n\r]+"))
+                .fold(listOf<Result<RequestResult>>()) { acc, res ->
+                    val tokens = res.split(",")
+                    acc.plus(accountUseCase.create(AccountInitiationParameter(tokens[0], tokens[1], ledgerId)))
+                }
+        }.flatten().run {
+            ctx.json(this.joinToString("\n"))
+        }
+    }
+
     fun balance(ctx: Context) {
         val profileId = ctx.pathParam("profileId")
         accountUseCase.balance(ProfileParameter(profileId))
@@ -104,6 +117,13 @@ class AccountController(
                 "\"accountName\": \"{account-name}\",<br/>" +
                 "\"ledgerId\": \"{ledger-id}\"<br/>" +
                 "}")
+    }.json<RequestResult>("200") { it.description("The account initiation request result") }
+
+    fun createBulkDoc() = document().operation {
+        it.summary("Create accounts from file").operationId("createBulk").addTagsItem("Account Management")
+    }.uploadedFile("file") {
+        it.description = "File"
+        it.required = true
     }.json<RequestResult>("200") { it.description("The account initiation request result") }
 
     fun balanceDoc() = document().operation {
