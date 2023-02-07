@@ -3,16 +3,20 @@ package id.walt.gateway.providers.metaco.restapi
 import com.beust.klaxon.Klaxon
 import id.walt.gateway.Common
 import id.walt.gateway.dto.AmountWithValue
+import id.walt.gateway.dto.CreateAccountPayloadData
 import id.walt.gateway.dto.TransferData
 import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.dto.accounts.AccountData
 import id.walt.gateway.dto.accounts.AccountIdentifier
+import id.walt.gateway.dto.accounts.AccountInitiationParameter
 import id.walt.gateway.dto.accounts.AccountParameter
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
 import id.walt.gateway.dto.balances.BalanceParameter
 import id.walt.gateway.dto.profiles.ProfileData
 import id.walt.gateway.dto.profiles.ProfileParameter
+import id.walt.gateway.dto.requests.RequestParameter
+import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.transactions.TransactionData
@@ -22,9 +26,9 @@ import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
+import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
 import id.walt.gateway.providers.metaco.restapi.order.model.Order
-import id.walt.gateway.providers.metaco.restapi.transaction.model.OrderReference
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
@@ -32,6 +36,7 @@ import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.Add
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.TransferParty
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.BalanceUseCase
+import id.walt.gateway.usecases.RequestUseCase
 import id.walt.gateway.usecases.TickerUseCase
 
 class AccountUseCaseImpl(
@@ -43,6 +48,7 @@ class AccountUseCaseImpl(
     private val addressRepository: AddressRepository,
     private val balanceUseCase: BalanceUseCase,
     private val tickerUseCase: TickerUseCase,
+    private val requestUseCase: RequestUseCase,
 ) : AccountUseCase {
     override fun profile(parameter: ProfileParameter): Result<ProfileData> = runCatching {
         ProfileData(
@@ -51,6 +57,34 @@ class AccountUseCaseImpl(
                 buildProfileData(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id)), it)
             })
     }
+
+    override fun create(parameter: AccountInitiationParameter): Result<RequestResult> = runCatching {
+        val domain = domainRepository.findAll(emptyMap()).first { it.data.alias == parameter.domainName }
+        if (!checkAccountExists(domain.data.id, parameter.accountName)) {
+            requestUseCase.create(
+                RequestParameter(
+                    payloadType = Payload.Types.CreateAccount.value,
+                    targetDomainId = domain.data.id,
+                    data = CreateAccountPayloadData(
+                        alias = parameter.accountName,
+                        ledgerId = parameter.ledgerId,
+                        lock = "Unlocked",
+                        keyStrategy = "VaultHard",
+                        vaultId = "00000000-0000-0000-0000-000000000000"
+                    ),
+                )
+            )
+            "${parameter.domainName} ${parameter.accountName}"
+        } else {
+            throw Exception("account already exists")
+        }
+    }.fold(
+        onSuccess = {
+            Result.success(RequestResult(true, it))
+        }, onFailure = {
+            Result.failure(Exception("Exception(\"Couldn't create account ${parameter.accountName} in domain ${parameter.domainName}\"): ${it.message}"))
+        }
+    )
 
     override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
@@ -108,6 +142,11 @@ class AccountUseCaseImpl(
             )
         }
     }
+
+    private fun checkAccountExists(domainId: String, alias: String) =
+        accountRepository.findAll(domainId, emptyMap()).any {
+            it.data.alias == alias
+        }
 
     private fun getProfileAccounts(profile: ProfileParameter): List<Account> = let {
         val callback: (domainId: String, id: String) -> List<Account> = getProfileFetchCallback(profile.id)

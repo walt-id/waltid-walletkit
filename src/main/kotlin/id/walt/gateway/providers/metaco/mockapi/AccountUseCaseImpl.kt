@@ -5,11 +5,13 @@ import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.TransferData
 import id.walt.gateway.dto.accounts.AccountData
 import id.walt.gateway.dto.accounts.AccountIdentifier
+import id.walt.gateway.dto.accounts.AccountInitiationParameter
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
 import id.walt.gateway.dto.balances.BalanceParameter
 import id.walt.gateway.dto.profiles.ProfileData
 import id.walt.gateway.dto.profiles.ProfileParameter
+import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
@@ -28,6 +30,8 @@ class AccountUseCaseImpl(
     private val accountsPool = (1..5).map { getAccount() }
 
     override fun profile(parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
+    override fun create(parameter: AccountInitiationParameter): Result<RequestResult> =
+        Result.success(RequestResult(true, "0x${Common.getRandomString(40, 2)}"))
 
     override fun balance(parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
