@@ -144,7 +144,7 @@ class SIOPv2Test : BaseApiTest() {
             contentType(ContentType.Application.Json)
             setBody(KlaxonWithConverters().parseArray<Map<String, Any>?>(KlaxonWithConverters().toJsonString(presentableCredentials)))
         }.bodyAsText().let { KlaxonWithConverters().parse<PresentationResponse>(it) }
-        
+
         presentationResponse!!.id_token shouldBe null
         presentationResponse.vp_token shouldNotBe null
         presentationResponse.presentation_submission shouldNotBe null
@@ -208,6 +208,7 @@ class SIOPv2Test : BaseApiTest() {
 
         // try to parse OIDC4VP request
         val parsedReq = shouldNotThrowAny {
+            println("Parsing OIDC4VPRequestUri: $reqUri")
             OIDC4VPService.parseOIDC4VPRequestUri(reqUri)
         }
 
