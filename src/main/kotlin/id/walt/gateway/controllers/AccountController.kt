@@ -1,10 +1,12 @@
 package id.walt.gateway.controllers
 
+import id.walt.gateway.dto.accounts.AccountInitiationParameter
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
 import id.walt.gateway.dto.balances.BalanceParameter
 import id.walt.gateway.dto.profiles.ProfileData
 import id.walt.gateway.dto.profiles.ProfileParameter
+import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter
@@ -19,6 +21,16 @@ class AccountController(
     fun profile(ctx: Context) {
         val profile = ctx.bodyAsClass<ProfileParameter>()
         accountUseCase.profile(profile)
+            .onSuccess {
+                ctx.json(it)
+            }.onFailure {
+                ctx.json(it)
+            }
+    }
+
+    fun create(ctx: Context) {
+        val parameter = ctx.bodyAsClass<AccountInitiationParameter>()
+        accountUseCase.create(parameter)
             .onSuccess {
                 ctx.json(it)
             }.onFailure {
@@ -76,8 +88,23 @@ class AccountController(
     fun profileDoc() = document().operation {
         it.summary("Returns the account profile data").operationId("profile").addTagsItem("Account Management")
     }.body<ProfileParameter> {
-        it.description("Profile parameter.")
+        it.description("Profile parameter.<br/>" +
+                "{<br/>" +
+                "\"id\": \"{login-data}\"<br/>" +
+                "}")
     }.json<ProfileData>("200") { it.description("The account profile data") }
+
+    fun createDoc() = document().operation {
+        it.summary("Creates an account having the specified alias in the specified domain, on the specified ledger")
+            .operationId("create").addTagsItem("Account Management")
+    }.body<ProfileParameter> {
+        it.description("Account initiation parameter.<br/>" +
+                "{<br/>" +
+                "\"domainName\": \"{domain-name}\",<br/>" +
+                "\"accountName\": \"{account-name}\",<br/>" +
+                "\"ledgerId\": \"{ledger-id}\"<br/>" +
+                "}")
+    }.json<RequestResult>("200") { it.description("The account initiation request result") }
 
     fun balanceDoc() = document().operation {
         it.summary("Returns the account balance").operationId("balance").addTagsItem("Account Management")

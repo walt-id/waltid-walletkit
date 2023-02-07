@@ -10,6 +10,7 @@ class AccountRouter(
     override fun routes() {
         ApiBuilder.path("accounts") {
             ApiBuilder.post("login", documented(accountController.profileDoc(), accountController::profile))
+            ApiBuilder.post("create", documented(accountController.createDoc(), accountController::create))
             ApiBuilder.get("{profileId}/balance", documented(accountController.balanceDoc(), accountController::balance))
             ApiBuilder.get("{accountId}/domain/{domainId}/balance/{tickerId}", documented(accountController.tickerBalanceDoc(), accountController::tickerBalance))
             ApiBuilder.get("{accountId}/domain/{domainId}/transactions", documented(accountController.transactionsDoc(), accountController::transactions))

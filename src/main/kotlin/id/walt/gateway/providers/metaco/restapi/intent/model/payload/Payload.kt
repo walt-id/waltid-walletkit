@@ -15,6 +15,7 @@ sealed class Payload(
         CreateTransferOrder("v0_CreateTransferOrder"),
         ValidateTickers("v0_ValidateTickers"),
         ReleaseQuarantinedTransfers("v0_ReleaseQuarantinedTransfers"),
+        CreateAccount("v0_CreateAccount"),
     }
 }
 
@@ -24,6 +25,7 @@ class PayloadTypeAdapter : TypeAdapter<Payload> {
             Payload.Types.CreateTransactionOrder.value -> TransactionOrderPayload::class
             Payload.Types.CreateTransferOrder.value -> TransferOrderPayload::class
             Payload.Types.ValidateTickers.value -> ValidateTickersPayload::class
+            Payload.Types.CreateAccount.value -> CreateAccountPayload::class
             else -> throw IllegalArgumentException("Unknown type: $type")
         }
 }

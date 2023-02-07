@@ -63,7 +63,8 @@ object MetacoRouter : Router {
                 BalanceRepositoryImpl(authService),
                 tickerUseCase,
             ),
-            tickerUseCase
+            tickerUseCase,
+            requestUseCase,
         )
     private val tradeUseCase: TradeUseCase =
         TradeUseCaseImpl(
