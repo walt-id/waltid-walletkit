@@ -139,8 +139,6 @@ object CredentialIssuanceManager {
             log.debug { "Credential $credentialTypeId is supported!" }
             log.debug { "Credential: ${supportedCredentials[credentialTypeId]}" }
 
-            println(supportedCredentials[credentialTypeId]!!::class.java.name)
-
             if (!supportedCredentials[credentialTypeId]!!.formats.containsKey(preferredByEcosystem)) {
                 log.debug { "Format $preferredByEcosystem is supported (${supportedCredentials[credentialTypeId]!!.formats})" }
                 // ecosystem preference is explicitly not supported, check if ldp_vc or jwt_vc is
@@ -254,10 +252,12 @@ object CredentialIssuanceManager {
         }
 
         val supportedCredentials = OIDC4CIService.getSupportedCredentials(issuer)
-        log.info { "Supported credentials are: $supportedCredentials" }
+        // log.info { "Supported credentials are: $supportedCredentials" }
 
         ContextManager.runWith(WalletContextManager.getUserContext(user)) {
-            session.credentials = session.credentialTypes.map { typeId ->
+            val custodian = Custodian.getService()
+
+            session.credentials = session.credentialTypes.mapNotNull { typeId ->
                 OIDC4CIService.getCredential(
                     issuer,
                     session.tokens!!.accessToken,
@@ -265,13 +265,12 @@ object CredentialIssuanceManager {
                     OIDC4CIService.generateDidProof(issuer, did, session.tokenNonce ?: ""),
                     format = getPreferredFormat(typeId, did, supportedCredentials)
                 )
-            }.filterNotNull().map { it }
-
-            session.credentials?.forEach {
+            }.onEach {
                 it.id = it.id ?: UUID.randomUUID().toString()
-                Custodian.getService().storeCredential(it.id!!, it)
+                custodian.storeCredential(it.id!!, it)
             }
         }
+
         putSession(session)
         return session
     }
