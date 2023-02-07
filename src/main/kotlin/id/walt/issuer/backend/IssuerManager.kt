@@ -24,6 +24,7 @@ import id.walt.signatory.ProofType
 import id.walt.signatory.Signatory
 import id.walt.signatory.dataproviders.MergingDataProvider
 import id.walt.verifier.backend.WalletConfiguration
+import io.github.pavleprica.kotlin.cache.time.based.shortTimeBasedCache
 import io.javalin.http.BadRequestResponse
 import mu.KotlinLogging
 import java.net.URI
@@ -36,13 +37,14 @@ fun isSchema(typeOrSchema: String): Boolean {
 }
 
 object IssuerManager {
-    val logger = KotlinLogging.logger {  }
+    val log = KotlinLogging.logger { }
     val defaultDid: String
         get() = IssuerTenant.config.issuerDid
             ?: IssuerTenant.state.defaultDid
             ?: DidService.create(DidMethod.key)
-                .also { IssuerTenant.state.defaultDid = it
-                    logger.warn { "No issuer DID configured, created temporary did:key for issuing: $it" }
+                .also {
+                    IssuerTenant.state.defaultDid = it
+                    log.warn { "No issuer DID configured, created temporary did:key for issuing: $it" }
                 }
 
     fun getIssuerContext(tenantId: String): TenantContext<IssuerConfig, IssuerState> {
@@ -146,15 +148,59 @@ object IssuerManager {
             .orElseThrow { BadRequestResponse("Invalid authorization code given") }
     }
 
+    private inline fun <T, R> Iterable<T>.allUniqueBy(transform: (T) -> R) =
+        HashSet<R>().let { hs ->
+            all { hs.add(transform(it)) }
+        }
+
+    /**
+     * For multipleCredentialsOfSameType in session.issuables
+     */
+    private val sessionAccessCounterCache = shortTimeBasedCache<String, HashMap<String, Int>>()
     fun fulfillIssuanceSession(session: IssuanceSession, credentialRequest: CredentialRequest): String? {
         val proof = credentialRequest.proof ?: throw BadRequestResponse("No proof given")
         val parsedJwt = SignedJWT.parse(proof.jwt)
         if (parsedJwt.header.keyID?.let { DidUrl.isDidUrl(it) } == false) throw BadRequestResponse("Proof is not DID signed")
 
         if (!JwtService.getService().verify(proof.jwt)) throw BadRequestResponse("Proof invalid")
+
         val did = DidUrl.from(parsedJwt.header.keyID).did
         val now = Instant.now()
-        return session.issuables!!.credentialsByType[credentialRequest.type]?.let {
+        val issuables = session.issuables ?: throw BadRequestResponse("No issuables")
+
+        log.debug { "Issuance session ${session.id}: Session issuables: ${session.issuables}" }
+
+        val sessionLongId = "${session.id}${session.nonce}"
+
+
+        val multipleCredentialsOfSameType = !issuables.credentials.allUniqueBy { it.type }
+
+        if (multipleCredentialsOfSameType && sessionAccessCounterCache[sessionLongId].isEmpty) {
+            log.debug { "Issuance session ${session.id}: Setup multipleCredentialsOfSameType" }
+            sessionAccessCounterCache[sessionLongId] = HashMap()
+        }
+
+        val requestedType = credentialRequest.type
+        val credentialsOfRequestedType = issuables.credentials.filter { it.type == requestedType }
+
+        val credential = when {
+            !multipleCredentialsOfSameType -> credentialsOfRequestedType.firstOrNull()
+            else -> {
+                val accessCounter = sessionAccessCounterCache[sessionLongId].get()
+
+                if (!accessCounter.contains(requestedType))
+                    accessCounter[requestedType] = -1
+
+                accessCounter[requestedType] = accessCounter[requestedType]!! + 1
+
+                log.info { "Issuance session ${session.id}: multipleCredentialsOfSameType " +
+                        "request ${accessCounter[requestedType]!! + 1}/${issuables.credentials.size}" }
+
+                credentialsOfRequestedType.getOrElse(accessCounter[requestedType]!!) { credentialsOfRequestedType.lastOrNull() }
+            }
+        }
+
+        return credential?.let {
             Signatory.getService().issue(it.type,
                 ProofConfig(
                     issuerDid = session.issuerDid ?: defaultDid,
@@ -197,34 +243,36 @@ object IssuerManager {
                 )
             )
         )
-        setCustomParameter("credentials_supported", VcTemplateManager.listTemplates().map { VcTemplateManager.getTemplate(it.name, true) }
-            .associateBy({ tmpl -> tmpl.template!!.type.last() }) { cred ->
-                CredentialMetadata(
-                    formats = mapOf(
-                        "ldp_vc" to CredentialFormat(
-                            types = cred.template!!.type,
-                            cryptographic_binding_methods_supported = listOf("did"),
-                            cryptographic_suites_supported = LdSignatureType.values().map { it.name }
+        setCustomParameter(
+            "credentials_supported",
+            VcTemplateManager.listTemplates().map { VcTemplateManager.getTemplate(it.name, true) }
+                .associateBy({ tmpl -> tmpl.template!!.type.last() }) { cred ->
+                    CredentialMetadata(
+                        formats = mapOf(
+                            "ldp_vc" to CredentialFormat(
+                                types = cred.template!!.type,
+                                cryptographic_binding_methods_supported = listOf("did"),
+                                cryptographic_suites_supported = LdSignatureType.values().map { it.name }
+                            ),
+                            "jwt_vc" to CredentialFormat(
+                                types = cred.template!!.type,
+                                cryptographic_binding_methods_supported = listOf("did"),
+                                cryptographic_suites_supported = listOf(
+                                    JWSAlgorithm.ES256,
+                                    JWSAlgorithm.ES256K,
+                                    JWSAlgorithm.EdDSA,
+                                    JWSAlgorithm.RS256,
+                                    JWSAlgorithm.PS256
+                                ).map { it.name }
+                            )
                         ),
-                        "jwt_vc" to CredentialFormat(
-                            types = cred.template!!.type,
-                            cryptographic_binding_methods_supported = listOf("did"),
-                            cryptographic_suites_supported = listOf(
-                                JWSAlgorithm.ES256,
-                                JWSAlgorithm.ES256K,
-                                JWSAlgorithm.EdDSA,
-                                JWSAlgorithm.RS256,
-                                JWSAlgorithm.PS256
-                            ).map { it.name }
-                        )
-                    ),
-                    display = listOf(
-                        CredentialDisplay(
-                            name = cred.template!!.type.last()
+                        display = listOf(
+                            CredentialDisplay(
+                                name = cred.template!!.type.last()
+                            )
                         )
                     )
-                )
-            }
+                }
         )
     }
 }
