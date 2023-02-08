@@ -13,6 +13,7 @@ class TransactionRouter(
             ApiBuilder.post("buy", documented(tradeController.buyDocs(), tradeController::buy))
             ApiBuilder.post("send", documented(tradeController.sendDocs(), tradeController::send))
             ApiBuilder.post("validate", documented(tradeController.validateDocs(), tradeController::validate))
+            ApiBuilder.post("airdrop", documented(tradeController.airdropDocs(), tradeController::airdrop))
         }
     }
 }

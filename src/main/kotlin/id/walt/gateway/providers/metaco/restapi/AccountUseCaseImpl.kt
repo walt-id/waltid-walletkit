@@ -6,10 +6,7 @@ import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.CreateAccountPayloadData
 import id.walt.gateway.dto.TransferData
 import id.walt.gateway.dto.ValueWithChange
-import id.walt.gateway.dto.accounts.AccountData
-import id.walt.gateway.dto.accounts.AccountIdentifier
-import id.walt.gateway.dto.accounts.AccountInitiationParameter
-import id.walt.gateway.dto.accounts.AccountParameter
+import id.walt.gateway.dto.accounts.*
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
 import id.walt.gateway.dto.balances.BalanceParameter
@@ -86,6 +83,18 @@ class AccountUseCaseImpl(
         }
     )
 
+    override fun list(): Result<List<AccountBasicData>> = runCatching {
+        domainRepository.findAll(emptyMap()).map { domain ->
+            accountRepository.findAll(domain.data.id, emptyMap()).map { account ->
+                AccountBasicData(
+                    domainName = domain.data.alias,
+                    accountAlias = account.data.alias ?: "no-name",
+                    address = addressRepository.findAll(domain.data.id, account.data.id, emptyMap()).map { it.address },
+                )
+            }
+        }.flatten()
+    }
+
     override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
             balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
@@ -160,7 +169,7 @@ class AccountUseCaseImpl(
     private fun getProfileFetchCallback(id: String): (domainId: String, accountId: String) -> List<Account> = { domainId, accountId ->
         if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
             listOf(accountRepository.findById(domainId, accountId))
-        } else if(Regex("[0-9]{2}").matches(id)){
+        } else if(Regex("[a-zA-Z]{3,7}[0-9]{2}").matches(id)){
             accountRepository.findAll(domainId, emptyMap()).filter {
                 it.data.alias.equals(id)
             }

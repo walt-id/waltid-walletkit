@@ -3,6 +3,7 @@ package id.walt.gateway.providers.metaco.mockapi
 import id.walt.gateway.Common
 import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.TransferData
+import id.walt.gateway.dto.accounts.AccountBasicData
 import id.walt.gateway.dto.accounts.AccountData
 import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.accounts.AccountInitiationParameter
@@ -32,6 +33,14 @@ class AccountUseCaseImpl(
     override fun profile(parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
     override fun create(parameter: AccountInitiationParameter): Result<RequestResult> =
         Result.success(RequestResult(true, "0x${Common.getRandomString(40, 2)}"))
+
+    override fun list(): Result<List<AccountBasicData>> = Result.success((1..5).map {
+        AccountBasicData(
+            domainName = Common.getRandomString(7, 1),
+            accountAlias = Common.getRandomString(5, 1),
+            address = listOf("0x${Common.getRandomString(40, 2)}")
+        )
+    })
 
     override fun balance(parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())

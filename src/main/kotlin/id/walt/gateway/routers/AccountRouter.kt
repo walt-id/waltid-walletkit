@@ -12,6 +12,7 @@ class AccountRouter(
             ApiBuilder.post("login", documented(accountController.profileDoc(), accountController::profile))
             ApiBuilder.post("create", documented(accountController.createDoc(), accountController::create))
             ApiBuilder.post("create/bulk/{ledgerId}", documented(accountController.createBulkDoc(), accountController::createBulk))
+            ApiBuilder.get("list", documented(accountController.listDoc(), accountController::list))
             ApiBuilder.get("{profileId}/balance", documented(accountController.balanceDoc(), accountController::balance))
             ApiBuilder.get("{accountId}/domain/{domainId}/balance/{tickerId}", documented(accountController.tickerBalanceDoc(), accountController::tickerBalance))
             ApiBuilder.get("{accountId}/domain/{domainId}/transactions", documented(accountController.transactionsDoc(), accountController::transactions))
