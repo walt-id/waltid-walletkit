@@ -97,7 +97,9 @@ class AccountUseCaseImpl(
 
     override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
-            balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
+            balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }.sortedBy {
+                it.ticker.name
+            }
         }.filter { !ProviderConfig.tickersIgnore.contains(it.ticker.id) }.let { AccountBalance(it) }
     }
 
