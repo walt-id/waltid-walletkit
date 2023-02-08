@@ -169,7 +169,7 @@ class AccountUseCaseImpl(
     private fun getProfileFetchCallback(id: String): (domainId: String, accountId: String) -> List<Account> = { domainId, accountId ->
         if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
             listOf(accountRepository.findById(domainId, accountId))
-        } else if(Regex("[0-9]{2}").matches(id)){
+        } else if(Regex("[a-zA-Z]{3,7}[0-9]{2}").matches(id)){
             accountRepository.findAll(domainId, emptyMap()).filter {
                 it.data.alias.equals(id)
             }
