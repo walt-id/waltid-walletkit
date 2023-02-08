@@ -6,10 +6,7 @@ import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.CreateAccountPayloadData
 import id.walt.gateway.dto.TransferData
 import id.walt.gateway.dto.ValueWithChange
-import id.walt.gateway.dto.accounts.AccountData
-import id.walt.gateway.dto.accounts.AccountIdentifier
-import id.walt.gateway.dto.accounts.AccountInitiationParameter
-import id.walt.gateway.dto.accounts.AccountParameter
+import id.walt.gateway.dto.accounts.*
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
 import id.walt.gateway.dto.balances.BalanceParameter
@@ -85,6 +82,18 @@ class AccountUseCaseImpl(
             Result.failure(Exception("Exception(\"Couldn't create account ${parameter.accountName} in domain ${parameter.domainName}\"): ${it.message}"))
         }
     )
+
+    override fun list(): Result<List<AccountBasicData>> = runCatching {
+        domainRepository.findAll(emptyMap()).map { domain ->
+            accountRepository.findAll(domain.data.id, emptyMap()).map { account ->
+                AccountBasicData(
+                    domainName = domain.data.alias,
+                    accountAlias = account.data.alias ?: "no-name",
+                    address = addressRepository.findAll(domain.data.id, account.data.id, emptyMap()).map { it.address },
+                )
+            }
+        }.flatten()
+    }
 
     override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
