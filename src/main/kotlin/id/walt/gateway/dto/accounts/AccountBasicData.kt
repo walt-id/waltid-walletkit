@@ -3,8 +3,8 @@ package id.walt.gateway.dto.accounts
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AccountInitiationData(
+data class AccountBasicData(
     val domainName: String,
-    val accountValue: String,
-    val address: String?,
+    val accountAlias: String,
+    val address: List<String>,
 )

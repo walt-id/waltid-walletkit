@@ -51,6 +51,12 @@ class AccountController(
         }
     }
 
+    fun list(ctx: Context) {
+        ctx.json(accountUseCase.list().getOrNull()?.joinToString("\n") {
+            "${it.domainName},${it.accountAlias},${it.address.joinToString(":")}"
+        } ?: "No accounts")
+    }
+
     fun balance(ctx: Context) {
         val profileId = ctx.pathParam("profileId")
         accountUseCase.balance(ProfileParameter(profileId))
@@ -120,11 +126,15 @@ class AccountController(
     }.json<RequestResult>("200") { it.description("The account initiation request result") }
 
     fun createBulkDoc() = document().operation {
-        it.summary("Create accounts from file").operationId("createBulk").addTagsItem("Account Management")
+        it.summary("Creates accounts from file").operationId("createBulk").addTagsItem("Account Management")
     }.uploadedFile("file") {
         it.description = "File"
         it.required = true
     }.json<RequestResult>("200") { it.description("The account initiation request result") }
+
+    fun listDoc() = document().operation {
+        it.summary("Returns the list of all available accounts").operationId("list").addTagsItem("Account Management")
+    }.json<String>("200") { it.description("The list of account basic data") }
 
     fun balanceDoc() = document().operation {
         it.summary("Returns the account balance").operationId("balance").addTagsItem("Account Management")
