@@ -1,6 +1,7 @@
 package id.walt.gateway.usecases
 
 import id.walt.gateway.dto.requests.RequestResult
+import id.walt.gateway.dto.trades.AirdropParameter
 import id.walt.gateway.dto.trades.TradeData
 
 interface TradeUseCase {
@@ -8,4 +9,5 @@ interface TradeUseCase {
     fun buy(spend: TradeData, receive: TradeData): Result<RequestResult>
     fun send(send: TradeData): Result<RequestResult>
     fun validate(parameter: TradeData): Result<RequestResult>
+    fun airdrop(parameter: AirdropParameter): Result<Int>
 }

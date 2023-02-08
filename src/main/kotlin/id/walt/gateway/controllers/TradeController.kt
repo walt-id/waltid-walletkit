@@ -2,6 +2,7 @@ package id.walt.gateway.controllers
 
 import id.walt.gateway.dto.accounts.AccountIdentifier
 import id.walt.gateway.dto.requests.RequestResult
+import id.walt.gateway.dto.trades.AirdropParameter
 import id.walt.gateway.dto.trades.SwapParameter
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TransferParameter
@@ -110,6 +111,8 @@ class TradeController(
             }
     }
 
+    fun airdrop(ctx: Context) = ctx.json(tradeUseCase.airdrop(ctx.bodyAsClass()).getOrNull() ?: 0)
+
     fun sellDocs() = document().operation {
         it.summary("Returns the sell trade details").operationId("sell").addTagsItem("Trade Management")
     }.body<SwapParameter> {
@@ -175,17 +178,19 @@ class TradeController(
     }.body<TransferParameter> {
         it.description("Send parameters:<br/>" +
                 "{<br/>" +
-                "\"amount\": \"{value}\",<br/>" +
-                "\"ticker\": \"{ticker-id}\",<br/>" +
-                "\"maxFee\": \"{value}\",<br/>" +
-                "\"sender\": {<br/>" +
-                "\"domainId\": \"{domain-id}\",<br/>" +
-                "\"accountId\": \"{account-id}\"<br/>" +
-                "},<br/>" +
-                "\"recipient\": {<br/>" +
-                "\"domainId\": \"{domain-id}\",<br/>" +
-                "\"accountId\": \"{account-id}\"<br/>" +
-                "}<br/>" +
+                "    \"amount\": \"{value}\",<br/>" +
+                "    \"ticker\": \"{ticker-id}\",<br/>" +
+                "    \"maxFee\": \"{value}\",<br/>" +
+                "    \"sender\":<br/>" +
+                "    {<br/>" +
+                "        \"domainId\": \"{domain-id}\",<br/>" +
+                "        \"accountId\": \"{account-id}\"<br/>" +
+                "    },<br/>" +
+                "    \"recipient\":<br/>" +
+                "    {<br/>" +
+                "        \"domainId\": \"{domain-id}\",<br/>" +
+                "        \"accountId\": \"{account-id}\"<br/>" +
+                "    }<br/>" +
                 "}")
     }.json<RequestResult>("200") { it.description("The send trade details") }
 
@@ -194,17 +199,37 @@ class TradeController(
     }.body<TransferParameter> {
         it.description("Trade preview parameters:<br/>" +
                 "{<br/>" +
-                "\"amount\": \"{value}\",<br/>" +
-                "\"ticker\": \"{ticker-id}\",<br/>" +
-                "\"maxFee\": \"{value}\",<br/>" +
-                "\"sender\": {<br/>" +
-                "\"domain-id\": \"{domain-id}\",<br/>" +
-                "\"account-id\": \"{account-id}\"<br/>" +
-                "},<br/>" +
-                "\"recipient\": {<br/>" +
-                "\"domainId\": \"{domain-id}\",<br/>" +
-                "\"accountId\": \"{account-id}\"<br/>" +
-                "}<br/>" +
+                "    \"amount\": \"{value}\",<br/>" +
+                "    \"ticker\": \"{ticker-id}\",<br/>" +
+                "    \"maxFee\": \"{value}\",<br/>" +
+                "    \"sender\":<br/>" +
+                "    {<br/>" +
+                "        \"domain-id\": \"{domain-id}\",<br/>" +
+                "        \"account-id\": \"{account-id}\"<br/>" +
+                "    },<br/>" +
+                "    \"recipient\":<br/>" +
+                "    {<br/>" +
+                "        \"domainId\": \"{domain-id}\",<br/>" +
+                "        \"accountId\": \"{account-id}\"<br/>" +
+                "    }<br/>" +
                 "}")
     }.json<RequestResult>("200") { it.description("The trade validation details") }
+
+    fun airdropDocs() = document().operation {
+        it.summary("Performs an airdrop to the specified addresses").operationId("airdrop")
+            .addTagsItem("Trade Management")
+    }.body<AirdropParameter> {
+        it.description("Airdrop parameter:<br/>" +
+                "{<br/>" +
+                "    \"amount\": \"String\",<br/>" +
+                "    \"ticker\": \"String\",<br/>" +
+                "    \"maxFee\": \"String\",<br/>" +
+                "    \"sender\":<br/>" +
+                "    {<br/>" +
+                "        \"domainId\": \"String\",<br/>" +
+                "        \"accountId\": \"String\"<br/>" +
+                "    },<br/>" +
+                "    \"addresses\": \"List<String>\"<br/>" +
+                "}")
+    }.json<Int>("200") { it.description("The number of successful airdrops") }
 }
