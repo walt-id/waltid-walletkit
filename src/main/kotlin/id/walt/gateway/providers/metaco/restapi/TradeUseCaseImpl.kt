@@ -7,7 +7,9 @@ import id.walt.gateway.dto.requests.RequestParameter
 import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
+import id.walt.gateway.dto.trades.AirdropParameter
 import id.walt.gateway.dto.trades.TradeData
+import id.walt.gateway.dto.trades.TransferParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.TransferRepository
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
@@ -41,6 +43,27 @@ class TradeUseCaseImpl(
             ledgerType = tickerUseCase.get(TickerParameter(parameter.trade.ticker)).getOrThrow().type
         )
     )
+
+    override fun airdrop(parameter: AirdropParameter): Result<Int> = runCatching {
+        parameter.addresses.fold(0) { acc, item ->
+            send(
+                TradeData(
+                    trade = TransferParameter(
+                        amount = parameter.amount,
+                        ticker = parameter.ticker,
+                        maxFee = parameter.maxFee,
+                        sender = AccountIdentifier(parameter.sender.domainId, parameter.sender.accountId),
+                        recipient = AccountIdentifier("", item)
+                    ),
+                    type = "Transfer"
+                )
+            ).fold(onSuccess = {
+                acc + 1
+            }, onFailure = {
+                acc
+            })
+        }
+    }
 
     private fun getPayloadType(ticker: TickerData) = when (ticker.kind) {
         "Contract" -> Payload.Types.CreateTransferOrder.value
