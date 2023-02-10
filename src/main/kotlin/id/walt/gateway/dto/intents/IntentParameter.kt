@@ -8,6 +8,6 @@ import java.time.temporal.ChronoUnit
 data class IntentParameter(
     val targetDomainId: String,
     val author: UserIdentifier,
-    val type: String = "Propose",
+    val type: String? = null,
     val expiry: Instant = Instant.now().plus(Duration.ofHours(1)).truncatedTo(ChronoUnit.SECONDS),
 )

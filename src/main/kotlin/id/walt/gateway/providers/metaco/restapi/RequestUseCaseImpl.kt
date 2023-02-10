@@ -2,7 +2,6 @@ package id.walt.gateway.providers.metaco.restapi
 
 import com.beust.klaxon.Klaxon
 import id.walt.gateway.dto.intents.IntentParameter
-import id.walt.gateway.dto.intents.PayloadData
 import id.walt.gateway.dto.intents.PayloadParameter
 import id.walt.gateway.dto.requests.RequestParameter
 import id.walt.gateway.dto.requests.RequestResult
@@ -23,57 +22,54 @@ class RequestUseCaseImpl(
 ) : RequestUseCase {
 
     override fun create(parameter: RequestParameter, additionalInfo: Map<String, String>): Result<RequestResult> =
-        createIntentRequest(parameter.payloadType, parameter.targetDomainId, parameter.data, parameter.ledgerType, additionalInfo)
+        runCatching {
+            createIntent(parameter.payloadType, parameter, additionalInfo, "Propose").let { intent ->
+                SignatureIntent(
+                    request = intent.request,
+                    signature = Klaxon().parse<SignChallengeResponse>(intentSignatureService.sign(intent as NoSignatureIntent))!!.signature,
+                )
+            }.run {
+                intentRepository.create(this)
+            }.let {
+                RequestResult(
+                    result = it.requestId != null,
+                    message = it.requestId ?: it.message ?: it.reason ?: "Unknown message"
+                )
+            }
+        }
 
     override fun validate(parameter: RequestParameter): Result<RequestResult> = runCatching {
-        intentRepository.validate(
-            parameter.targetDomainId, PayloadBuilder.create(
-                PayloadParameter(
-                    type = parameter.payloadType,
-                    parametersType = parameter.ledgerType ?: "",
-                    data = parameter.data,
-                )
-            )
-        ).let {
+        createIntent(parameter.payloadType, parameter, emptyMap()).let { intent ->
+            intentRepository.validate(intent)
+        }.let {
+//            RequestResult(
+//                result = it.result.type == "Success",
+//                message = it.result.reason //+ (it.estimate as EthereumEstimate)?.gas.let { " (gas: $it)" }
+//            )
             RequestResult(
-                result = it.result.type == "Success",
-                message = it.result.reason //+ (it.estimate as EthereumEstimate)?.gas.let { " (gas: $it)" }
+                result = it.success,
+                message = it.errors.joinToString(".").takeIf { it.isNotEmpty() } ?: "Unknown error"
             )
         }
     }
 
-    private fun <T : PayloadData> createIntentRequest(
+    private fun createIntent(
         payloadType: String,
-        targetDomainId: String,
-        data: T,
-        ledgerType: String? = null,
+        parameter: RequestParameter,
         additionalInfo: Map<String, String>,
-    ) = runCatching {
-        IntentBuilder.build(
-            IntentParameter(
-                targetDomainId = targetDomainId,
-                author = UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId),
-                type = "Propose",
-            ), PayloadBuilder.create(
-                PayloadParameter(
-                    type = payloadType,
-                    data = data,
-                    parametersType = ledgerType ?: "",
-                    additionalInfo = additionalInfo,
-                )
+        intentType: String? = null,
+    ) = IntentBuilder.build(
+        IntentParameter(
+            targetDomainId = parameter.targetDomainId,
+            author = UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId),
+            type = intentType,
+        ), PayloadBuilder.create(
+            PayloadParameter(
+                type = payloadType,
+                data = parameter.data,
+                parametersType = parameter.ledgerType ?: "",
+                additionalInfo = additionalInfo,
             )
-        ).let { intent ->
-            SignatureIntent(
-                request = intent.request,
-                signature = Klaxon().parse<SignChallengeResponse>(intentSignatureService.sign(intent as NoSignatureIntent))!!.signature,
-            )
-        }.run {
-            intentRepository.create(this)
-        }.let {
-            RequestResult(
-                result = it.requestId != null,
-                message = it.requestId ?: it.message ?: it.reason ?: "Unknown message"
-            )
-        }
-    }
+        )
+    )
 }
