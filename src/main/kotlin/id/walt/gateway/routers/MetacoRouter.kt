@@ -24,6 +24,7 @@ import id.walt.gateway.providers.metaco.restapi.transaction.TransactionRepositor
 import id.walt.gateway.providers.metaco.restapi.transfer.TransferRepositoryImpl
 import id.walt.gateway.providers.rcb.CoinUseCaseImpl
 import id.walt.gateway.providers.rcb.DoubleFieldResponseParser
+import id.walt.gateway.providers.rcb.StringFieldResponseParser
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.MultiCoinUseCaseImpl
 import id.walt.gateway.usecases.TradeUseCase
@@ -35,7 +36,7 @@ object MetacoRouter : Router {
     private val authService = AuthService(AuthSignatureService())
     private val tickerRepository = TickerRepositoryImpl(authService)
     private val coinUseCase = MultiCoinUseCaseImpl(
-        CoinUseCaseImpl(RcbImpl(), DoubleFieldResponseParser()),
+        CoinUseCaseImpl(RcbImpl(), StringFieldResponseParser()),
         SimpleCoinUseCaseImpl(CoingeckoImpl(), SimplePriceParser()),
         RBITokensMockUseCaseImpl(),
     )

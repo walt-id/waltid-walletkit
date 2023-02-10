@@ -103,9 +103,7 @@ class TickerUseCaseImpl(
         onSuccess = {
             Pair(
                 ValueWithChange(it.askPrice, it.change, currency),
-                ValueWithChange(
-                    it.bidPrice ?: it.askPrice, it.change, currency
-                )
+                ValueWithChange(it.bidPrice ?: it.askPrice, it.change, currency)
             )
         }, onFailure = {
             Pair(

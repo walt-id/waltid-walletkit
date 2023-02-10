@@ -31,6 +31,7 @@ class TransferOrderPayloadBuilder(
                 value = additionalInfo["value"] ?: "0",
                 change = additionalInfo["change"] ?: "0",
                 currency = additionalInfo["currency"] ?: "*",
+                tokenPrice = additionalInfo["tokenPrice"] ?: "0",
                 type = data.type,
             )),
         ),

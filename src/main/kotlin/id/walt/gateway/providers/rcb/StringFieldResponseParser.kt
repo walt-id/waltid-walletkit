@@ -8,9 +8,10 @@ class StringFieldResponseParser : ResponseParser<CoinData> {
     override fun parse(data: String): CoinData = let {
         Klaxon().parse<Map<String, String>>(data)?.let {
             CoinData(
-                askPrice = it["price"]?.toDoubleOrNull() ?: throw Exception("Could not parse field price"),
-                marketCap = it["marketCap"]?.toDoubleOrNull() ?: throw Exception("Could not parse field price"),
-                change = it["change"]?.toDoubleOrNull() ?: throw Exception("Could not parse field price"),
+                askPrice = it["askprice"]?.toDoubleOrNull() ?: throw Exception("Could not parse field askprice"),
+                bidPrice = it["bidprice"]?.toDoubleOrNull() ?: throw Exception("Could not parse field bidprice"),
+                marketCap = it["marketCap"]?.toDoubleOrNull() ?: .0,
+                change = it["change"]?.toDoubleOrNull() ?: .0,
             )
         } ?: throw Exception("Could not parse $data")
     }

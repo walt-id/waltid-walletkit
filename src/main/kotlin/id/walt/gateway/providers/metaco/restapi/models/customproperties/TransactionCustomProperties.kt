@@ -7,5 +7,6 @@ data class TransactionCustomProperties(
     val value: String,
     val change: String,
     val currency: String,
+    val tokenPrice: String,
     val type: String,
 )
