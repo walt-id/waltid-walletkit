@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.intent.model
 
+import com.beust.klaxon.Json
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import kotlinx.serialization.Serializable
 
@@ -12,5 +13,6 @@ data class Request(
     val payload: Payload,
     val description: String? = null,
     val customProperties: Map<String, String>,
-    val type: String
+    @Json(serializeNull = false)
+    val type: String? = null,
 )
