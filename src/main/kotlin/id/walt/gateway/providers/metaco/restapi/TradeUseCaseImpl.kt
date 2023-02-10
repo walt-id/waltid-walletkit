@@ -35,14 +35,17 @@ class TradeUseCaseImpl(
 
     override fun send(send: TradeData): Result<RequestResult> = orderTrade(send)
 
-    override fun validate(parameter: TradeData): Result<RequestResult> = requestUseCase.validate(
-        RequestParameter(
-            payloadType = Payload.Types.CreateTransactionOrder.value,
-            targetDomainId = parameter.trade.sender.domainId,
-            data = parameter,
-            ledgerType = tickerUseCase.get(TickerParameter(parameter.trade.ticker)).getOrThrow().type
-        )
-    )
+    override fun validate(parameter: TradeData): Result<RequestResult> =
+        tickerUseCase.get(TickerParameter(parameter.trade.ticker)).getOrThrow().let {
+            requestUseCase.validate(
+                RequestParameter(
+                    payloadType = getPayloadType(it),
+                    targetDomainId = parameter.trade.sender.domainId,
+                    data = parameter,
+                    ledgerType = it.type,
+                )
+            )
+        }
 
     override fun airdrop(parameter: AirdropParameter): Result<Int> = runCatching {
         parameter.addresses.fold(0) { acc, item ->
