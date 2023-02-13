@@ -14,7 +14,8 @@ class ExchangeController(
         val parameter = ExchangeParameter(
             from = ctx.pathParam("from"),
             to = ctx.pathParam("to"),
-            amount = ctx.pathParam("amount")
+            amount = ctx.pathParam("amount"),
+            type = ctx.pathParam("type"),
         )
         val result = exchangeUseCase.exchange(parameter).getOrDefault(ExchangeData("0", "0"))
         ctx.status(HttpCode.OK)

@@ -1,5 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi
 
+import id.walt.gateway.dto.coins.CoinData
 import id.walt.gateway.dto.exchanges.ExchangeData
 import id.walt.gateway.dto.exchanges.ExchangeParameter
 import id.walt.gateway.providers.metaco.CoinMapper
@@ -16,18 +17,26 @@ class ExchangeUseCaseImpl(
     override fun exchange(parameter: ExchangeParameter): Result<ExchangeData> = runCatching {
         val fromName = getTokenName(URLDecoder.decode(parameter.from, "utf-8"))
         val toName = getTokenName(URLDecoder.decode(parameter.to, "utf-8"))
-        coinUseCase.metadata(CoinMapper.mapNameToCoinParameter(fromName, "eur")).getOrNull()?.askPrice?.let { from ->
-            coinUseCase.metadata(CoinMapper.mapNameToCoinParameter(toName, "eur")).getOrNull()?.askPrice?.let { to ->
-                parameter.amount.toDoubleOrNull()?.let { amount ->
-                    if (to == .0) throw IllegalArgumentException("Division by zero.")
-                    if (from == .0) throw IllegalArgumentException("Division by zero.")
-                    ExchangeData(
-                        amount = (amount * from / to).toString(),
-                        unitPrice = (to / from).toString()
-                    )
-                }
-            }
+        val fromPrice = coinUseCase.metadata(CoinMapper.mapNameToCoinParameter(fromName, "eur")).getOrThrow().let {
+            getPrice(it, parameter.type)
+        }
+        val toPrice = coinUseCase.metadata(CoinMapper.mapNameToCoinParameter(toName, "eur")).getOrThrow().let {
+            getPrice(it, parameter.type)
+        }
+        parameter.amount.toDoubleOrNull()?.let { amount ->
+            if (toPrice == .0) throw IllegalArgumentException("Division by zero.")
+            if (fromPrice == .0) throw IllegalArgumentException("Division by zero.")
+            ExchangeData(
+                amount = (amount * fromPrice / toPrice).toString(),
+                unitPrice = (toPrice / fromPrice).toString()
+            )
         } ?: throw IllegalArgumentException("Couldn't parse input data")
+    }
+
+    private fun getPrice(coin: CoinData, type: String) = when (type.lowercase()) {
+        "sale" -> coin.bidPrice ?: coin.askPrice
+        "purchase" -> coin.askPrice
+        else -> coin.bidPrice ?: coin.askPrice
     }
 
     private fun getTokenName(input: String): String = if (uuidRegex.matches(input)) {
