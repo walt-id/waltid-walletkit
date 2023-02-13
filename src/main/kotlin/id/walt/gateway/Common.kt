@@ -1,5 +1,7 @@
 package id.walt.gateway
 
+import id.walt.gateway.dto.tickers.TickerData
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
 import kotlin.random.Random
 
 object Common {
@@ -27,4 +29,21 @@ object Common {
     ).let {
         it.insert(it.length - decimals, '.')
     }.toString().toDoubleOrNull() ?: .0//Double.NaN
+
+    fun getTransactionMeta(tradeType: String, amount: String, ticker: TickerData): TransactionCustomProperties =
+        when (tradeType) {
+            "Outgoing", "Purchase" -> ticker.askPrice
+            "Receive", "Sale" -> ticker.bidPrice
+            else -> ticker.price
+        }.let {
+            TransactionCustomProperties(
+                value = (computeAmount(amount, ticker.decimals) * it.value).toString(),
+                change = (computeAmount(amount, ticker.decimals) * it.change).toString(),
+                currency = it.currency,
+                tokenPrice = it.value.toString(),
+                tokenSymbol = ticker.symbol,
+                tokenDecimals = ticker.decimals.toString(),
+                type = tradeType,
+            )
+        }
 }

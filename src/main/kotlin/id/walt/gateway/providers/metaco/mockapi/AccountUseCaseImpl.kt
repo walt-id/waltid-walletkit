@@ -18,6 +18,8 @@ import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
 import id.walt.gateway.dto.transactions.TransactionParameter
 import id.walt.gateway.dto.transactions.TransactionTransferData
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.toMap
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TickerUseCase
 import java.time.Duration
@@ -66,25 +68,24 @@ class AccountUseCaseImpl(
         ticker = tickerUseCase.get(TickerParameter("")).getOrThrow(),
     )
 
-    private fun getTransaction(id: String) = tickerUseCase.get(TickerParameter("")).getOrThrow().let {
-        TransactionData(
-            id = id,
-            relatedAccount = "0x${Common.getRandomString(40, 2)}",
-            amount = Common.getRandomString(3, 0),
-            ticker = it,
-            price = it.price,
-            type = listOf("Transfer", "Sell", "Buy", "Receive")[Common.getRandomInt(to = 4)],
-            status = getTransactionStatus(),
-            date = getDate(),
-        )
-    }
+    private fun getTransaction(id: String) = TransactionData(
+        id = id,
+        relatedAccount = "0x${Common.getRandomString(40, 2)}",
+        amount = Common.getRandomString(3, 0),
+        meta = getTransactionMeta().toMap(),
+        status = getTransactionStatus(),
+        date = getDate(),
+    )
 
-    private fun getTokenTriple() = let {
-        val name = listOf("tGOLD", "Stable Coin")[Common.getRandomInt(to = 2)]
-        val kind = if (name == "tGOLD") "Contract" else "Native"
-        val symbol = if (name == "tGOLD") "tGOLD" else "eth"
-        Triple(name, kind, symbol)
-    }
+    private fun getTransactionMeta() = TransactionCustomProperties(
+        value = Common.getRandomString(3),
+        change = Common.getRandomDouble(.0, 12.0).toString(),
+        currency = "EUR",
+        tokenPrice = Common.getRandomDouble(40.0, 70.0).toString(),
+        tokenSymbol = Common.getRandomString(3, 1),
+        tokenDecimals = Common.getRandomInt(6, 18).toString(),
+        type = listOf("Transfer", "Sell", "Buy", "Receive")[Common.getRandomInt(to = 4)],
+    )
 
     private fun getTransfers() = (1..2).map {
         TransferData(

@@ -13,6 +13,7 @@ import id.walt.gateway.dto.trades.TransferParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
 import id.walt.gateway.providers.metaco.repositories.TransferRepository
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.toMap
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
 import id.walt.gateway.usecases.RequestUseCase
 import id.walt.gateway.usecases.TickerUseCase
@@ -78,7 +79,6 @@ class TradeUseCaseImpl(
         runCatching { tickerUseCase.get(TickerParameter(data.trade.ticker)).getOrThrow() }.fold(
             onSuccess = { ticker ->
                 if (!dryRun) tickerUseCase.validate(data.trade.ticker)//TODO: check for success and proceed accordingly
-                orderReleaseQuarantine(data.trade.sender)
                 requestUseCase.create(
                     RequestParameter(
                         getPayloadType(ticker),
@@ -86,11 +86,7 @@ class TradeUseCaseImpl(
                         data,
                         ticker.type,
                     ),
-                    mapOf(
-                        "value" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.price.value).toString(),
-                        "change" to (Common.computeAmount(data.trade.amount, ticker.decimals) * ticker.price.change).toString(),
-                        "currency" to ticker.price.currency
-                    )
+                    Common.getTransactionMeta(data.type, data.trade.amount, ticker).toMap()
                 )
             },
             onFailure = {
