@@ -5,7 +5,6 @@ import id.walt.gateway.Common
 import id.walt.gateway.dto.AmountWithValue
 import id.walt.gateway.dto.CreateAccountPayloadData
 import id.walt.gateway.dto.TransferData
-import id.walt.gateway.dto.ValueWithChange
 import id.walt.gateway.dto.accounts.*
 import id.walt.gateway.dto.balances.AccountBalance
 import id.walt.gateway.dto.balances.BalanceData
@@ -25,7 +24,9 @@ import id.walt.gateway.providers.metaco.repositories.*
 import id.walt.gateway.providers.metaco.restapi.account.model.Account
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
+import id.walt.gateway.providers.metaco.restapi.models.customproperties.toMap
 import id.walt.gateway.providers.metaco.restapi.order.model.Order
+import id.walt.gateway.providers.metaco.restapi.transaction.model.RelatedAccount
 import id.walt.gateway.providers.metaco.restapi.transaction.model.Transaction
 import id.walt.gateway.providers.metaco.restapi.transfer.model.Transfer
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
@@ -108,7 +109,6 @@ class AccountUseCaseImpl(
     }
 
     override fun transactions(parameter: TransactionListParameter): Result<List<TransactionData>> = runCatching {
-        val tickerData = parameter.tickerId?.let { getTickerData(it) }
         val transactions = transactionRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.id }
         val orders = orderRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.data.id }
         transferRepository.findAll(
@@ -122,11 +122,7 @@ class AccountUseCaseImpl(
             val transaction = transactions[it.key]?.first()
             val order = orders[transaction?.orderReference?.id]?.first()
             buildTransactionData(
-                parameter,
-                tickerData ?: getTickerData(it.value.first().tickerId),
-                it.value,
-                transaction,
-                order
+                parameter, parameter.tickerId ?: it.value.first().tickerId, it.value, transaction, order
             )
         }
     }
@@ -193,7 +189,7 @@ class AccountUseCaseImpl(
 
     private fun buildTransactionData(
         parameter: TransactionListParameter,
-        tickerData: TickerData,
+        tickerId: String,
         transfers: List<Transfer>,
         transaction: Transaction?,
         order: Order?,
@@ -203,36 +199,23 @@ class AccountUseCaseImpl(
             id = transaction?.id ?: "",
             date = transaction?.registeredAt ?: transfers.first().registeredAt,
             amount = amount,
-            ticker = tickerData,
-            type = getTransactionOrderType(parameter.accountId, transaction, order),
             status = getTransactionStatus(transaction),
-            price = getTransactionPrice(
-                amount,
-                tickerData.decimals,
-                tickerData.price.value,
-                tickerData.price.change,
-                order,
-            ),
+            meta = let {
+                getTransactionMeta(order) ?: Common.getTransactionMeta(
+                    tradeType = getTransactionOrderType(parameter.accountId, transaction?.relatedAccounts?: emptyList()),
+                    amount = amount,
+                    ticker = getTickerData(tickerId),
+                )
+            }.toMap(),
             relatedAccount = getRelatedAccount(parameter.accountId, transfers),
         )
     }
 
-    private fun getTransactionPrice(
-        amount: String,
-        decimals: Int,
-        price: Double,
-        change: Double,
-        order: Order? = null,
-    ) = order?.let {
+    private fun getTransactionMeta(order: Order? = null) = order?.let {
         it.data.metadata.customProperties["transactionProperties"]?.let {
-            Klaxon().parse<TransactionCustomProperties>(it)?.let {
-                ValueWithChange(it.value.toDoubleOrNull() ?: .0, it.change.toDoubleOrNull() ?: .0, it.currency)
-            }
+            runCatching { Klaxon().parse<TransactionCustomProperties>(it) }.getOrNull()
         }
-    } ?: ValueWithChange(
-        Common.computeAmount(amount, decimals) * price,
-        Common.computeAmount(amount, decimals) * change
-    )
+    }
 
     private fun getRelatedAccount(accountId: String, transfers: List<Transfer>) = let {
         val filtered = transfers.filter { it.kind == "Transfer" }
@@ -261,12 +244,7 @@ class AccountUseCaseImpl(
         tickers = getAccountTickers(parameter).map { it.ticker.id }
     )
 
-    private fun getTransactionOrderType(accountId: String, transaction: Transaction?, order: Order? = null) =
-        order?.data?.let {
-            transaction?.relatedAccounts?.filter { it.id == accountId }?.none { it.sender }?.takeIf { it }
-                ?.let { "Receive" } ?: it.metadata.customProperties["transactionProperties"]?.let {
-                Klaxon().parse<TransactionCustomProperties>(it)?.type
-            } ?: "Outgoing"
-        } ?: "Receive"
+    private fun getTransactionOrderType(accountId: String, relatedAccounts: List<RelatedAccount>) =
+        relatedAccounts.filter { it.id == accountId }.none { it.sender }.takeIf { it }?.let { "Receive" } ?: "Outgoing"
 }
 

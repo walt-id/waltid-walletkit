@@ -16,6 +16,8 @@ class EstimateTypeAdapter : TypeAdapter<Estimate> {
         when (type as String) {
             "Ethereum" -> EthereumEstimate::class
             "Bitcoin" -> BitcoinEstimate::class
+            "Failure" -> FailureEstimate::class
+            "Success" -> SuccessEstimate::class
             else -> throw IllegalArgumentException("Unknown type: $type")
         }
 }

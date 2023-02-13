@@ -48,7 +48,7 @@ class RequestUseCaseImpl(
 //            )
             RequestResult(
                 result = it.success,
-                message = it.errors.joinToString(".").takeIf { it.isNotEmpty() } ?: "Unknown error"
+                message = it.errors?.joinToString(".").takeIf { it?.isNotEmpty() ?: false } ?: "Unknown error"
             )
         }
     }
