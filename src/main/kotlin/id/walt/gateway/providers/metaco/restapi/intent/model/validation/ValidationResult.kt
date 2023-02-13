@@ -12,7 +12,7 @@ sealed class ValidationResult(
     val type: String,
 ) {
     abstract val success: Boolean
-    abstract val errors: List<String>
+    abstract val errors: List<String>?
 }
 
 class ValidationResultTypeAdapter : TypeAdapter<ValidationResult> {

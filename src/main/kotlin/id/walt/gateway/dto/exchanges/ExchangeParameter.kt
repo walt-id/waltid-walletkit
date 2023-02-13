@@ -7,4 +7,5 @@ data class ExchangeParameter(
     val amount: String,
     val from: String,
     val to: String,
+    val type: String,
 )
