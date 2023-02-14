@@ -1,7 +1,7 @@
 package id.walt.gateway.providers.metaco.restapi.models.parameters
 
-import id.walt.gateway.providers.metaco.restapi.models.destination.Destination
 import id.walt.gateway.providers.metaco.restapi.intent.model.fee.FeeStrategy
+import id.walt.gateway.providers.metaco.restapi.models.destination.Destination
 import kotlinx.serialization.Serializable
 
 @Serializable

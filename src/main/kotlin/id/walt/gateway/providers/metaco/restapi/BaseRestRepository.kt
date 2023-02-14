@@ -38,13 +38,14 @@ abstract class BaseRestRepository(
         }
     }
 
-    inline fun <reified K: EntityList<T>, T> findAllLoopPages(url: String, criteria: Map<String, String>): List<T> = let {
+    inline fun <reified K : EntityList<T>, T> findAllLoopPages(url: String, criteria: Map<String, String>): List<T> = let {
         val list = mutableListOf<T>()
         var entityList = CommonHttp.get<K>(client, url.plus(CommonHttp.buildQueryList(criteria)))
         do {
             list.addAll(entityList.items)
-            entityList.nextStartingAfter?.let{
-                entityList = CommonHttp.get<K>(client, url.plus(CommonHttp.buildQueryList(criteria.plus("startingAfter" to it))))
+            entityList.nextStartingAfter?.let {
+                entityList =
+                    CommonHttp.get<K>(client, url.plus(CommonHttp.buildQueryList(criteria.plus("startingAfter" to it))))
             }
         } while (entityList.nextStartingAfter != null)
         list

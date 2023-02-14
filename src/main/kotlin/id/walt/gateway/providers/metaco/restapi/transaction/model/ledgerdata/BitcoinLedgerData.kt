@@ -8,5 +8,4 @@ import kotlinx.serialization.Serializable
 class BitcoinLedgerData(
     val inputs: List<Input>,
     val outputs: List<Output>,
-) : LedgerData("Bitcoin") {
-}
+) : LedgerData("Bitcoin")

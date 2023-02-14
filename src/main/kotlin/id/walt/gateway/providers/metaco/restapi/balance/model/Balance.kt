@@ -1,7 +1,6 @@
 package id.walt.gateway.providers.metaco.restapi.balance.model
 
 import com.beust.klaxon.Json
-import id.walt.gateway.providers.metaco.restapi.balance.model.AccountReference
 import kotlinx.serialization.Serializable
 
 @Serializable

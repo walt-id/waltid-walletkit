@@ -2,7 +2,6 @@ package id.walt
 
 import com.github.ajalt.clikt.core.subcommands
 import id.walt.cli.*
-import id.walt.issuer.backend.IssuerManager
 import id.walt.multitenancy.ConfigureTenantCmd
 import id.walt.multitenancy.TenantCmd
 import id.walt.servicematrix.ServiceMatrix
@@ -16,8 +15,6 @@ import id.walt.webwallet.backend.cli.WalletCmd
 import id.walt.webwallet.backend.context.WalletContextManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import mu.KotlinLogging
-import java.io.File
 
 
 val WALTID_WALLET_BACKEND_PORT = System.getenv("WALTID_WALLET_BACKEND_PORT")?.toIntOrNull() ?: 8080

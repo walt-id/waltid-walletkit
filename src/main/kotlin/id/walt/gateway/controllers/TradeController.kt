@@ -93,15 +93,20 @@ class TradeController(
 
     fun validate(ctx: Context) {
         val parameters = ctx.bodyAsClass<TransferParameter>()
-        tradeUseCase.validate(TradeData(TransferParameter(
-            amount = parameters.amount,
-            ticker = parameters.ticker,
-            maxFee = parameters.maxFee,
-            sender = parameters.sender,
-            recipient = AccountIdentifier(
-                domainId = parameters.recipient.domainId.takeIf { it.isNotEmpty() }?:ProviderConfig.nostroDomainId,
-                accountId = parameters.recipient.accountId.takeIf { it.isNotEmpty() }?:ProviderConfig.nostroAccountId,
-            )),"Transfer"))
+        tradeUseCase.validate(
+            TradeData(
+                TransferParameter(
+                    amount = parameters.amount,
+                    ticker = parameters.ticker,
+                    maxFee = parameters.maxFee,
+                    sender = parameters.sender,
+                    recipient = AccountIdentifier(
+                        domainId = parameters.recipient.domainId.takeIf { it.isNotEmpty() } ?: ProviderConfig.nostroDomainId,
+                        accountId = parameters.recipient.accountId.takeIf { it.isNotEmpty() } ?: ProviderConfig.nostroAccountId,
+                    )
+                ), "Transfer"
+            )
+        )
             .onSuccess {
                 ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
                 ctx.json(it)
@@ -116,120 +121,130 @@ class TradeController(
     fun sellDocs() = document().operation {
         it.summary("Returns the sell trade details").operationId("sell").addTagsItem("Trade Management")
     }.body<SwapParameter> {
-        it.description("Sell parameters:<br/>" +
-        "{<br/>" +
-        "    \"spend\":<br/>" +
-        "    {<br/>" +
-        "        \"amount\": \"{amount}\",<br/>" +
-        "        \"ticker\": \"{ticker-id}\",<br/>" +
-        "        \"maxFee\": \"{maxFee}\",<br/>" +
-        "        \"sender\":<br/>" +
-        "        {<br/>" +
-        "            \"domainId\": \"{domain-id}\",<br/>" +
-        "            \"accountId\": \"{account-id}\"<br/>" +
-        "        }<br/>" +
-        "    },<br/>" +
-        "    \"receive\":<br/>" +
-        "    {<br/>" +
-        "        \"amount\": \"{amount}\",<br/>" +
-        "        \"ticker\": \"{ticker-id}\",<br/>" +
-        "        \"maxFee\": \"{maxFee}\",<br/>" +
-        "        \"sender\":<br/>" +
-        "        {<br/>" +
-        "            \"domainId\": \"{domain-id | empty-string}\",<br/>" +
-        "            \"accountId\": \"{account-id | address}\"<br/>" +
-        "        }<br/>" +
-        "    }<br/>" +
-        "}")
+        it.description(
+            "Sell parameters:<br/>" +
+                    "{<br/>" +
+                    "    \"spend\":<br/>" +
+                    "    {<br/>" +
+                    "        \"amount\": \"{amount}\",<br/>" +
+                    "        \"ticker\": \"{ticker-id}\",<br/>" +
+                    "        \"maxFee\": \"{maxFee}\",<br/>" +
+                    "        \"sender\":<br/>" +
+                    "        {<br/>" +
+                    "            \"domainId\": \"{domain-id}\",<br/>" +
+                    "            \"accountId\": \"{account-id}\"<br/>" +
+                    "        }<br/>" +
+                    "    },<br/>" +
+                    "    \"receive\":<br/>" +
+                    "    {<br/>" +
+                    "        \"amount\": \"{amount}\",<br/>" +
+                    "        \"ticker\": \"{ticker-id}\",<br/>" +
+                    "        \"maxFee\": \"{maxFee}\",<br/>" +
+                    "        \"sender\":<br/>" +
+                    "        {<br/>" +
+                    "            \"domainId\": \"{domain-id | empty-string}\",<br/>" +
+                    "            \"accountId\": \"{account-id | address}\"<br/>" +
+                    "        }<br/>" +
+                    "    }<br/>" +
+                    "}"
+        )
     }.json<RequestResult>("200") { it.description("The sell trade details") }
 
     fun buyDocs() = document().operation {
         it.summary("Returns the buy trade details").operationId("buy").addTagsItem("Trade Management")
     }.body<SwapParameter> {
-        it.description("Buy parameters:<br/>" +
-        "{<br/>" +
-        "    \"spend\":<br/>" +
-        "    {<br/>" +
-        "        \"amount\": \"{amount}\",<br/>" +
-        "        \"ticker\": \"{ticker-id}\",<br/>" +
-        "        \"maxFee\": \"{maxFee}\",<br/>" +
-        "        \"sender\":<br/>" +
-        "        {<br/>" +
-        "            \"domainId\": \"{domain-id}\",<br/>" +
-        "            \"accountId\": \"{account-id}\"<br/>" +
-        "        }<br/>" +
-        "    },<br/>" +
-        "    \"receive\":<br/>" +
-        "    {<br/>" +
-        "        \"amount\": \"{amount}\",<br/>" +
-        "        \"ticker\": \"{ticker-id}\",<br/>" +
-        "        \"maxFee\": \"{maxFee}\",<br/>" +
-        "        \"sender\":<br/>" +
-        "        {<br/>" +
-        "            \"domainId\": \"{domain-id | empty-string}\",<br/>" +
-        "            \"accountId\": \"{account-id | address}\"<br/>" +
-        "        }<br/>" +
-        "    }<br/>" +
-        "}")
+        it.description(
+            "Buy parameters:<br/>" +
+                    "{<br/>" +
+                    "    \"spend\":<br/>" +
+                    "    {<br/>" +
+                    "        \"amount\": \"{amount}\",<br/>" +
+                    "        \"ticker\": \"{ticker-id}\",<br/>" +
+                    "        \"maxFee\": \"{maxFee}\",<br/>" +
+                    "        \"sender\":<br/>" +
+                    "        {<br/>" +
+                    "            \"domainId\": \"{domain-id}\",<br/>" +
+                    "            \"accountId\": \"{account-id}\"<br/>" +
+                    "        }<br/>" +
+                    "    },<br/>" +
+                    "    \"receive\":<br/>" +
+                    "    {<br/>" +
+                    "        \"amount\": \"{amount}\",<br/>" +
+                    "        \"ticker\": \"{ticker-id}\",<br/>" +
+                    "        \"maxFee\": \"{maxFee}\",<br/>" +
+                    "        \"sender\":<br/>" +
+                    "        {<br/>" +
+                    "            \"domainId\": \"{domain-id | empty-string}\",<br/>" +
+                    "            \"accountId\": \"{account-id | address}\"<br/>" +
+                    "        }<br/>" +
+                    "    }<br/>" +
+                    "}"
+        )
     }.json<RequestResult>("200") { it.description("The buy trade details") }
 
     fun sendDocs() = document().operation {
         it.summary("Returns the send trade details").operationId("send").addTagsItem("Trade Management")
     }.body<TransferParameter> {
-        it.description("Send parameters:<br/>" +
-                "{<br/>" +
-                "    \"amount\": \"{value}\",<br/>" +
-                "    \"ticker\": \"{ticker-id}\",<br/>" +
-                "    \"maxFee\": \"{value}\",<br/>" +
-                "    \"sender\":<br/>" +
-                "    {<br/>" +
-                "        \"domainId\": \"{domain-id}\",<br/>" +
-                "        \"accountId\": \"{account-id}\"<br/>" +
-                "    },<br/>" +
-                "    \"recipient\":<br/>" +
-                "    {<br/>" +
-                "        \"domainId\": \"{domain-id}\",<br/>" +
-                "        \"accountId\": \"{account-id}\"<br/>" +
-                "    }<br/>" +
-                "}")
+        it.description(
+            "Send parameters:<br/>" +
+                    "{<br/>" +
+                    "    \"amount\": \"{value}\",<br/>" +
+                    "    \"ticker\": \"{ticker-id}\",<br/>" +
+                    "    \"maxFee\": \"{value}\",<br/>" +
+                    "    \"sender\":<br/>" +
+                    "    {<br/>" +
+                    "        \"domainId\": \"{domain-id}\",<br/>" +
+                    "        \"accountId\": \"{account-id}\"<br/>" +
+                    "    },<br/>" +
+                    "    \"recipient\":<br/>" +
+                    "    {<br/>" +
+                    "        \"domainId\": \"{domain-id}\",<br/>" +
+                    "        \"accountId\": \"{account-id}\"<br/>" +
+                    "    }<br/>" +
+                    "}"
+        )
     }.json<RequestResult>("200") { it.description("The send trade details") }
 
     fun validateDocs() = document().operation {
         it.summary("Returns the trade validation details").operationId("validate").addTagsItem("Trade Management")
     }.body<TransferParameter> {
-        it.description("Trade preview parameters:<br/>" +
-                "{<br/>" +
-                "    \"amount\": \"{value}\",<br/>" +
-                "    \"ticker\": \"{ticker-id}\",<br/>" +
-                "    \"maxFee\": \"{value}\",<br/>" +
-                "    \"sender\":<br/>" +
-                "    {<br/>" +
-                "        \"domain-id\": \"{domain-id}\",<br/>" +
-                "        \"account-id\": \"{account-id}\"<br/>" +
-                "    },<br/>" +
-                "    \"recipient\":<br/>" +
-                "    {<br/>" +
-                "        \"domainId\": \"{domain-id}\",<br/>" +
-                "        \"accountId\": \"{account-id}\"<br/>" +
-                "    }<br/>" +
-                "}")
+        it.description(
+            "Trade preview parameters:<br/>" +
+                    "{<br/>" +
+                    "    \"amount\": \"{value}\",<br/>" +
+                    "    \"ticker\": \"{ticker-id}\",<br/>" +
+                    "    \"maxFee\": \"{value}\",<br/>" +
+                    "    \"sender\":<br/>" +
+                    "    {<br/>" +
+                    "        \"domain-id\": \"{domain-id}\",<br/>" +
+                    "        \"account-id\": \"{account-id}\"<br/>" +
+                    "    },<br/>" +
+                    "    \"recipient\":<br/>" +
+                    "    {<br/>" +
+                    "        \"domainId\": \"{domain-id}\",<br/>" +
+                    "        \"accountId\": \"{account-id}\"<br/>" +
+                    "    }<br/>" +
+                    "}"
+        )
     }.json<RequestResult>("200") { it.description("The trade validation details") }
 
     fun airdropDocs() = document().operation {
         it.summary("Performs an airdrop to the specified addresses").operationId("airdrop")
             .addTagsItem("Trade Management")
     }.body<AirdropParameter> {
-        it.description("Airdrop parameter:<br/>" +
-                "{<br/>" +
-                "    \"amount\": \"String\",<br/>" +
-                "    \"ticker\": \"String\",<br/>" +
-                "    \"maxFee\": \"String\",<br/>" +
-                "    \"sender\":<br/>" +
-                "    {<br/>" +
-                "        \"domainId\": \"String\",<br/>" +
-                "        \"accountId\": \"String\"<br/>" +
-                "    },<br/>" +
-                "    \"addresses\": \"List<String>\"<br/>" +
-                "}")
+        it.description(
+            "Airdrop parameter:<br/>" +
+                    "{<br/>" +
+                    "    \"amount\": \"String\",<br/>" +
+                    "    \"ticker\": \"String\",<br/>" +
+                    "    \"maxFee\": \"String\",<br/>" +
+                    "    \"sender\":<br/>" +
+                    "    {<br/>" +
+                    "        \"domainId\": \"String\",<br/>" +
+                    "        \"accountId\": \"String\"<br/>" +
+                    "    },<br/>" +
+                    "    \"addresses\": \"List<String>\"<br/>" +
+                    "}"
+        )
     }.json<Int>("200") { it.description("The number of successful airdrops") }
 }

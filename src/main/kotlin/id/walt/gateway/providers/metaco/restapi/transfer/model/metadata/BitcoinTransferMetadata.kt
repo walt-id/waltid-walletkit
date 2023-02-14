@@ -7,5 +7,4 @@ import kotlinx.serialization.Serializable
 class BitcoinTransferMetadata(
     @Json(serializeNull = false)
     val outputIndex: Int? = null,
-) : TransferMetadata("Bitcoin") {
-}
+) : TransferMetadata("Bitcoin")

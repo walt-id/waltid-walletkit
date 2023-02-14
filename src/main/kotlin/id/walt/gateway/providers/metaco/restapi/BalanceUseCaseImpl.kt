@@ -29,7 +29,8 @@ class BalanceUseCaseImpl(
             it.tickerId.equals(parameter.tickerId)
         }?.let {
             buildBalanceData(it)
-        } ?: throw IllegalArgumentException("No balance found for account: ${parameter.accountId} ticker: ${parameter.tickerId} on domain: ${parameter.domainId}")
+        }
+            ?: throw IllegalArgumentException("No balance found for account: ${parameter.accountId} ticker: ${parameter.tickerId} on domain: ${parameter.domainId}")
     }
 
     private fun buildBalanceData(balance: Balance): BalanceData? = balance.takeIf {

@@ -6,5 +6,4 @@ import kotlinx.serialization.Serializable
 @Serializable
 class EthereumLedgerData(
     val logs: List<LedgerDataLog>,
-) : LedgerData("Ethereum") {
-}
+) : LedgerData("Ethereum")

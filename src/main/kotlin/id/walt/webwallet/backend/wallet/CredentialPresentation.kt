@@ -16,7 +16,7 @@ import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.oidc.OIDCUtils
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 
 data class CredentialPresentationSessionInfo(
     val id: String,
@@ -94,7 +94,8 @@ object CredentialPresentationManager {
     }
 
     fun continueCredentialPresentationFor(sessionId: String, did: String): CredentialPresentationSession {
-        val session = sessionCache.getIfPresent(sessionId) ?: throw IllegalArgumentException("No session found for id $sessionId")
+        val session =
+            sessionCache.getIfPresent(sessionId) ?: throw IllegalArgumentException("No session found for id $sessionId")
         session.sessionInfo.did = did
         session.sessionInfo.presentableCredentials = getPresentableCredentials(session)
         session.sessionInfo.availableIssuers = null
@@ -110,7 +111,8 @@ object CredentialPresentationManager {
     }
 
     fun fulfillPresentation(sessionId: String, selectedCredentials: List<PresentableCredential>): PresentationResponse {
-        val session = sessionCache.getIfPresent(sessionId) ?: throw IllegalArgumentException("No session found for id $sessionId")
+        val session =
+            sessionCache.getIfPresent(sessionId) ?: throw IllegalArgumentException("No session found for id $sessionId")
         val did = session.sessionInfo.did ?: throw IllegalArgumentException("Did not set for this session")
 
         val myCredentials = Custodian.getService().listCredentials()
@@ -127,7 +129,7 @@ object CredentialPresentationManager {
         ).toVerifiablePresentation()
 
         val siopResponse = OIDC4VPService.getSIOPResponseFor(session.req, did, listOf(vp))
-        val rp_response = if(ResponseMode("post") == session.req.responseMode) {
+        val rp_response = if (ResponseMode("post") == session.req.responseMode) {
             OIDC4VPService.postSIOPResponse(session.req, siopResponse)
         } else null
 

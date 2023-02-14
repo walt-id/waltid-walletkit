@@ -2,13 +2,11 @@ package id.walt.verifier.backend
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import com.google.common.cache.CacheBuilder
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.id.State
 import com.nimbusds.openid.connect.sdk.Nonce
-import id.walt.WALTID_DATA_ROOT
 import id.walt.auditor.*
 import id.walt.model.dif.*
 import id.walt.model.oidc.SIOPv2Response
@@ -18,16 +16,9 @@ import id.walt.multitenancy.TenantId
 import id.walt.multitenancy.TenantType
 import id.walt.servicematrix.BaseService
 import id.walt.servicematrix.ServiceRegistry
-import id.walt.services.context.Context
-import id.walt.services.context.ContextManager
-import id.walt.services.hkvstore.FileSystemHKVStore
-import id.walt.services.hkvstore.FilesystemStoreConfig
-import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.oidc.OIDC4VPService
-import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserInfo
-import id.walt.webwallet.backend.context.UserContext
 import io.github.pavleprica.kotlin.cache.time.based.longTimeBasedCache
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.UnauthorizedResponse
@@ -41,7 +32,6 @@ import mu.KotlinLogging
 import java.net.URI
 import java.nio.ByteBuffer
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 abstract class VerifierManager : BaseService() {
     open fun getVerifierContext(tenantId: String): TenantContext<VerifierConfig, VerifierState> {
@@ -50,7 +40,7 @@ abstract class VerifierManager : BaseService() {
 
     private val log = KotlinLogging.logger { }
 
-    private  fun convertUUIDToBytes(uuid: UUID): ByteArray?{
+    private fun convertUUIDToBytes(uuid: UUID): ByteArray? {
         val bb: ByteBuffer = ByteBuffer.wrap(ByteArray(16))
         bb.putLong(uuid.mostSignificantBits)
         bb.putLong(uuid.leastSignificantBits)
@@ -58,7 +48,7 @@ abstract class VerifierManager : BaseService() {
     }
 
     open fun newRequest(
-        walletUrl: URI,
+        walletUrl: String,
         presentationDefinition: PresentationDefinition,
         state: String? = null,
         redirectCustomUrlQuery: String = "",
@@ -74,8 +64,8 @@ abstract class VerifierManager : BaseService() {
             redirect_uri = URI.create("${VerifierTenant.config.verifierApiUrl}/verify$redirectQuery"),
             response_mode = responseMode,
             nonce = Nonce(nonce),
-            presentation_definition = if(presentationDefinitionByReference) null else presentationDefinition,
-            presentation_definition_uri = if(presentationDefinitionByReference)
+            presentation_definition = if (presentationDefinitionByReference) null else presentationDefinition,
+            presentation_definition_uri = if (presentationDefinitionByReference)
                 URI.create("${VerifierTenant.config.verifierApiUrl}/pd/$requestId").also {
                     VerifierTenant.state.presentationDefinitionCache.put(requestId, presentationDefinition)
                 } else null,
@@ -98,7 +88,7 @@ abstract class VerifierManager : BaseService() {
     }
 
     fun newRequestBySchemaOrVc(
-        walletUrl: URI,
+        walletUrl: String,
         schemaUris: Set<String>,
         vcTypes: Set<String>,
         state: String? = null,
@@ -119,7 +109,15 @@ abstract class VerifierManager : BaseService() {
                 nonce
             )
 
-            else -> newRequestByVcTypes(walletUrl, vcTypes, state, redirectCustomUrlQuery, responseMode, presentationDefinitionByReference, nonce)
+            else -> newRequestByVcTypes(
+                walletUrl,
+                vcTypes,
+                state,
+                redirectCustomUrlQuery,
+                responseMode,
+                presentationDefinitionByReference,
+                nonce
+            )
         }
 
         if (verificationCallbackUrl != null) {
@@ -136,7 +134,7 @@ abstract class VerifierManager : BaseService() {
     }
 
     open fun newRequestBySchemaUris(
-        walletUrl: URI,
+        walletUrl: String,
         schemaUris: Set<String>,
         state: String? = null,
         redirectCustomUrlQuery: String = "",
@@ -149,7 +147,7 @@ abstract class VerifierManager : BaseService() {
                 id = "1",
                 input_descriptors = schemaUris.mapIndexed { index, schemaUri ->
                     InputDescriptor(
-                        id = "${index+1}",
+                        id = "${index + 1}",
                         schema = VCSchema(uri = schemaUri)
                     )
                 }.toList()
@@ -158,7 +156,7 @@ abstract class VerifierManager : BaseService() {
     }
 
     open fun newRequestByVcTypes(
-        walletUrl: URI,
+        walletUrl: String,
         vcTypes: Set<String>,
         state: String? = null,
         redirectCustomUrlQuery: String = "",
@@ -171,7 +169,7 @@ abstract class VerifierManager : BaseService() {
                 id = "1",
                 input_descriptors = vcTypes.mapIndexed { index, vcType ->
                     InputDescriptor(
-                        id = "${index+1}",
+                        id = "${index + 1}",
                         constraints = InputDescriptorConstraints(
                             fields = listOf(
                                 InputDescriptorField(
@@ -194,7 +192,7 @@ abstract class VerifierManager : BaseService() {
             ChallengePolicy(req.getCustomParameter("nonce")!!.first(), applyToVC = false, applyToVP = true),
             PresentationDefinitionPolicy(
                 VerifierTenant.state.presentationDefinitionCache.getIfPresent(req.state.value)
-                ?: OIDC4VPService.getPresentationDefinition(req)
+                    ?: OIDC4VPService.getPresentationDefinition(req)
             ),
             *(VerifierTenant.config.additionalPolicies?.map { p ->
                 PolicyRegistry.getPolicyWithJsonArg(p.policy, p.argument?.let { JsonObject(it) })
@@ -235,8 +233,8 @@ abstract class VerifierManager : BaseService() {
                     vp = vp,
                     vcs = vp.verifiableCredential ?: listOf(),
                     verification_result = Auditor.getService().verify(
-                            vp, getVerificationPoliciesFor(req)
-                        )
+                        vp, getVerificationPoliciesFor(req)
+                    )
                 )
             }, auth_token = null
         )
@@ -260,16 +258,19 @@ abstract class VerifierManager : BaseService() {
                     verificationCallbacks.remove(state)
                     null
                 }
+
                 in setOf(
                     HttpStatusCode.MovedPermanently, HttpStatusCode.PermanentRedirect,
                     HttpStatusCode.Found, HttpStatusCode.SeeOther, HttpStatusCode.TemporaryRedirect
                 ) -> response.headers[HttpHeaders.Location]
+
                 in setOf(
                     HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden
                 ) -> {
                     overallValid = false
                     null
                 }
+
                 else -> null
             }
         } else null
@@ -310,6 +311,4 @@ abstract class VerifierManager : BaseService() {
     }
 }
 
-class DefaultVerifierManager : VerifierManager() {
-
-}
+class DefaultVerifierManager : VerifierManager()

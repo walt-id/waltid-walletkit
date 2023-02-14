@@ -5,7 +5,6 @@ import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
 import id.walt.gateway.providers.goldorg.GoldHistoricalPriceUseCaseImpl
-import id.walt.gateway.providers.goldorg.HistoricalPriceRepository
 import id.walt.gateway.providers.goldorg.HistoricalPriceRepositoryImpl
 import id.walt.gateway.providers.metaco.mockapi.RBITokensMockUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.*
@@ -23,10 +22,8 @@ import id.walt.gateway.providers.metaco.restapi.ticker.TickerRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transaction.TransactionRepositoryImpl
 import id.walt.gateway.providers.metaco.restapi.transfer.TransferRepositoryImpl
 import id.walt.gateway.providers.rcb.CoinUseCaseImpl
-import id.walt.gateway.providers.rcb.DoubleFieldResponseParser
 import id.walt.gateway.providers.rcb.StringFieldResponseParser
 import id.walt.gateway.usecases.AccountUseCase
-import id.walt.gateway.usecases.HistoricalPriceUseCase
 import id.walt.gateway.usecases.MultiCoinUseCaseImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
@@ -78,7 +75,8 @@ object MetacoRouter : Router {
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))
     private val tickerRouter = TickerRouter(TickerController(tickerUseCase))
     private val exchangeRouter = ExchangeRouter(ExchangeController(ExchangeUseCaseImpl(tickerRepository, coinUseCase)))
-    private val historicalRouter = HistoricalDataRouter(HistoricalPriceController(GoldHistoricalPriceUseCaseImpl(HistoricalPriceRepositoryImpl())))
+    private val historicalRouter =
+        HistoricalDataRouter(HistoricalPriceController(GoldHistoricalPriceUseCaseImpl(HistoricalPriceRepositoryImpl())))
 
     override fun routes() {
         ApiBuilder.path("") {

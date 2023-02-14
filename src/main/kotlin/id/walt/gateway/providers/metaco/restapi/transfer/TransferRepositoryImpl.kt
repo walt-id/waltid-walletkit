@@ -9,7 +9,7 @@ import id.walt.gateway.providers.metaco.restapi.transfer.model.TransferList
 
 class TransferRepositoryImpl(
     override val authService: AuthService
-): TransferRepository, BaseRestRepository(authService) {
+) : TransferRepository, BaseRestRepository(authService) {
     private val listEndpoint = "/v1/domains/%s/transactions/transfers"
     private val detailEndpoint = "/v1/domains/%s/transactions/transfers/%s"
 

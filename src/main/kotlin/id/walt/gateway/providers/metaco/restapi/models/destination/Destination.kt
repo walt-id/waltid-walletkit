@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
 abstract class Destination {
     abstract val type: String
 
-    companion object{
+    companion object {
         private val uuidRegex = Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}")
 
         //TODO: fix for endpoint-id

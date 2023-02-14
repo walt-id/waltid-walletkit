@@ -1,12 +1,10 @@
 package id.walt.multitenancy
 
 import id.walt.WALTID_DATA_ROOT
-import id.walt.issuer.backend.IssuerManager
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
-import id.walt.verifier.backend.VerifierManager
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name

@@ -13,7 +13,11 @@ interface PayloadBuilder<T : PayloadData> {
 
     companion object {
         fun <T : PayloadData> create(parameter: PayloadParameter<T>): Payload = when (parameter.type) {
-            Payload.Types.CreateTransactionOrder.value -> TransactionOrderPayloadBuilder(parameter.parametersType, parameter.additionalInfo).build(parameter.data as TradeData)
+            Payload.Types.CreateTransactionOrder.value -> TransactionOrderPayloadBuilder(
+                parameter.parametersType,
+                parameter.additionalInfo
+            ).build(parameter.data as TradeData)
+
             Payload.Types.CreateTransferOrder.value -> TransferOrderPayloadBuilder(parameter.additionalInfo).build(parameter.data as TradeData)
             Payload.Types.ValidateTickers.value -> ValidateTickersPayloadBuilder().build(parameter.data as TickerPayloadData)
             Payload.Types.ReleaseQuarantinedTransfers.value -> ReleaseQuarantinedTransfersPayloadBuilder().build(parameter.data as QuarantineTransferPayloadData)

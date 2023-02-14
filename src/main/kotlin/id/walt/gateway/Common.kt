@@ -2,8 +2,8 @@ package id.walt.gateway
 
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
-import java.time.Instant
 import java.time.Duration
+import java.time.Instant
 import kotlin.random.Random
 
 object Common {

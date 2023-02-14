@@ -10,7 +10,7 @@ import java.net.Socket
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.util.*
-import java.util.Objects.requireNonNull
+import java.util.Objects.*
 import javax.net.ssl.*
 
 
@@ -30,7 +30,8 @@ class SocketServer {
     ) = withContext(Dispatchers.IO) {
         requireNonNull(tlsVersion, "TLS version is mandatory")
         require(port > 0) { "Port number cannot be less than or equal to 0" }
-        initContext(port, trustStore, keyStore).use {it as SSLServerSocket
+        initContext(port, trustStore, keyStore).use {
+            it as SSLServerSocket
             it.needClientAuth = true
             it.enabledProtocols = arrayOf(tlsVersion)
 //            it.enabledProtocols = it.supportedProtocols
