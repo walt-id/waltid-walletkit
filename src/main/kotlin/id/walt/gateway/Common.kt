@@ -2,6 +2,8 @@ package id.walt.gateway
 
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.TransactionCustomProperties
+import java.time.Instant
+import java.time.Duration
 import kotlin.random.Random
 
 object Common {
@@ -46,4 +48,20 @@ object Common {
                 type = tradeType,
             )
         }
+
+    /**
+     * Converts a timeframe string to milliseconds epoch pair
+     * @param timeframe - string to represent the timeframe, e.g. 7d for 7 days
+     * @return Pair of millisecond epoch, 1st being past, 2nd being now
+     */
+    fun timeframeToTimestamp(timeframe: String) = Instant.now().let {
+        when (timeframe) {
+            "1d" -> Pair(it.minus(Duration.ofDays(1)).toEpochMilli(), it.toEpochMilli())
+            "7d" -> Pair(it.minus(Duration.ofDays(7)).toEpochMilli(), it.toEpochMilli())
+            "3m" -> Pair(it.minus(Duration.ofDays(90)).toEpochMilli(), it.toEpochMilli())
+            "6m" -> Pair(it.minus(Duration.ofDays(180)).toEpochMilli(), it.toEpochMilli())
+            "1y" -> Pair(it.minus(Duration.ofDays(365)).toEpochMilli(), it.toEpochMilli())
+            else -> Pair(it.minus(Duration.ofDays(365)).toEpochMilli(), it.toEpochMilli())
+        }
+    }
 }
