@@ -66,7 +66,8 @@ object IssuerController {
                             documented(document().operation {
                                 it.summary("Create new DID")
                                     .description("Creates and registers a DID. Currently the DID methods: key, web, ebsi (v1/v2) and iota are supported. For EBSI v1: a  bearer token is required.")
-                                    .operationId("createAdvanced").addTagsItem("Issuer Configuration").addTagsItem("Decentralized Identifiers")
+                                    .operationId("createAdvanced").addTagsItem("Issuer Configuration")
+                                    .addTagsItem("Decentralized Identifiers")
                             }
                                 .body<DidCreationRequest>()
                                 .result<String>("200"),
@@ -273,7 +274,7 @@ object IssuerController {
             val isPreAuthorized = ctx.queryParam("isPreAuthorized")?.toBoolean() ?: false
             val initiationRequest =
                 IssuerManager.newIssuanceInitiationRequest(selectedIssuables, isPreAuthorized, userPin, issuerDid)
-            ctx.result("${wallet.url}/${wallet.receivePath}?${initiationRequest.toQueryString()}")
+            ctx.result("${wallet.url}${if (!wallet.url.endsWith("/")) "/" else ""}${wallet.receivePath}?${initiationRequest.toQueryString()}")
         }
     }
 

@@ -15,6 +15,7 @@ import id.walt.services.did.DidService
 import id.walt.services.hkvstore.InMemoryHKVStore
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.oidc.OIDC4VPService
+import id.walt.services.oidc.OidcSchemeFixer.unescapeOpenIdScheme
 import id.walt.services.vcstore.HKVVcStoreService
 import id.walt.signatory.ProofConfig
 import id.walt.signatory.Signatory
@@ -198,13 +199,13 @@ class SIOPv2Test : BaseApiTest() {
         val req = ContextManager.runWith(VerifierManager.getService().getVerifierContext(TenantId.DEFAULT_TENANT)) {
             // create req with pd by ref
             VerifierManager.getService().newRequestByVcTypes(
-                URI.create("openid:///"),
+                "openid://",
                 setOf("VerifiableId"),
                 responseMode = ResponseMode("post"),
                 presentationDefinitionByReference = true
             )
         }
-        val reqUri = req.toURI()
+        val reqUri = req.toURI().unescapeOpenIdScheme()
 
         // try to parse OIDC4VP request
         val parsedReq = shouldNotThrowAny {

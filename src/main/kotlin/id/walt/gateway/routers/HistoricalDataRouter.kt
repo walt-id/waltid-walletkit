@@ -6,10 +6,13 @@ import io.javalin.plugin.openapi.dsl.documented
 
 class HistoricalDataRouter(
     private val historicalPriceController: HistoricalPriceController,
-): Router {
+) : Router {
     override fun routes() {
         ApiBuilder.path("historical") {
-            ApiBuilder.get("asset/{asset}/timeframe/{timeframe}", documented(historicalPriceController.getDoc(), historicalPriceController::get))
+            ApiBuilder.get(
+                "asset/{asset}/timeframe/{timeframe}",
+                documented(historicalPriceController.getDoc(), historicalPriceController::get)
+            )
         }
     }
 }

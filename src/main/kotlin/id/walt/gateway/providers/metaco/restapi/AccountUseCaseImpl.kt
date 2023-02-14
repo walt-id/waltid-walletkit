@@ -13,7 +13,6 @@ import id.walt.gateway.dto.profiles.ProfileData
 import id.walt.gateway.dto.profiles.ProfileParameter
 import id.walt.gateway.dto.requests.RequestParameter
 import id.walt.gateway.dto.requests.RequestResult
-import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
 import id.walt.gateway.dto.transactions.TransactionData
 import id.walt.gateway.dto.transactions.TransactionListParameter
@@ -98,9 +97,10 @@ class AccountUseCaseImpl(
 
     override fun balance(parameter: ProfileParameter): Result<AccountBalance> = runCatching {
         getProfileAccounts(parameter).flatMap {
-            balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }.sortedBy {
-                it.ticker.name
-            }
+            balanceUseCase.list(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id))).getOrElse { emptyList() }
+                .sortedBy {
+                    it.ticker.name
+                }
         }.filter { !ProviderConfig.tickersIgnore.contains(it.ticker.id) }.let { AccountBalance(it) }
     }
 
@@ -109,8 +109,10 @@ class AccountUseCaseImpl(
     }
 
     override fun transactions(parameter: TransactionListParameter): Result<List<TransactionData>> = runCatching {
-        val transactions = transactionRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.id }
-        val orders = orderRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.data.id }
+        val transactions =
+            transactionRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.id }
+        val orders =
+            orderRepository.findAll(parameter.domainId, mapOf("accountId" to parameter.accountId)).groupBy { it.data.id }
         transferRepository.findAll(
             parameter.domainId, mapOf(
                 "accountId" to parameter.accountId,
@@ -164,17 +166,18 @@ class AccountUseCaseImpl(
         }.flatten()
     }
 
-    private fun getProfileFetchCallback(id: String): (domainId: String, accountId: String) -> List<Account> = { domainId, accountId ->
-        if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
-            listOf(accountRepository.findById(domainId, accountId))
-        } else if(Regex("[a-zA-Z]{3,7}[0-9]{2}").matches(id)){
-            accountRepository.findAll(domainId, emptyMap()).filter {
-                it.data.alias.equals(id)
+    private fun getProfileFetchCallback(id: String): (domainId: String, accountId: String) -> List<Account> =
+        { domainId, accountId ->
+            if (Regex("[a-zA-Z0-9]{8}(-[a-zA-Z0-9]{4}){3}-[a-zA-Z0-9]{12}").matches(id)) {
+                listOf(accountRepository.findById(domainId, accountId))
+            } else if (Regex("[a-zA-Z]{3,7}[0-9]{2}").matches(id)) {
+                accountRepository.findAll(domainId, emptyMap()).filter {
+                    it.data.alias.equals(id)
+                }
+            } else {
+                accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId"))
             }
-        }else {
-            accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId"))
         }
-    }
 
     private fun getTickerData(tickerId: String) = tickerUseCase.get(TickerParameter(tickerId)).getOrThrow()
 
@@ -202,7 +205,7 @@ class AccountUseCaseImpl(
             status = getTransactionStatus(transaction),
             meta = let {
                 getTransactionMeta(order) ?: Common.getTransactionMeta(
-                    tradeType = getTransactionOrderType(parameter.accountId, transaction?.relatedAccounts?: emptyList()),
+                    tradeType = getTransactionOrderType(parameter.accountId, transaction?.relatedAccounts ?: emptyList()),
                     amount = amount,
                     ticker = getTickerData(tickerId),
                 )

@@ -10,6 +10,7 @@ import id.walt.model.oidc.SIOPv2Response
 import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
 import id.walt.rest.auditor.AuditorRestController
+import id.walt.services.oidc.OidcSchemeFixer.unescapeOpenIdScheme
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -19,7 +20,6 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import mu.KotlinLogging
-import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -32,7 +32,9 @@ object VerifierController {
             path("{tenantId}") {
                 before { ctx ->
                     log.info { "Setting verifier API context: ${ctx.pathParam("tenantId")}" }
-                    WalletContextManager.setCurrentContext(VerifierManager.getService().getVerifierContext(ctx.pathParam("tenantId")))
+                    WalletContextManager.setCurrentContext(
+                        VerifierManager.getService().getVerifierContext(ctx.pathParam("tenantId"))
+                    )
                 }
                 after {
                     log.info { "Resetting verifier API context" }
@@ -45,7 +47,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("listWallets")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .jsonArray<WalletConfiguration>("200"),
                         VerifierController::listWallets,
                     ))
@@ -57,7 +59,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("presentVID")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("walletId")
                             .queryParam<String>("schemaUri", isRepeatable = true)
                             .queryParam<String>("vcType", isRepeatable = true)
@@ -73,7 +75,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("presentXDevice")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("schemaUri", isRepeatable = true)
                             .queryParam<String>("vcType", isRepeatable = true)
                             .queryParam<Boolean>("pdByReference") { it.description("true: include presentation definition by reference, else by value (default: false)") }
@@ -84,7 +86,7 @@ object VerifierController {
                 get("pd/{id}", documented(document().operation {
                     it.summary("Get presentation definition from cache").operationId("pdFromCache").addTagsItem("Verifier")
                 }
-                    .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                    .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                     .pathParam<String>("id")
                     .json<PresentationDefinition>("200"),
                     VerifierController::getPresentationDefinitionFromCache))
@@ -95,7 +97,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("verifySIOPv2Request")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("state")
                             .formParamBody<String> { }
                             .result<String>("302"),
@@ -108,7 +110,7 @@ object VerifierController {
                                     .addTagsItem("Verifier")
                                     .operationId("isVerified")
                             }
-                                .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                                .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                                 .queryParam<String>("state")
                                 .result<Unit>("404")
                                 .result<String>("200"),
@@ -117,31 +119,36 @@ object VerifierController {
                 }
                 path("config") {
                     post("setConfiguration", documented(document().operation {
-                        it.summary("Set configuration for this verifier tenant").operationId("setConfiguration").addTagsItem("Verifier Configuration")
+                        it.summary("Set configuration for this verifier tenant").operationId("setConfiguration")
+                            .addTagsItem("Verifier Configuration")
                     }
-                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                         .body<IssuerConfig>()
                         .json<String>("200"), VerifierController::setConfiguration))
                     get("getConfiguration", documented(document().operation {
-                        it.summary("Get configuration for this verifier tenant").operationId("getConfiguration").addTagsItem("Verifier Configuration")
+                        it.summary("Get configuration for this verifier tenant").operationId("getConfiguration")
+                            .addTagsItem("Verifier Configuration")
                     }
-                        .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                        .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                         .json<IssuerConfig>("200"), VerifierController::getConfiguration
                     ))
                     path("policies") {
                         get(
                             "list",
                             documented(document().operation {
-                                it.summary("List verification policies").operationId("listPolicies").addTagsItem("Verifier Configuration")
-                            }.pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }.json<Array<VerificationPolicy>>("200"), AuditorRestController::listPolicies)
+                                it.summary("List verification policies").operationId("listPolicies")
+                                    .addTagsItem("Verifier Configuration")
+                            }.pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
+                                .json<Array<VerificationPolicy>>("200"), AuditorRestController::listPolicies)
                         )
                         post(
                             "create/{name}",
                             documented(
                                 document().operation {
-                                    it.summary("Create dynamic verification policy").operationId("createDynamicPolicy").addTagsItem("Verifier Configuration")
+                                    it.summary("Create dynamic verification policy").operationId("createDynamicPolicy")
+                                        .addTagsItem("Verifier Configuration")
                                 }
-                                    .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                                    .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                                     .pathParam<String>("name")
                                     .queryParam<Boolean>("update")
                                     .queryParam<Boolean>("downloadPolicy")
@@ -154,8 +161,10 @@ object VerifierController {
                             "delete/{name}",
                             documented(
                                 document().operation {
-                                    it.summary("Delete a dynamic verification policy").operationId("deletePolicy").addTagsItem("Verifier Configuration")
-                                }.pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }.pathParam<String>("name"),
+                                    it.summary("Delete a dynamic verification policy").operationId("deletePolicy")
+                                        .addTagsItem("Verifier Configuration")
+                                }.pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
+                                    .pathParam<String>("name"),
                                 AuditorRestController::deleteDynamicPolicy
                             )
                         )
@@ -168,7 +177,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("completeAuthentication")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("access_token")
                             .json<Map<String, Any>>("200"),
                         VerifierController::completeAuthentication
@@ -181,7 +190,7 @@ object VerifierController {
                                 .addTagsItem("Verifier")
                                 .operationId("get protected data")
                         }
-                            .pathParam<String>("tenantId"){ it.example(TenantId.DEFAULT_TENANT) }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .result<String>("200"),
                         VerifierController::getProtectedData
                     ), UserRole.AUTHORIZED)
@@ -190,7 +199,8 @@ object VerifierController {
 
     private fun getPresentationDefinitionFromCache(context: Context) {
         val id = context.pathParam("id")
-        val pd = VerifierTenant.state.presentationDefinitionCache.getIfPresent(id) ?: throw BadRequestResponse("Presentation definition id invalid or expired")
+        val pd = VerifierTenant.state.presentationDefinitionCache.getIfPresent(id)
+            ?: throw BadRequestResponse("Presentation definition id invalid or expired")
         context.contentType(ContentType.APPLICATION_JSON).result(KlaxonWithConverters().toJsonString(pd))
     }
 
@@ -206,6 +216,7 @@ object VerifierController {
         val config = context.bodyAsClass<VerifierConfig>()
         VerifierTenant.setConfig(config)
     }
+
     fun listWallets(ctx: Context) {
         ctx.json(VerifierTenant.config.wallets.values)
     }
@@ -219,7 +230,7 @@ object VerifierController {
                 entry.value.map { value -> "${entry.key}=${URLEncoder.encode(value, StandardCharsets.UTF_8)}" }
             }.joinToString("&")
 
-       return customQueryParams
+        return customQueryParams
     }
 
     private fun Context.getSchemaOrVcType(): Triple<List<String>, List<String>, String?> {
@@ -245,7 +256,7 @@ object VerifierController {
         val customQueryParams = getPresentationCustomQueryParams(ctx.queryParamMap())
 
         val req = verifierManager.newRequestBySchemaOrVc(
-            walletUrl = URI.create("${wallet.url}/${wallet.presentPath}"),
+            walletUrl = "${wallet.url}/${wallet.presentPath}",
             schemaUris = schemaUris.toSet(),
             vcTypes = vcTypes.toSet(),
             redirectCustomUrlQuery = customQueryParams,
@@ -254,7 +265,7 @@ object VerifierController {
             presentationDefinitionByReference = ctx.queryParam("pdByReference")?.toBoolean() ?: false
         )
 
-        ctx.status(HttpCode.FOUND).header("Location", req.toURI().toString())
+        ctx.status(HttpCode.FOUND).header("Location", req.toURI().unescapeOpenIdScheme().toString())
     }
 
     fun presentCredentialXDevice(ctx: Context) {
@@ -263,7 +274,7 @@ object VerifierController {
         val customQueryParams = getPresentationCustomQueryParams(ctx.queryParamMap())
 
         val req = verifierManager.newRequestBySchemaOrVc(
-            walletUrl = URI.create("openid:///"),
+            walletUrl = "openid://",
             schemaUris = schemaUris.toSet(),
             vcTypes = vcTypes.toSet(),
             redirectCustomUrlQuery = customQueryParams,
@@ -272,7 +283,7 @@ object VerifierController {
             presentationDefinitionByReference = ctx.queryParam("pdByReference")?.toBoolean() ?: false
         )
 
-        ctx.json(PresentationRequestInfo(req.state.value, req.toURI().toString()))
+        ctx.json(PresentationRequestInfo(req.state.value, req.toURI().unescapeOpenIdScheme().toString()))
     }
 
     val recentlyVerifiedResponses = customTimeBasedCache<String, String>(java.time.Duration.ofSeconds(300))

@@ -1,5 +1,5 @@
 package id.walt.multitenancy
 
-interface TenantState<C: TenantConfig> {
-  var config: C?
+interface TenantState<C : TenantConfig> {
+    var config: C?
 }

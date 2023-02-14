@@ -13,5 +13,8 @@ class BalanceRepositoryImpl(
     private val endpoint = "/v1/domains/%s/accounts/%s/balances"
 
     override fun findAll(domainId: String, accountId: String, criteria: Map<String, String>): List<Balance> =
-        findAllLoopPages<BalanceList, Balance>(String.format(CommonHttp.buildUrl(baseUrl, endpoint), domainId, accountId), criteria)
+        findAllLoopPages<BalanceList, Balance>(
+            String.format(CommonHttp.buildUrl(baseUrl, endpoint), domainId, accountId),
+            criteria
+        )
 }

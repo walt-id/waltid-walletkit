@@ -6,7 +6,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.serialization.kotlinx.json.*
 
-abstract class BaseSignatureService<T>: SignatureService<T> {
+abstract class BaseSignatureService<T> : SignatureService<T> {
     protected val client = HttpClient(CIO) {
         install(ContentNegotiation) {
             json()

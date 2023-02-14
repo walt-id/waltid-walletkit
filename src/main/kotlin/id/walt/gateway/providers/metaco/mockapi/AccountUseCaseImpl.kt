@@ -48,7 +48,8 @@ class AccountUseCaseImpl(
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
     override fun transactions(parameter: TransactionListParameter) =
-        Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }.sortedByDescending { Instant.parse(it.date) })
+        Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }
+            .sortedByDescending { Instant.parse(it.date) })
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
@@ -56,6 +57,7 @@ class AccountUseCaseImpl(
         profileId = UUID.randomUUID().toString(),
         accounts = accountsPool,
     )
+
     private fun getAccount() = AccountData(
         accountIdentifier = AccountIdentifier(UUID.randomUUID().toString(), UUID.randomUUID().toString()),
         alias = Common.getRandomString(7, 1),

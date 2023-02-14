@@ -7,5 +7,4 @@ import kotlinx.serialization.Serializable
 class EthereumTransferMetadata(
     @Json(serializeNull = false)
     val dummy: String? = null,
-) : TransferMetadata("Ethereum") {
-}
+) : TransferMetadata("Ethereum")

@@ -107,22 +107,26 @@ class AccountController(
     fun profileDoc() = document().operation {
         it.summary("Returns the account profile data").operationId("profile").addTagsItem("Account Management")
     }.body<ProfileParameter> {
-        it.description("Profile parameter.<br/>" +
-                "{<br/>" +
-                "\"id\": \"{login-data}\"<br/>" +
-                "}")
+        it.description(
+            "Profile parameter.<br/>" +
+                    "{<br/>" +
+                    "\"id\": \"{login-data}\"<br/>" +
+                    "}"
+        )
     }.json<ProfileData>("200") { it.description("The account profile data") }
 
     fun createDoc() = document().operation {
         it.summary("Creates an account having the specified alias in the specified domain, on the specified ledger")
             .operationId("create").addTagsItem("Account Management")
     }.body<ProfileParameter> {
-        it.description("Account initiation parameter.<br/>" +
-                "{<br/>" +
-                "\"domainName\": \"{domain-name}\",<br/>" +
-                "\"accountName\": \"{account-name}\",<br/>" +
-                "\"ledgerId\": \"{ledger-id}\"<br/>" +
-                "}")
+        it.description(
+            "Account initiation parameter.<br/>" +
+                    "{<br/>" +
+                    "\"domainName\": \"{domain-name}\",<br/>" +
+                    "\"accountName\": \"{account-name}\",<br/>" +
+                    "\"ledgerId\": \"{ledger-id}\"<br/>" +
+                    "}"
+        )
     }.json<RequestResult>("200") { it.description("The account initiation request result") }
 
     fun createBulkDoc() = document().operation {

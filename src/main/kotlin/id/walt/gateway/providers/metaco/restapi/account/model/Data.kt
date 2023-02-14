@@ -1,8 +1,8 @@
 package id.walt.gateway.providers.metaco.restapi.account.model
 
 import com.beust.klaxon.Json
-import kotlinx.serialization.Serializable
 import id.walt.gateway.providers.metaco.restapi.models.metadata.Metadata
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class Data(

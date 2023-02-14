@@ -63,7 +63,7 @@ object RestAPI {
 
     fun createJavalin(accessManager: AccessManager): Javalin = Javalin.create { config ->
         config.apply {
-            enableDevLogging()
+            //enableDevLogging()
             enableCorsForAllOrigins()
             requestLogger { ctx, ms ->
                 if (ctx.url().endsWith("isVerified")) return@requestLogger
@@ -74,9 +74,8 @@ object RestAPI {
                             if (ctx.body().isNotEmpty()) append("\nRequest: ${ctx.body()}")
                             if (!ctx.resultString().isNullOrEmpty()) append("\nResponse: ${ctx.resultString()}")
 
-                            if (!ctx.res.getHeader(HttpHeaders.Location)
-                                    .isNullOrEmpty()
-                            ) append("\nLocation: ${ctx.res.getHeader(HttpHeaders.Location)}")
+                            val location = ctx.res.getHeader(HttpHeaders.Location)
+                            if (!location.isNullOrEmpty()) append("\nLocation: $location")
                         }.toString()
                 }
             }
@@ -112,8 +111,9 @@ object RestAPI {
                     return Klaxon().toJsonString(obj)
                 }
 
-                override fun <T : Any?> fromJsonString(json: String, targetClass: Class<T>): T {
+                override fun <T : Any?> fromJsonString(json: String, targetClass: Class<T>): T & Any {
                     return JavalinJackson().fromJsonString(json, targetClass)
+                        ?: throw IllegalArgumentException("Cannot deserialize JSON: $json")
                 }
             })
         }
@@ -121,7 +121,14 @@ object RestAPI {
 
         fun Context.reportRequestException(exception: Exception): Context {
             exception.printStackTrace()
-            return this.json(mapOf("error" to true, "error_type" to exception::class.simpleName, "message" to exception.message, "url" to this.fullUrl()))
+            return this.json(
+                mapOf(
+                    "error" to true,
+                    "error_type" to exception::class.simpleName,
+                    "message" to exception.message,
+                    "url" to this.fullUrl()
+                )
+            )
                 .status(HttpCode.BAD_REQUEST)
         }
 

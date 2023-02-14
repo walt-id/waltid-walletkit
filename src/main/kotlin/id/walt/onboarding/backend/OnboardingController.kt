@@ -9,14 +9,16 @@ import id.walt.auditor.Auditor
 import id.walt.auditor.ChallengePolicy
 import id.walt.auditor.ChallengePolicyArg
 import id.walt.auditor.SignaturePolicy
-import id.walt.issuer.backend.*
+import id.walt.issuer.backend.IssuableCredential
+import id.walt.issuer.backend.Issuables
+import id.walt.issuer.backend.IssuerManager
+import id.walt.issuer.backend.IssuerTenant
 import id.walt.model.DidMethod
 import id.walt.model.DidUrl
 import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
 import id.walt.model.dif.PresentationDefinition
 import id.walt.multitenancy.TenantId
-import id.walt.services.context.ContextManager
 import id.walt.services.jwt.JwtService
 import id.walt.services.oidc.OIDCUtils
 import id.walt.webwallet.backend.auth.JWTService
@@ -187,7 +189,7 @@ object OnboardingController {
             val vp_token =
                 credClaim.vp_token
                     ?: authRequest.customParameters["vp_token"]?.flatMap {
-                        OIDCUtils.fromVpToken(it) ?: listOf()
+                        OIDCUtils.fromVpToken(it)
                     } ?: listOf()
             val vp = vp_token.firstOrNull() ?: throw BadRequestResponse("No VP token found on authorization request")
 
@@ -206,7 +208,7 @@ object OnboardingController {
             IssuerManager.updateIssuanceSession(session, session.issuables)
 
             val access_token = JwtService.getService()
-                    .sign(IssuerManager.defaultDid, JWTClaimsSet.Builder().subject(session.id).build().toString())
+                .sign(IssuerManager.defaultDid, JWTClaimsSet.Builder().subject(session.id).build().toString())
 
             ctx.status(HttpCode.FOUND)
                 .header(
@@ -226,10 +228,10 @@ object OnboardingController {
         val accessToken = ctx.header("Authorization")?.let { it.substringAfterLast("Bearer ") }
             ?: throw UnauthorizedResponse("No valid access token set on request")
         val sessionId = if (JwtService.getService().verify(accessToken)) {
-                JwtService.getService().parseClaims(accessToken)!!["sub"].toString()
-            } else {
-                null
-            }
+            JwtService.getService().parseClaims(accessToken)!!["sub"].toString()
+        } else {
+            null
+        }
         val session = sessionId?.let { IssuerManager.getIssuanceSession(it) }
             ?: throw UnauthorizedResponse("Invalid access token or session expired")
         val did = session.did ?: throw ForbiddenResponse("No DID specified on current session")

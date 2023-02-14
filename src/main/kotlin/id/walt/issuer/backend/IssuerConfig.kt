@@ -15,10 +15,11 @@ data class IssuerConfig(
     @Json(serializeNull = false) val issuerClientName: String = "Walt.id Issuer Portal",
     val wallets: Map<String, WalletConfiguration> = WalletConfiguration.getDefaultWalletConfigurations(),
     val issuerDid: String? = null
-): TenantConfig {
+) : TenantConfig {
     @Json(ignored = true)
     val onboardingApiUrl
         get() = issuerApiUrl.replace("/issuer-api", "/onboarding-api")
+
     @Json(ignored = true)
     val onboardingUiUrl
         get() = "$issuerUiUrl/Onboarding/"
@@ -27,7 +28,7 @@ data class IssuerConfig(
         return Klaxon().fieldConverter(ExternalHostnameUrl::class, externalHostnameUrlValueConverter).toJsonString(this)
     }
 
-    companion object: TenantConfigFactory<IssuerConfig> {
+    companion object : TenantConfigFactory<IssuerConfig> {
 
         val CONFIG_FILE = "${id.walt.WALTID_DATA_ROOT}/config/issuer-config.json"
 
@@ -35,9 +36,10 @@ data class IssuerConfig(
             return Klaxon().fieldConverter(ExternalHostnameUrl::class, externalHostnameUrlValueConverter)
                 .parse(json) ?: IssuerConfig()
         }
+
         override fun forDefaultTenant(): IssuerConfig {
             val cf = File(CONFIG_FILE)
-            return if(cf.exists()) {
+            return if (cf.exists()) {
                 fromJson(cf.readText())
             } else {
                 IssuerConfig()

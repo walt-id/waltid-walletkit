@@ -11,7 +11,7 @@ import io.ktor.serialization.kotlinx.json.*
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-class HistoricalPriceRepositoryImpl: HistoricalPriceRepository {
+class HistoricalPriceRepositoryImpl : HistoricalPriceRepository {
     val endpoint = "https://fsapi.gold.org/api/goldprice/v11/chart/price/eur/grams/%s,%s"
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {

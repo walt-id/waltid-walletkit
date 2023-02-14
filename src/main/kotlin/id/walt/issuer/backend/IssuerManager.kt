@@ -68,7 +68,7 @@ object IssuerManager {
 
     private fun prompt(prompt: String, default: String?): String? {
         print("$prompt [$default]: ")
-        val input = readLine()
+        val input = readlnOrNull()
         return when (input.isNullOrBlank()) {
             true -> default
             else -> input
@@ -193,8 +193,10 @@ object IssuerManager {
 
                 accessCounter[requestedType] = accessCounter[requestedType]!! + 1
 
-                log.info { "Issuance session ${session.id}: multipleCredentialsOfSameType " +
-                        "request ${accessCounter[requestedType]!! + 1}/${issuables.credentials.size}" }
+                log.info {
+                    "Issuance session ${session.id}: multipleCredentialsOfSameType " +
+                            "request ${accessCounter[requestedType]!! + 1}/${issuables.credentials.size}"
+                }
 
                 credentialsOfRequestedType.getOrElse(accessCounter[requestedType]!!) { credentialsOfRequestedType.lastOrNull() }
             }
@@ -219,7 +221,7 @@ object IssuerManager {
     fun getXDeviceWallet(): WalletConfiguration {
         return WalletConfiguration(
             id = "x-device",
-            url = "openid-initiate-issuance:/",
+            url = "openid-initiate-issuance://",
             presentPath = "",
             receivePath = "",
             description = "cross device"

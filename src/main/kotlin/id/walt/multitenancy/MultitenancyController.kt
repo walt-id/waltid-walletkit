@@ -11,23 +11,31 @@ import io.javalin.plugin.openapi.dsl.documented
 object MultitenancyController {
     val routes
         get() = path("multitenancy") {
-            get("listLoadedTenants", documented(
-                document().operation {
-                    it.summary("List multitenancy *LOADED* tenants. If no tenants are loaded (e.g. right after a restart) this method will indeed return an empty list.")
-                        .addTagsItem("Multitenancy")
-                        .operationId("listLoadedTenants")
-                }.json<List<TenantId>>("200"),
-                MultitenancyController::listLoadedTenants
-            ))
+            get(
+                "listLoadedTenants", documented(
+                    document().operation {
+                        it.summary("List multitenancy *LOADED* tenants. If no tenants are loaded (e.g. right after a restart) this method will indeed return an empty list.")
+                            .addTagsItem("Multitenancy")
+                            .operationId("listLoadedTenants")
+                    }.json<List<TenantId>>("200"),
+                    MultitenancyController::listLoadedTenants
+                )
+            )
 
-            get("listAllTenantIdsByType/{TenantType}", documented(
-                document().operation {
-                    it.summary("List multitenancy tenant IDs by tenant type. Available tenant types: ${TenantType.values().map { it.name }}")
-                        .addTagsItem("Multitenancy")
-                        .operationId("listAllTenantIdsByType")
-                }.json<List<String>>("200"),
-                MultitenancyController::listAllTenantIdsByType
-            ))
+            get(
+                "listAllTenantIdsByType/{TenantType}", documented(
+                    document().operation {
+                        it.summary(
+                            "List multitenancy tenant IDs by tenant type. Available tenant types: ${
+                                TenantType.values().map { it.name }
+                            }"
+                        )
+                            .addTagsItem("Multitenancy")
+                            .operationId("listAllTenantIdsByType")
+                    }.json<List<String>>("200"),
+                    MultitenancyController::listAllTenantIdsByType
+                )
+            )
         }
 
     private fun listLoadedTenants(ctx: Context) {

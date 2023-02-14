@@ -177,7 +177,8 @@ object WalletController {
                     )
                     get("metadata", documented(
                         document().operation {
-                            it.summary("View credential issuer (portal) meta data").addTagsItem("Wallet / Issuers").operationId("issuerMeta")
+                            it.summary("View credential issuer (portal) meta data").addTagsItem("Wallet / Issuers")
+                                .operationId("issuerMeta")
                         }
                             .queryParam<String>("issuerId"),
                         WalletController::issuerMeta),
@@ -205,7 +206,8 @@ object WalletController {
                     // called by wallet UI
                     get("info", documented(
                         document().operation {
-                            it.summary("Get issuance session info, including issued credentials").addTagsItem("Wallet / Issuance")
+                            it.summary("Get issuance session info, including issued credentials")
+                                .addTagsItem("Wallet / Issuance")
                                 .operationId("issuanceSessionInfo")
                         }
                             .queryParam<String>("sessionId")
@@ -262,7 +264,10 @@ object WalletController {
                 }
                 post(
                     "resetUserData",
-                    documented(document().operation { it.summary("Reset all user data").addTagsItem("Wallet / Account") }, WalletController::resetUserData),
+                    documented(
+                        document().operation { it.summary("Reset all user data").addTagsItem("Wallet / Account") },
+                        WalletController::resetUserData
+                    ),
                     UserRole.AUTHORIZED
                 )
             }

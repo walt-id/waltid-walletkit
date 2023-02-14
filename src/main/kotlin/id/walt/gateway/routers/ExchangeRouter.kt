@@ -9,7 +9,10 @@ class ExchangeRouter(
 ) : Router {
     override fun routes() {
         ApiBuilder.path("exchange") {
-            ApiBuilder.get("from/{from}/to/{to}/amount/{amount}/type/{type}", documented(exchangeController.getDoc(), exchangeController::get))
+            ApiBuilder.get(
+                "from/{from}/to/{to}/amount/{amount}/type/{type}",
+                documented(exchangeController.getDoc(), exchangeController::get)
+            )
         }
     }
 }

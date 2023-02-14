@@ -27,15 +27,17 @@ class TransferOrderPayloadBuilder(
         maximumFee = data.trade.maxFee,
         customProperties = mapOf(
             "transactionProperties" to
-            Klaxon().toJsonString(TransactionCustomProperties(
-                value = additionalInfo["value"] ?: "0",
-                change = additionalInfo["change"] ?: "0",
-                currency = additionalInfo["currency"] ?: "*",
-                tokenPrice = additionalInfo["tokenPrice"] ?: "0",
-                tokenSymbol = additionalInfo["tokenSymbol"] ?: "*",
-                tokenDecimals = additionalInfo["tokenDecimals"] ?: "0",
-                type = data.type,
-            )),
+                    Klaxon().toJsonString(
+                        TransactionCustomProperties(
+                            value = additionalInfo["value"] ?: "0",
+                            change = additionalInfo["change"] ?: "0",
+                            currency = additionalInfo["currency"] ?: "*",
+                            tokenPrice = additionalInfo["tokenPrice"] ?: "0",
+                            tokenSymbol = additionalInfo["tokenSymbol"] ?: "*",
+                            tokenDecimals = additionalInfo["tokenDecimals"] ?: "0",
+                            type = data.type,
+                        )
+                    ),
         ),
     )
 }
