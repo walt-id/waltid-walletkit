@@ -1,12 +1,12 @@
 package id.walt.gateway.routers
 
-import id.walt.gateway.controllers.AccountController
-import id.walt.gateway.controllers.ExchangeController
-import id.walt.gateway.controllers.TickerController
-import id.walt.gateway.controllers.TradeController
+import id.walt.gateway.controllers.*
 import id.walt.gateway.providers.coingecko.SimpleCoinUseCaseImpl
 import id.walt.gateway.providers.coingecko.SimplePriceParser
 import id.walt.gateway.providers.cryptologos.LogoUseCaseImpl
+import id.walt.gateway.providers.goldorg.GoldHistoricalPriceUseCaseImpl
+import id.walt.gateway.providers.goldorg.HistoricalPriceRepository
+import id.walt.gateway.providers.goldorg.HistoricalPriceRepositoryImpl
 import id.walt.gateway.providers.metaco.mockapi.RBITokensMockUseCaseImpl
 import id.walt.gateway.providers.metaco.restapi.*
 import id.walt.gateway.providers.metaco.restapi.account.AccountRepositoryImpl
@@ -26,6 +26,7 @@ import id.walt.gateway.providers.rcb.CoinUseCaseImpl
 import id.walt.gateway.providers.rcb.DoubleFieldResponseParser
 import id.walt.gateway.providers.rcb.StringFieldResponseParser
 import id.walt.gateway.usecases.AccountUseCase
+import id.walt.gateway.usecases.HistoricalPriceUseCase
 import id.walt.gateway.usecases.MultiCoinUseCaseImpl
 import id.walt.gateway.usecases.TradeUseCase
 import io.javalin.apibuilder.ApiBuilder
@@ -77,6 +78,7 @@ object MetacoRouter : Router {
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))
     private val tickerRouter = TickerRouter(TickerController(tickerUseCase))
     private val exchangeRouter = ExchangeRouter(ExchangeController(ExchangeUseCaseImpl(tickerRepository, coinUseCase)))
+    private val historicalRouter = HistoricalDataRouter(HistoricalPriceController(GoldHistoricalPriceUseCaseImpl(HistoricalPriceRepositoryImpl())))
 
     override fun routes() {
         ApiBuilder.path("") {
@@ -84,6 +86,7 @@ object MetacoRouter : Router {
             transactionRouter.routes()
             tickerRouter.routes()
             exchangeRouter.routes()
+            historicalRouter.routes()
         }
     }
 }
