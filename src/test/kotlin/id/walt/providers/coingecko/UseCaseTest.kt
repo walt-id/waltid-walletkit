@@ -33,8 +33,8 @@ class UseCaseTest : StringSpec({
 
     "simple token use case returns the parsed value" {
         forAll(
-            row(CoinParameter("bitcoin", "eur"), CoinData(15901.82, null, 305246870774.20654, 0.36233145138594613)),
-            row(CoinParameter("matic-network", "eur"), CoinData(0.810057, null, 7177541018.584296, -0.5512113103483903)),
+            row(CoinParameter("bitcoin", "eur"), CoinData(15901.82, null, 305246870774.20654, 0.36233145138594613, 0.36233145138594613)),
+            row(CoinParameter("matic-network", "eur"), CoinData(0.810057, null, 7177541018.584296, -0.5512113103483903, -0.5512113103483903)),
         ) { param, result ->
             // given
             every { repository.findById(any(), any()) } returns data
