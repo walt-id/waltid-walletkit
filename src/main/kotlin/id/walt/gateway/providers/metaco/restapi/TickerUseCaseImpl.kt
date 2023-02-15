@@ -102,8 +102,8 @@ class TickerUseCaseImpl(
     private fun buildTickerData(ticker: Ticker, currency: String) = coinUseCase.metadata(ticker.map(currency)).fold(
         onSuccess = {
             Pair(
-                ValueWithChange(it.askPrice, it.change, currency),
-                ValueWithChange(it.bidPrice ?: it.askPrice, it.change, currency)
+                ValueWithChange(it.askPrice, it.askChange, currency),
+                ValueWithChange(it.bidPrice ?: it.askPrice, it.bidChange, currency)
             )
         }, onFailure = {
             Pair(
@@ -122,7 +122,7 @@ class TickerUseCaseImpl(
                 )
             ).data,
             name = ticker.data.name,
-            price = it.second,
+            price = it.first,
             askPrice = it.first,
             bidPrice = it.second,
             decimals = ticker.data.decimals ?: 0,

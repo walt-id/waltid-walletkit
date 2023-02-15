@@ -13,5 +13,6 @@ data class CoinData(
     val bidPrice: Double? = null,
     @Json(serializeNull = false)
     val marketCap: Double? = null,
-    val change: Double,
+    val askChange: Double,
+    val bidChange: Double,
 )

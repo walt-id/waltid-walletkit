@@ -19,7 +19,8 @@ class SimplePriceParser : ResponseParser<CoinData> {
         CoinData(
             askPrice = price?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN,
             marketCap = marketCap?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN,
-            change = change24h?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN
+            askChange = change24h?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN
+            bidChange = change24h?.groups?.get(2)?.value?.toDoubleOrNull() ?: .0,//Double.NaN
         )
     }
 }
