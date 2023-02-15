@@ -34,8 +34,8 @@ object Common {
 
     fun getTransactionMeta(tradeType: String, amount: String, ticker: TickerData): TransactionCustomProperties =
         when (tradeType) {
-            "Outgoing", "Purchase" -> ticker.askPrice
-            "Receive", "Sale" -> ticker.bidPrice
+//            "Outgoing", "Purchase" -> ticker.askPrice
+//            "Receive", "Sale" -> ticker.bidPrice
             else -> ticker.price
         }.let {
             TransactionCustomProperties(
