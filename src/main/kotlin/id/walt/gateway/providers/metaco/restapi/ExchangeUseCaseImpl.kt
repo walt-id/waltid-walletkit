@@ -34,9 +34,9 @@ class ExchangeUseCaseImpl(
     }
 
     private fun getPrice(coin: CoinData, type: String) = when (type.lowercase()) {
-        "sale" -> coin.bidPrice ?: coin.askPrice
-        "purchase" -> coin.askPrice
-        else -> coin.bidPrice ?: coin.askPrice
+//        "sale" -> coin.bidPrice ?: coin.askPrice
+//        "purchase" -> coin.askPrice
+        else -> coin.askPrice
     }
 
     private fun getTokenName(input: String): String = if (uuidRegex.matches(input)) {
