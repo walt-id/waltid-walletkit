@@ -10,7 +10,7 @@ class EthereumParametersBuilder : ParameterBuilder {
     override fun build(params: TransferParameter): Parameters = EthereumParameters(
         amount = params.amount,
         maximumFee = params.maxFee,
-        feeStrategy = PriorityFeeStrategy("Medium"),//TODO: fix hard-code
+        feeStrategy = PriorityFeeStrategy("High"),//TODO: fix hard-code
         destination = Destination.parse(params.recipient.accountId)
     )
 }
