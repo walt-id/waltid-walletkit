@@ -139,6 +139,7 @@ object RestAPI {
         exception(InvalidKeyException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(java.security.spec.InvalidKeySpecException::class.java) { e, ctx -> ctx.reportRequestException(e) }
         exception(TenantNotFoundException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(Tenant.WaltContextTenantSystemError::class.java) { e, ctx -> ctx.reportRequestException(e) }
     }
 
     fun start(bindAddress: String, port: Int, accessManager: AccessManager, routes: () -> Unit = DEFAULT_ROUTES): Javalin {
