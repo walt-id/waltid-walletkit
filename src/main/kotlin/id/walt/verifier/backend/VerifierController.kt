@@ -332,12 +332,12 @@ object VerifierController {
     fun completeAuthentication(ctx: Context) {
         val access_token = ctx.queryParam("access_token")
         if (access_token == null) {
-            ctx.status(HttpCode.FORBIDDEN)
+            ctx.status(HttpCode.FORBIDDEN).result("Unknown access token.")
             return
         }
         val result = VerifierManager.getService().getVerificationResult(access_token)
         if (result == null) {
-            ctx.status(HttpCode.FORBIDDEN)
+            ctx.status(HttpCode.FORBIDDEN).result("Invalid SIOP Response Verification Result.")
             return
         }
         ctx.contentType(ContentType.JSON).result(KlaxonWithConverters().toJsonString(result))
