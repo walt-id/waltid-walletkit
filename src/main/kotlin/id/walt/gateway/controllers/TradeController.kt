@@ -24,8 +24,8 @@ class TradeController(
                 swap.spend.maxFee,
                 sender = swap.spend.sender,
                 recipient = swap.receive.sender.takeIf { !it.isEmpty() } ?: AccountIdentifier(
-                    ProviderConfig.nostroDomainId,
-                    ProviderConfig.nostroAccountId
+                    "",
+                    ProviderConfig.nostroAddress
                 ),
             ), "Sale"),
             TradeData(TransferParameter(
@@ -56,8 +56,8 @@ class TradeController(
                 maxFee = swap.spend.maxFee,
                 sender = swap.spend.sender,
                 recipient = swap.receive.sender.takeIf { !it.isEmpty() } ?: AccountIdentifier(
-                    ProviderConfig.nostroDomainId,
-                    ProviderConfig.nostroAccountId
+                    "",
+                    ProviderConfig.nostroAddress
                 ),
             ), "Purchase"),
             TradeData(TransferParameter(
@@ -116,7 +116,27 @@ class TradeController(
             }
     }
 
-    fun airdrop(ctx: Context) = ctx.json(tradeUseCase.airdrop(ctx.bodyAsClass()).getOrNull() ?: 0)
+    fun airdrop(ctx: Context) {
+        val parameters = ctx.bodyAsClass<AirdropParameter>()
+        parameters.addresses.fold(0) { acc, item ->
+            tradeUseCase.send(
+                TradeData(
+                    trade = TransferParameter(
+                        amount = parameters.amount,
+                        ticker = parameters.ticker,
+                        maxFee = parameters.maxFee,
+                        sender = AccountIdentifier(parameters.sender.domainId, parameters.sender.accountId),
+                        recipient = AccountIdentifier("", item)
+                    ),
+                    type = "Transfer"
+                )
+            ).fold(onSuccess = {
+                acc + 1
+            }, onFailure = {
+                acc
+            })
+        }
+    }
 
     fun sellDocs() = document().operation {
         it.summary("Returns the sell trade details").operationId("sell").addTagsItem("Trade Management")

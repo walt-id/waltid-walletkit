@@ -2,7 +2,6 @@ package id.walt.gateway.providers.metaco.mockapi
 
 import id.walt.gateway.Common
 import id.walt.gateway.dto.requests.RequestResult
-import id.walt.gateway.dto.trades.AirdropParameter
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.usecases.TradeUseCase
 import java.util.*
@@ -16,8 +15,6 @@ class TradeUseCaseImpl : TradeUseCase {
 
     override fun validate(parameter: TradeData): Result<RequestResult> =
         Result.success(getTradeValidation())
-
-    override fun airdrop(parameter: AirdropParameter): Result<Int> = Result.success(Common.getRandomInt(0, 20))
 
     private fun getTradeData() = (Common.getRandomInt(from = 0, to = 2) % 2 == 0).let {
         RequestResult(

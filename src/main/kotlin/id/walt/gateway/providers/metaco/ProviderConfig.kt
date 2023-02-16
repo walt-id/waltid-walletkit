@@ -16,8 +16,12 @@ object ProviderConfig {
     val privateKey: String = File(privateKeyPath).takeIf { it.exists() }?.readText() ?: ""
     val nostroAccountId: String = System.getenv("NOSTRO_ACCOUNT_ID") ?: ""
     val nostroDomainId: String = System.getenv("NOSTRO_DOMAIN_ID") ?: ""
+    val nostroAddress: String = System.getenv("NOSTRO_ADDRESS") ?: ""
     private val tickerIgnorePath: String = System.getenv("TICKER_IGNORE_PATH") ?: ""
     val preApprovedTransferAmount: String = System.getenv("PRE_APPROVED_TRANSFER_AMOUNT") ?: "0"
+    val coinMapPath: String = System.getenv("COIN_MAP_PATH") ?: ""
+    val intentExpiryDays: String = System.getenv("INTENT_EXPIRY_DAYS") ?: "1"
+    val feePriorityStrategy: String = System.getenv("FEE_PRIORITY_STRATEGY") ?: "Low"
 
     val tickersIgnore: List<String> by lazy {
         runCatching { File(tickerIgnorePath).readLines() }.getOrElse { emptyList() }

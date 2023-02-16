@@ -9,7 +9,7 @@ import id.walt.gateway.providers.metaco.restapi.models.parameters.Parameters
 
 class BitcoinParametersBuilder : ParameterBuilder {
     override fun build(params: TransferParameter): Parameters = BitcoinParameters(
-        feeStrategy = PriorityFeeStrategy("Medium"),//TODO: fix hard-code
+        feeStrategy = PriorityFeeStrategy("High"),//TODO: fix hard-code
         maximumFee = params.maxFee,
         outputs = listOf(
             Output(
