@@ -90,10 +90,6 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
-            - name: socket-keystore
-              mountPath: "/waltid/wallet/keystore/servercert.p12"
-              subPath: servercert.p12
-              readOnly: true
             - name: metaco-key-secret
               mountPath: "/waltid/wallet/metaco/privkey.pem"
               subPath: privkey.pem
@@ -111,8 +107,6 @@ spec:
               value: 0.0.0.0
           envFrom:
           - secretRef:
-              name: socket-secret
-          - secretRef:
               name: metaco-secret
           args:
             - run
@@ -129,12 +123,6 @@ spec:
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
-        - name: socket-keystore
-          secret:
-            secretName: socket-keystore-secret
-            items:
-              - key: servercert.p12
-                path: servercert.p12
         - name: metaco-key-secret
           secret:
             secretName: metaco-key-secret
