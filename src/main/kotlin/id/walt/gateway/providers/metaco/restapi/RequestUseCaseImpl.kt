@@ -15,6 +15,9 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.SignatureIntent
 import id.walt.gateway.providers.metaco.restapi.services.SignChallengeResponse
 import id.walt.gateway.providers.metaco.restapi.services.SignatureService
 import id.walt.gateway.usecases.RequestUseCase
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class RequestUseCaseImpl(
     private val intentRepository: IntentRepository,
@@ -59,6 +62,7 @@ class RequestUseCaseImpl(
             targetDomainId = parameter.targetDomainId,
             author = UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId),
             type = intentType,
+            expiry = ProviderConfig.intentExpiryDays,
         ), PayloadBuilder.create(
             PayloadParameter(
                 type = payloadType,
