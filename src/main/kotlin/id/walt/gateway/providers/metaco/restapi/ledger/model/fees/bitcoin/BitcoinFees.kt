@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BitcoinFees(
-    val high: LevelFee,
-    val medium: LevelFee,
-    val low: LevelFee,
+    override val high: BitcoinPriorityStrategy,
+    override val medium: BitcoinPriorityStrategy,
+    override val low: BitcoinPriorityStrategy,
 ) : Fees("Bitcoin")

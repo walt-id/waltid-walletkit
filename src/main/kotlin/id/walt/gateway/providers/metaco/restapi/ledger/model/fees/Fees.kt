@@ -10,8 +10,12 @@ import kotlin.reflect.KClass
 @Serializable
 @TypeFor(field = "type", adapter = FeeTypeAdapter::class)
 abstract class Fees(
-    val type: String
-)
+    val type: String,
+) {
+    abstract val high: PriorityStrategy
+    abstract val medium: PriorityStrategy
+    abstract val low: PriorityStrategy
+}
 
 class FeeTypeAdapter : TypeAdapter<Fees> {
     override fun classFor(type: Any): KClass<out Fees> = when (type as String) {
@@ -20,4 +24,11 @@ class FeeTypeAdapter : TypeAdapter<Fees> {
         else -> throw IllegalArgumentException("No fee type defined for $type")
     }
 
+}
+
+fun Fees.priorityStrategyFromString(priority: String) = when (priority.lowercase()) {
+    "high" -> this.high
+    "medium" -> this.medium
+    "low" -> this.low
+    else -> this.low
 }
