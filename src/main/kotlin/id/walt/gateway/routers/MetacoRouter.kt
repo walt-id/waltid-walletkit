@@ -50,6 +50,7 @@ object MetacoRouter : Router {
         requestUseCase,
     )
     private val transferRepository = TransferRepositoryImpl(authService)
+    private val addressRepository = AddressRepositoryImpl(authService)
     private val accountUseCase: AccountUseCase =
         AccountUseCaseImpl(
             DomainRepositoryImpl(authService),
@@ -57,7 +58,7 @@ object MetacoRouter : Router {
             TransactionRepositoryImpl(authService),
             OrderRepositoryImpl(authService),
             transferRepository,
-            AddressRepositoryImpl(authService),
+            addressRepository,
             BalanceUseCaseImpl(
                 BalanceRepositoryImpl(authService),
                 tickerUseCase,
@@ -70,6 +71,7 @@ object MetacoRouter : Router {
             tickerUseCase,
             requestUseCase,
             transferRepository,
+            addressRepository,
         )
     private val accountRouter = AccountRouter(AccountController(accountUseCase))
     private val transactionRouter = TransactionRouter(TradeController(tradeUseCase))
