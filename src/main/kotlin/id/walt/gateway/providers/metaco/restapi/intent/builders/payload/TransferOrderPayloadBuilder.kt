@@ -23,7 +23,7 @@ class TransferOrderPayloadBuilder(
                 paysFee = false,
             )
         ),
-        feeStrategy = "Medium", //TODO: fix hardcoded value
+        feeStrategy = "High", //TODO: fix hardcoded value
         maximumFee = data.trade.maxFee,
         customProperties = mapOf(
             "transactionProperties" to
