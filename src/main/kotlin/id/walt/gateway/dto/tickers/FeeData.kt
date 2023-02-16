@@ -8,14 +8,14 @@ data class FeeData(
     val level: String = "Medium",
 ) {
     val fee: String = when (level.lowercase()) {
-        "medium" -> computeFee(72238U)
         "high" -> computeFee(97888U)
+        "medium" -> computeFee(72238U)
         else -> computeFee(21000U)
     }
 
     private fun computeFee(gasUnits: UInt): String = let {
         gasPrice.toULongOrNull()?.let {
-            it * gasUnits
+            (1.1 * (it * gasUnits).toDouble()).toULong()
         } ?: 0
     }.toString()
 }
