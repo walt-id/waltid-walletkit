@@ -7,13 +7,15 @@ import id.walt.gateway.dto.requests.RequestParameter
 import id.walt.gateway.dto.requests.RequestResult
 import id.walt.gateway.dto.tickers.TickerData
 import id.walt.gateway.dto.tickers.TickerParameter
-import id.walt.gateway.dto.trades.AirdropParameter
 import id.walt.gateway.dto.trades.TradeData
 import id.walt.gateway.dto.trades.TransferParameter
 import id.walt.gateway.providers.metaco.ProviderConfig
+import id.walt.gateway.providers.metaco.repositories.AddressRepository
 import id.walt.gateway.providers.metaco.repositories.TransferRepository
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.toMap
+import id.walt.gateway.providers.metaco.restapi.models.destination.AddressDestination
+import id.walt.gateway.providers.metaco.restapi.models.destination.Destination
 import id.walt.gateway.providers.metaco.restapi.transfer.model.transferparty.AccountTransferParty
 import id.walt.gateway.usecases.RequestUseCase
 import id.walt.gateway.usecases.TickerUseCase
@@ -23,6 +25,7 @@ class TradeUseCaseImpl(
     private val tickerUseCase: TickerUseCase,
     private val requestUseCase: RequestUseCase,
     private val transferRepository: TransferRepository,
+    private val addressRepository: AddressRepository,
 ) : TradeUseCase {
     override fun sell(spend: TradeData, receive: TradeData): Result<RequestResult> =
         orderTrade(spend).also {
@@ -48,51 +51,43 @@ class TradeUseCaseImpl(
             )
         }
 
-    override fun airdrop(parameter: AirdropParameter): Result<Int> = runCatching {
-        parameter.addresses.fold(0) { acc, item ->
-            send(
-                TradeData(
-                    trade = TransferParameter(
-                        amount = parameter.amount,
-                        ticker = parameter.ticker,
-                        maxFee = parameter.maxFee,
-                        sender = AccountIdentifier(parameter.sender.domainId, parameter.sender.accountId),
-                        recipient = AccountIdentifier("", item)
-                    ),
-                    type = "Transfer"
-                )
-            ).fold(onSuccess = {
-                acc + 1
-            }, onFailure = {
-                acc
-            })
-        }
-    }
-
     private fun getPayloadType(ticker: TickerData) = when (ticker.kind) {
         "Contract" -> Payload.Types.CreateTransferOrder.value
         "Native" -> Payload.Types.CreateTransactionOrder.value
         else -> ""
     }
 
-    private fun orderTrade(data: TradeData, dryRun: Boolean = false): Result<RequestResult> =
-        runCatching { tickerUseCase.get(TickerParameter(data.trade.ticker)).getOrThrow() }.fold(
-            onSuccess = { ticker ->
-                if (!dryRun) tickerUseCase.validate(data.trade.ticker)//TODO: check for success and proceed accordingly
-                requestUseCase.create(
-                    RequestParameter(
-                        getPayloadType(ticker),
-                        data.trade.sender.domainId,
-                        data,
-                        ticker.type,
-                    ),
-                    Common.getTransactionMeta(data.type, data.trade.amount, ticker).toMap()
-                )
-            },
-            onFailure = {
-                Result.failure(it)
-            }
+    private fun orderTrade(data: TradeData, dryRun: Boolean = false): Result<RequestResult> = let {
+        val ticker = tickerUseCase.get(TickerParameter(data.trade.ticker)).getOrThrow()
+        if (!dryRun) tickerUseCase.validate(data.trade.ticker)//TODO: check for success and proceed accordingly
+        requestUseCase.create(
+            RequestParameter(
+                getPayloadType(ticker),
+                data.trade.sender.domainId,
+                processTradeRecipient(data),
+                ticker.type,
+            ),
+            Common.getTransactionMeta(data.type, data.trade.amount, ticker).toMap()
         )
+    }
+
+    private fun processTradeRecipient(trade: TradeData): TradeData =
+        Destination.parse(trade.trade.recipient.accountId).takeIf { it is AddressDestination }?.let { trade }
+            ?: addressRepository.findAll(trade.trade.recipient.domainId, trade.trade.recipient.accountId, emptyMap())
+                .first().address.let {
+                    TradeData(
+                        TransferParameter(
+                            amount = trade.trade.amount,
+                            ticker = trade.trade.ticker,
+                            maxFee = trade.trade.maxFee,
+                            sender = trade.trade.sender,
+                            recipient = AccountIdentifier(
+                                "",
+                                it
+                            )
+                        ), trade.type
+                    )
+                }
 
     private fun orderReleaseQuarantine(account: AccountIdentifier) = runCatching {
         transferRepository.findAll(account.domainId, mapOf("accountId" to account.accountId, "quarantined" to "true"))

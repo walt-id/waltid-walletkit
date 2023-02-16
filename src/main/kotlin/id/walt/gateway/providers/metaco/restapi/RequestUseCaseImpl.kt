@@ -15,6 +15,9 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.SignatureIntent
 import id.walt.gateway.providers.metaco.restapi.services.SignChallengeResponse
 import id.walt.gateway.providers.metaco.restapi.services.SignatureService
 import id.walt.gateway.usecases.RequestUseCase
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class RequestUseCaseImpl(
     private val intentRepository: IntentRepository,
@@ -42,10 +45,6 @@ class RequestUseCaseImpl(
         createIntent(parameter.payloadType, parameter, emptyMap()).let { intent ->
             intentRepository.validate(intent)
         }.let {
-//            RequestResult(
-//                result = it.result.type == "Success",
-//                message = it.result.reason //+ (it.estimate as EthereumEstimate)?.gas.let { " (gas: $it)" }
-//            )
             RequestResult(
                 result = it.success,
                 message = it.errors?.joinToString(".").takeIf { it?.isNotEmpty() ?: false } ?: "Unknown error"
@@ -63,6 +62,7 @@ class RequestUseCaseImpl(
             targetDomainId = parameter.targetDomainId,
             author = UserIdentifier(ProviderConfig.domainId, ProviderConfig.userId),
             type = intentType,
+            expiry = ProviderConfig.intentExpiryDays,
         ), PayloadBuilder.create(
             PayloadParameter(
                 type = payloadType,

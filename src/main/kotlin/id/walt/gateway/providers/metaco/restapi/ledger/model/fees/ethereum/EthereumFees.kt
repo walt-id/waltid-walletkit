@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class EthereumFees(
-    val high: LevelFee,
-    val medium: LevelFee,
-    val low: LevelFee,
+    override val high: EthereumPriorityStrategy,
+    override val medium: EthereumPriorityStrategy,
+    override val low: EthereumPriorityStrategy,
 ) : Fees("Ethereum")
