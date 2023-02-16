@@ -16,7 +16,10 @@ import id.walt.gateway.providers.metaco.restapi.intent.model.payload.Payload
 import id.walt.gateway.providers.metaco.restapi.intent.model.payload.ValidateTickersPayload
 import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.Fees
 import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.bitcoin.BitcoinFees
+import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.bitcoin.BitcoinPriorityStrategy
 import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.ethereum.EthereumFees
+import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.ethereum.EthereumPriorityStrategy
+import id.walt.gateway.providers.metaco.restapi.ledger.model.fees.priorityStrategyFromString
 import id.walt.gateway.providers.metaco.restapi.ticker.model.Ticker
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC20LedgerProperties
 import id.walt.gateway.providers.metaco.restapi.ticker.model.ledgerproperties.ERC721LedgerProperties
@@ -93,10 +96,20 @@ class TickerUseCaseImpl(
         customProperties = emptyMap()
     )
 
-    private fun getFeeData(fees: Fees): FeeData = when (fees) {
-        is EthereumFees -> FeeData(gasPrice = fees.high.gasPrice, level = "High")
-        is BitcoinFees -> FeeData(gasPrice = fees.high.satoshiPerVbyte, level = "High")
-        else -> throw IllegalArgumentException("Unknown fees type")
+    private fun getFeeData(fees: Fees): FeeData = ProviderConfig.feePriorityStrategy.let {
+        when (fees) {
+            is EthereumFees -> FeeData(
+                gasPrice = (fees.priorityStrategyFromString(it) as EthereumPriorityStrategy).gasPrice,
+                level = it
+            )
+
+            is BitcoinFees -> FeeData(
+                gasPrice = (fees.priorityStrategyFromString(it) as BitcoinPriorityStrategy).satoshiPerVbyte,
+                level = it
+            )
+
+            else -> throw IllegalArgumentException("Unknown fees type")
+        }
     }
 
     private fun buildTickerData(ticker: Ticker, currency: String) = coinUseCase.metadata(ticker.map(currency)).fold(
