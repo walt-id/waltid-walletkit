@@ -42,10 +42,6 @@ class RequestUseCaseImpl(
         createIntent(parameter.payloadType, parameter, emptyMap()).let { intent ->
             intentRepository.validate(intent)
         }.let {
-//            RequestResult(
-//                result = it.result.type == "Success",
-//                message = it.result.reason //+ (it.estimate as EthereumEstimate)?.gas.let { " (gas: $it)" }
-//            )
             RequestResult(
                 result = it.success,
                 message = it.errors?.joinToString(".").takeIf { it?.isNotEmpty() ?: false } ?: "Unknown error"

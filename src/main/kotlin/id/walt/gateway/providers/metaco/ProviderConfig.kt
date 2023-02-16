@@ -19,6 +19,7 @@ object ProviderConfig {
     val nostroAddress: String = System.getenv("NOSTRO_ADDRESS") ?: ""
     private val tickerIgnorePath: String = System.getenv("TICKER_IGNORE_PATH") ?: ""
     val preApprovedTransferAmount: String = System.getenv("PRE_APPROVED_TRANSFER_AMOUNT") ?: "0"
+    val coinMapPath: String = System.getenv("COIN_MAP_PATH") ?: ""
 
     val tickersIgnore: List<String> by lazy {
         runCatching { File(tickerIgnorePath).readLines() }.getOrElse { emptyList() }
