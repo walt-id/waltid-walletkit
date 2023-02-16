@@ -21,6 +21,7 @@ object ProviderConfig {
     val preApprovedTransferAmount: String = System.getenv("PRE_APPROVED_TRANSFER_AMOUNT") ?: "0"
     val coinMapPath: String = System.getenv("COIN_MAP_PATH") ?: ""
     val intentExpiryDays: String = System.getenv("INTENT_EXPIRY_DAYS") ?: "1"
+    val feePriorityStrategy: String = System.getenv("FEE_PRIORITY_STRATEGY") ?: "Low"
 
     val tickersIgnore: List<String> by lazy {
         runCatching { File(tickerIgnorePath).readLines() }.getOrElse { emptyList() }
