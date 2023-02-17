@@ -69,6 +69,6 @@ class TickerController(
     }.json<FeeData>("200") { it.description("The ticker fee data") }
 
     fun validateDoc() = document().operation {
-        it.summary("Returns the ticker validation request result").operationId("fee").addTagsItem("Ticker Management")
+        it.summary("Returns the ticker validation request result").operationId("validate").addTagsItem("Ticker Management")
     }.json<RequestResult>("200") { it.description("The ticker validation request result") }
 }

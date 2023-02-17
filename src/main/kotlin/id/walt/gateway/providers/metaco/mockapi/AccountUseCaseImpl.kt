@@ -22,6 +22,8 @@ import id.walt.gateway.providers.metaco.restapi.models.customproperties.Transact
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.toMap
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TickerUseCase
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -47,9 +49,11 @@ class AccountUseCaseImpl(
     override fun balance(parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
-    override fun transactions(parameter: TransactionListParameter) =
+    override fun transactions(parameter: TransactionListParameter) = runBlocking {
+        delay(5000)
         Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }
             .sortedByDescending { Instant.parse(it.date) })
+    }
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
