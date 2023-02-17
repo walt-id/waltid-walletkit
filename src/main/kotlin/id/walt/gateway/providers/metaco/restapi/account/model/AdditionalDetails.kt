@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AdditionalDetails(
     @Json(serializeNull = false)
-    val lastBalancesUpdateProcessedAt: String?,
+    val lastBalancesUpdateProcessedAt: String? = null,
     @Json(serializeNull = false)
-    val lastBalancesUpdateRequestedAt: String?,
+    val lastBalancesUpdateRequestedAt: String? = null,
     val processing: Processing
 )

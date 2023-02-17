@@ -34,7 +34,10 @@ class AccountUseCaseImpl(
 ) : AccountUseCase {
     private val accountsPool = (1..5).map { getAccount() }
 
-    override fun profile(parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
+    override fun profile(parameter: ProfileParameter) =
+        parameter.id.length.takeIf { it % 2 == 0 }?.let { Result.success(getProfile(parameter.id)) }
+            ?: Result.failure(Exception("No profile available with the provided credentials."))
+
     override fun create(parameter: AccountInitiationParameter): Result<RequestResult> =
         Result.success(RequestResult(true, "0x${Common.getRandomString(40, 2)}"))
 
