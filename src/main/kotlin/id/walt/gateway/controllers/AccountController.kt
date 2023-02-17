@@ -13,6 +13,7 @@ import id.walt.gateway.dto.transactions.TransactionParameter
 import id.walt.gateway.dto.transactions.TransactionTransferData
 import id.walt.gateway.usecases.AccountUseCase
 import io.javalin.http.Context
+import io.javalin.http.HttpCode
 import io.javalin.plugin.openapi.dsl.document
 
 class AccountController(
@@ -22,8 +23,10 @@ class AccountController(
         val profile = ctx.bodyAsClass<ProfileParameter>()
         accountUseCase.profile(profile)
             .onSuccess {
+                ctx.status(HttpCode.OK)
                 ctx.json(it)
             }.onFailure {
+                ctx.status(HttpCode.NOT_FOUND)
                 ctx.json(it)
             }
     }
