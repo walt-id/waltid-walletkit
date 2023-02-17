@@ -95,10 +95,12 @@ spec:
               subPath: privkey.pem
               readOnly: true
             - name: ticker-whitelist-configmap
-              mountPath: "/waltid/wallet/metaco/config/"
+              mountPath: "/waltid/wallet/metaco/config/ticker.whitelist"
+              subPath: ticker.whitelist
               readOnly: true
             - name: coinmap-configmap
-              mountPath: "/waltid/wallet/metaco/config/"
+              mountPath: "/waltid/wallet/metaco/config/coin.map"
+              subPath: coin.map
               readOnly: true
           env:
             - name: WALTID_DATA_ROOT
