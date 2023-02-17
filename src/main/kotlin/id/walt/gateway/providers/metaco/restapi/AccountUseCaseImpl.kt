@@ -101,7 +101,7 @@ class AccountUseCaseImpl(
                 .sortedBy {
                     it.ticker.name
                 }
-        }.filter { !ProviderConfig.tickersIgnore.contains(it.ticker.id) }.let { AccountBalance(it) }
+        }.filter { ProviderConfig.tickersWhitelist.contains(it.ticker.id) }.let { AccountBalance(it) }
     }
 
     override fun balance(parameter: BalanceParameter): Result<BalanceData> = runCatching {
