@@ -60,6 +60,7 @@ class TradeUseCaseImpl(
     private fun orderTrade(data: TradeData, dryRun: Boolean = false): Result<RequestResult> = let {
         val ticker = tickerUseCase.get(TickerParameter(data.trade.ticker)).getOrThrow()
         if (!dryRun) tickerUseCase.validate(data.trade.ticker)//TODO: check for success and proceed accordingly
+        orderReleaseQuarantine(data.trade.sender)
         requestUseCase.create(
             RequestParameter(
                 getPayloadType(ticker),
