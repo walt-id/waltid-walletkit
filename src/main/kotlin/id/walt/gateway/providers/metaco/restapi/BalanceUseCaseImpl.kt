@@ -34,7 +34,7 @@ class BalanceUseCaseImpl(
     }
 
     private fun buildBalanceData(balance: Balance): BalanceData? = balance.takeIf {
-        !ProviderConfig.tickersIgnore.contains(it.tickerId)
+        ProviderConfig.tickersWhitelist.contains(it.tickerId)
     }?.let {
         BalanceData(
             amount = balance.totalAmount,

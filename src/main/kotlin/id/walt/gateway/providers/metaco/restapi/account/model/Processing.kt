@@ -1,8 +1,11 @@
 package id.walt.gateway.providers.metaco.restapi.account.model
 
+import com.beust.klaxon.Json
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Processing(
-    val status: String
+    @Json(serializeNull = false)
+    val hint: String? = null,
+    val status: String,
 )
