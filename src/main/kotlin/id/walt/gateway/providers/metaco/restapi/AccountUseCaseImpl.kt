@@ -48,11 +48,13 @@ class AccountUseCaseImpl(
     private val requestUseCase: RequestUseCase,
 ) : AccountUseCase {
     override fun profile(parameter: ProfileParameter): Result<ProfileData> = runCatching {
-        ProfileData(
-            profileId = parameter.id,
-            accounts = getProfileAccounts(parameter).map {
-                buildProfileData(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id)), it)
-            })
+        getProfileAccounts(parameter).takeIf { it.isNotEmpty() }?.let {
+            ProfileData(
+                profileId = parameter.id,
+                accounts = it.map {
+                    buildProfileData(AccountParameter(AccountIdentifier(it.data.domainId, it.data.id)), it)
+                })
+        }?: throw Exception("No profile available with the provided credentials.")
     }
 
     override fun create(parameter: AccountInitiationParameter): Result<RequestResult> = runCatching {
@@ -79,7 +81,7 @@ class AccountUseCaseImpl(
         onSuccess = {
             Result.success(RequestResult(true, it))
         }, onFailure = {
-            Result.failure(Exception("Exception(\"Couldn't create account ${parameter.accountName} in domain ${parameter.domainName}\"): ${it.message}"))
+            Result.failure(Exception("Couldn't create account ${parameter.accountName} in domain ${parameter.domainName}\"): ${it.message}"))
         }
     )
 
@@ -101,7 +103,7 @@ class AccountUseCaseImpl(
                 .sortedBy {
                     it.ticker.name
                 }
-        }.filter { !ProviderConfig.tickersIgnore.contains(it.ticker.id) }.let { AccountBalance(it) }
+        }.filter { ProviderConfig.tickersWhitelist.contains(it.ticker.id) }.let { AccountBalance(it) }
     }
 
     override fun balance(parameter: BalanceParameter): Result<BalanceData> = runCatching {
@@ -175,7 +177,7 @@ class AccountUseCaseImpl(
                     it.data.alias.equals(id)
                 }
             } else {
-                accountRepository.findAll(domainId, mapOf("metadata.customProperties" to "iban:$accountId"))
+                throw Exception("Couldn't find an account with the provided credentials.")
             }
         }
 

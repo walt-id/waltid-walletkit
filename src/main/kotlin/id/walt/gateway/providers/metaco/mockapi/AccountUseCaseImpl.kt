@@ -22,6 +22,8 @@ import id.walt.gateway.providers.metaco.restapi.models.customproperties.Transact
 import id.walt.gateway.providers.metaco.restapi.models.customproperties.toMap
 import id.walt.gateway.usecases.AccountUseCase
 import id.walt.gateway.usecases.TickerUseCase
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -32,7 +34,10 @@ class AccountUseCaseImpl(
 ) : AccountUseCase {
     private val accountsPool = (1..5).map { getAccount() }
 
-    override fun profile(parameter: ProfileParameter) = Result.success(getProfile(parameter.id))
+    override fun profile(parameter: ProfileParameter) =
+        parameter.id.length.takeIf { it % 2 == 0 }?.let { Result.success(getProfile(parameter.id)) }
+            ?: Result.failure(Exception("No profile available with the provided credentials."))
+
     override fun create(parameter: AccountInitiationParameter): Result<RequestResult> =
         Result.success(RequestResult(true, "0x${Common.getRandomString(40, 2)}"))
 
@@ -47,9 +52,11 @@ class AccountUseCaseImpl(
     override fun balance(parameter: ProfileParameter) = Result.success(AccountBalance((1..2).map { getBalance() }))
     override fun balance(parameter: BalanceParameter) = Result.success(getBalance())
 
-    override fun transactions(parameter: TransactionListParameter) =
+    override fun transactions(parameter: TransactionListParameter) = runBlocking {
+        delay(5000)
         Result.success((1..24).map { getTransaction(UUID.randomUUID().toString()) }
             .sortedByDescending { Instant.parse(it.date) })
+    }
 
     override fun transaction(parameter: TransactionParameter) = Result.success(getTransactionTransferData())
 
