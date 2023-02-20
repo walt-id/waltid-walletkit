@@ -1,16 +1,28 @@
 package id.walt.verifier.backend
 
+import com.nimbusds.jose.util.Base64URL
+import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
+import com.nimbusds.oauth2.sdk.ResponseType
+import com.nimbusds.oauth2.sdk.Scope
+import com.nimbusds.oauth2.sdk.id.ClientID
+import com.nimbusds.oauth2.sdk.id.State
+import com.nimbusds.openid.connect.sdk.OIDCScopeValue
 import id.walt.auditor.VerificationPolicy
 import id.walt.auditor.dynamic.DynamicPolicyArg
 import id.walt.common.KlaxonWithConverters
 import id.walt.issuer.backend.IssuerConfig
+import id.walt.model.dif.InputDescriptor
+import id.walt.model.dif.InputDescriptorConstraints
+import id.walt.model.dif.InputDescriptorField
 import id.walt.model.dif.PresentationDefinition
 import id.walt.model.oidc.SIOPv2Response
 import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
 import id.walt.rest.auditor.AuditorRestController
+import id.walt.services.oidc.OidcSchemeFixer
 import id.walt.services.oidc.OidcSchemeFixer.unescapeOpenIdScheme
+import id.walt.verifier.backend.VerifierManager.Companion.convertUUIDToBytes
 import id.walt.webwallet.backend.auth.JWTService
 import id.walt.webwallet.backend.auth.UserRole
 import id.walt.webwallet.backend.context.WalletContextManager
@@ -20,8 +32,10 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import mu.KotlinLogging
+import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.*
 
 object VerifierController {
 
@@ -81,6 +95,35 @@ object VerifierController {
                             .queryParam<Boolean>("pdByReference") { it.description("true: include presentation definition by reference, else by value (default: false)") }
                             .result<PresentationRequestInfo>("200"),
                         VerifierController::presentCredentialXDevice
+                    ))
+                }
+                path("presentLegacy") {
+                    get(documented(
+                        document().operation {
+                            it.summary("Present Verifiable ID cross-device in legacy format")
+                                .addTagsItem("Verifier")
+                                .operationId("presentLegacy")
+                        }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
+                            .queryParam<String>("walletId")
+                            .queryParam<String>("schemaUri", isRepeatable = true)
+                            .queryParam<String>("vcType", isRepeatable = true)
+                            .result<PresentationRequestInfo>("200"),
+                        VerifierController::presentCredentialLegacy
+                    ))
+                }
+                path("presentXDeviceLegacy") {
+                    get(documented(
+                        document().operation {
+                            it.summary("Present Verifiable ID cross-device")
+                                .addTagsItem("Verifier")
+                                .operationId("presentXDevice")
+                        }
+                            .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
+                            .queryParam<String>("schemaUri", isRepeatable = true)
+                            .queryParam<String>("vcType", isRepeatable = true)
+                            .result<PresentationRequestInfo>("200"),
+                        VerifierController::presentCredentialXDeviceLegacy
                     ))
                 }
                 get("pd/{id}", documented(document().operation {
@@ -268,6 +311,67 @@ object VerifierController {
         ctx.status(HttpCode.FOUND).header("Location", req.toURI().unescapeOpenIdScheme().toString())
     }
 
+    fun presentCredentialLegacy(ctx: Context) {
+        val wallet = ctx.queryParam("walletId")?.let { VerifierTenant.config.wallets[it] }
+            ?: throw BadRequestResponse("Unknown or missing walletId")
+
+        val (_, vcTypes, verificationCallbackUrl) = ctx.getSchemaOrVcType()
+        log.debug { "Found requested callback: $verificationCallbackUrl" }
+
+        val walletUrl = URI.create("${wallet.url}/${wallet.presentPath}")
+        val redirectUri = URI.create("${VerifierTenant.config.verifierApiUrl}/verify")
+
+        val nonce = Base64URL.encode(convertUUIDToBytes(UUID.randomUUID())).toString()
+        val customParams = mutableMapOf("nonce" to listOf(nonce))
+
+        val presentation_definition = PresentationDefinition(
+            id = "1",
+            input_descriptors = vcTypes.mapIndexed { index, vcType ->
+                InputDescriptor(
+                    id = "${index + 1}",
+                    constraints = InputDescriptorConstraints(
+                        fields = listOf(
+                            InputDescriptorField(
+                                path = listOf("$.type"),
+                                filter = mapOf(
+                                    "const" to vcType
+                                )
+                            )
+                        )
+                    )
+                )
+            }.toList()
+        )
+
+        //val presentationDefinitionKey = "presentation_definition"
+        //val presentationDefinitionValue = KlaxonWithConverters().toJsonString(presentation_definition)
+        //customParams[presentationDefinitionKey] = listOf(presentationDefinitionValue)
+
+        customParams["claims"] = listOf(
+            KlaxonWithConverters().toJsonString(
+                mapOf(
+                    //"id_token" to "",
+                    "vp_token" to mapOf(
+                        "presentation_definition" to presentation_definition
+                    )
+                )
+            )
+        )
+        val req2 = AuthorizationRequest(
+            walletUrl,
+            ResponseType("id_token"),
+            ResponseMode("post"),
+            ClientID(redirectUri.toString()),
+            redirectUri, Scope(OIDCScopeValue.OPENID),
+            State(nonce),
+            null, null, null, false, null, null, null,
+            customParams
+        )
+        VerifierTenant.state.reqCache.put(nonce, req2)
+
+        ctx.status(HttpCode.FOUND).header("Location", req2.toURI().toString())
+    }
+
     fun presentCredentialXDevice(ctx: Context) {
         val (schemaUris, vcTypes, verificationCallbackUrl) = ctx.getSchemaOrVcType()
 
@@ -284,6 +388,64 @@ object VerifierController {
         )
 
         ctx.json(PresentationRequestInfo(req.state.value, req.toURI().unescapeOpenIdScheme().toString()))
+    }
+
+
+    fun presentCredentialXDeviceLegacy(ctx: Context) {
+
+        val (_, vcTypes, verificationCallbackUrl) = ctx.getSchemaOrVcType()
+
+        log.debug { "Found requested callback: $verificationCallbackUrl" }
+
+        val redirectUri = URI.create("${VerifierTenant.config.verifierApiUrl}/verify")
+
+        val nonce = Base64URL.encode(convertUUIDToBytes(UUID.randomUUID())).toString()
+        val customParams = mutableMapOf("nonce" to listOf(nonce))
+
+        val presentation_definition = PresentationDefinition(
+            id = "1",
+            input_descriptors = vcTypes.mapIndexed { index, vcType ->
+                InputDescriptor(
+                    id = "${index + 1}",
+                    constraints = InputDescriptorConstraints(
+                        fields = listOf(
+                            InputDescriptorField(
+                                path = listOf("$.type"),
+                                filter = mapOf(
+                                    "const" to vcType
+                                )
+                            )
+                        )
+                    )
+                )
+            }.toList()
+        )
+
+        customParams["claims"] = listOf(
+            KlaxonWithConverters().toJsonString(
+                mapOf(
+                    //"id_token" to "",
+                    "vp_token" to mapOf(
+                        "presentation_definition" to presentation_definition
+                    )
+                )
+            )
+        )
+
+        val req2 = AuthorizationRequest(
+            OidcSchemeFixer.openIdSchemeFixUri,
+            ResponseType("id_token"),
+            ResponseMode("post"),
+            ClientID(redirectUri.toString()),
+            redirectUri, Scope(OIDCScopeValue.OPENID),
+            State(nonce),
+            null, null, null, false, null, null, null,
+            customParams
+        )
+
+        VerifierTenant.state.reqCache.put(nonce, req2)
+
+        ctx.json(PresentationRequestInfo(req2.state.value, req2.toURI().unescapeOpenIdScheme().toString()))
     }
 
     val recentlyVerifiedResponses = customTimeBasedCache<String, String>(java.time.Duration.ofSeconds(300))
