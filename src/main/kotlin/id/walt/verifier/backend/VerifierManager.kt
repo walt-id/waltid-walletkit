@@ -40,13 +40,6 @@ abstract class VerifierManager : BaseService() {
 
     private val log = KotlinLogging.logger { }
 
-    private fun convertUUIDToBytes(uuid: UUID): ByteArray? {
-        val bb: ByteBuffer = ByteBuffer.wrap(ByteArray(16))
-        bb.putLong(uuid.mostSignificantBits)
-        bb.putLong(uuid.leastSignificantBits)
-        return bb.array()
-    }
-
     open fun newRequest(
         walletUrl: String,
         presentationDefinition: PresentationDefinition,
@@ -308,6 +301,13 @@ abstract class VerifierManager : BaseService() {
 
     companion object {
         fun getService(): VerifierManager = ServiceRegistry.getService()
+
+        fun convertUUIDToBytes(uuid: UUID): ByteArray? {
+            val bb: ByteBuffer = ByteBuffer.wrap(ByteArray(16))
+            bb.putLong(uuid.mostSignificantBits)
+            bb.putLong(uuid.leastSignificantBits)
+            return bb.array()
+        }
     }
 }
 
