@@ -90,26 +90,11 @@ spec:
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
               name: wallet-data
-            - name: metaco-key-secret
-              mountPath: "/waltid/wallet/metaco/privkey.pem"
-              subPath: privkey.pem
-              readOnly: true
-            - name: ticker-whitelist-configmap
-              mountPath: "/waltid/wallet/metaco/config/ticker.whitelist"
-              subPath: ticker.whitelist
-              readOnly: true
-            - name: coinmap-configmap
-              mountPath: "/waltid/wallet/metaco/config/coin.map"
-              subPath: coin.map
-              readOnly: true
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
             - name: WALTID_WALLET_BACKEND_BIND_ADDRESS
               value: 0.0.0.0
-          envFrom:
-          - secretRef:
-              name: metaco-secret
           args:
             - run
           ports:
@@ -125,18 +110,6 @@ spec:
         - name: wallet-data
           persistentVolumeClaim:
             claimName: wallet-data-volume-claim
-        - name: metaco-key-secret
-          secret:
-            secretName: metaco-key-secret
-            items:
-              - key: privkey.pem
-                path: privkey.pem
-        - name: ticker-whitelist-configmap
-          configMap:
-            name: ticker-whitelist-configmap
-        - name: coinmap-configmap
-          configMap:
-            name: coinmap-configmap
 ---
 kind: Service
 apiVersion: v1
