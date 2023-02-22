@@ -45,13 +45,13 @@ object VerifierController {
         get() =
             path("{tenantId}") {
                 before { ctx ->
-                    log.info { "Setting verifier API context: ${ctx.pathParam("tenantId")}" }
+                    //log.info { "Setting verifier API context: ${ctx.pathParam("tenantId")}" }
                     WalletContextManager.setCurrentContext(
                         VerifierManager.getService().getVerifierContext(ctx.pathParam("tenantId"))
                     )
                 }
                 after {
-                    log.info { "Resetting verifier API context" }
+                    //log.info { "Resetting verifier API context" }
                     WalletContextManager.resetCurrentContext()
                 }
                 path("wallets") {
@@ -115,9 +115,9 @@ object VerifierController {
                 path("presentXDeviceLegacy") {
                     get(documented(
                         document().operation {
-                            it.summary("Present Verifiable ID cross-device")
+                            it.summary("Present Verifiable ID cross-device in legacy format")
                                 .addTagsItem("Verifier")
-                                .operationId("presentXDevice")
+                                .operationId("presentXDeviceLegacy")
                         }
                             .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("schemaUri", isRepeatable = true)
