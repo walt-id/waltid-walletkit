@@ -100,20 +100,18 @@ class TradeController(
                     ticker = parameters.ticker,
                     maxFee = parameters.maxFee,
                     sender = parameters.sender,
-                    recipient = AccountIdentifier(
-                        domainId = parameters.recipient.domainId.takeIf { it.isNotEmpty() } ?: ProviderConfig.nostroDomainId,
-                        accountId = parameters.recipient.accountId.takeIf { it.isNotEmpty() } ?: ProviderConfig.nostroAccountId,
+                    recipient = parameters.recipient.takeIf { !it.isEmpty() } ?: AccountIdentifier(
+                        domainId = "",
+                        accountId = ProviderConfig.nostroAddress,
                     )
-                ), "Transfer"
-            )
-        )
-            .onSuccess {
-                ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
-                ctx.json(it)
-            }.onFailure {
-                ctx.status(HttpCode.NOT_FOUND)
-                ctx.json(it)
-            }
+                ), "Transfer")
+        ).onSuccess {
+            ctx.status(it.result.takeIf { it }?.let { HttpCode.OK } ?: HttpCode.NOT_FOUND)
+            ctx.json(it)
+        }.onFailure {
+            ctx.status(HttpCode.NOT_FOUND)
+            ctx.json(it)
+        }
     }
 
     fun airdrop(ctx: Context) {
