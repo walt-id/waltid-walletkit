@@ -4,13 +4,8 @@ import cc.vileda.openapi.dsl.components
 import cc.vileda.openapi.dsl.info
 import cc.vileda.openapi.dsl.security
 import com.beust.klaxon.Klaxon
-import com.beust.klaxon.KlaxonException
-import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.databind.exc.MismatchedInputException
-import id.walt.gateway.routers.GatewayRouter
 import id.walt.issuer.backend.IssuerController
 import id.walt.multitenancy.MultitenancyController
-import id.walt.multitenancy.Tenant.TenantNotFoundException
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
@@ -34,7 +29,6 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
 import mu.KotlinLogging
-import java.security.InvalidKeyException
 
 object RestAPI {
 
@@ -45,7 +39,6 @@ object RestAPI {
             AuthController.routes
             WalletController.routes
             DidWebRegistryController.routes
-            GatewayRouter.routes()
             MultitenancyController.routes
         }
         path("verifier-api") {
