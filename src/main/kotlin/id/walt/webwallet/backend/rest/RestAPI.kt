@@ -126,19 +126,21 @@ object RestAPI {
                     "error" to true,
                     "error_type" to exception::class.simpleName,
                     "message" to exception.message,
-                    "url" to this.fullUrl()
+                    "url" to this.fullUrl(),
+                    "stacktrace" to exception.stackTraceToString()
                 )
             )
                 .status(HttpCode.BAD_REQUEST)
         }
 
-        exception(IllegalArgumentException::class.java) { e, ctx -> ctx.reportRequestException(e) }
-        exception(MismatchedInputException::class.java) { e, ctx -> ctx.reportRequestException(e) }
-        exception(JsonParseException::class.java) { e, ctx -> ctx.reportRequestException(e) }
-        exception(KlaxonException::class.java) { e, ctx -> ctx.reportRequestException(e) }
-        exception(InvalidKeyException::class.java) { e, ctx -> ctx.reportRequestException(e) }
-        exception(java.security.spec.InvalidKeySpecException::class.java) { e, ctx -> ctx.reportRequestException(e) }
-        exception(TenantNotFoundException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(IllegalArgumentException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(MismatchedInputException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(JsonParseException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(KlaxonException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(InvalidKeyException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(java.security.spec.InvalidKeySpecException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        //exception(TenantNotFoundException::class.java) { e, ctx -> ctx.reportRequestException(e) }
+        exception(Exception::class.java) { e, ctx -> ctx.reportRequestException(e) }
         //exception(Tenant.WaltContextTenantSystemError::class.java) { e, ctx -> ctx.reportRequestException(e) }
     }
 
