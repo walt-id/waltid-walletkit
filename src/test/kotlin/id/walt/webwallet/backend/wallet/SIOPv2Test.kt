@@ -3,11 +3,13 @@ package id.walt.webwallet.backend.wallet
 import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.util.URLUtils
 import id.walt.BaseApiTest
+import id.walt.auditor.PresentationDefinitionPolicy
 import id.walt.common.KlaxonWithConverters
 import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.custodian.Custodian
 import id.walt.issuer.backend.*
 import id.walt.model.DidMethod
+import id.walt.model.oidc.SIOPv2Response
 import id.walt.multitenancy.TenantId
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.services.context.ContextManager
