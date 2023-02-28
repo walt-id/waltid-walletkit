@@ -180,6 +180,7 @@ abstract class VerifierManager : BaseService() {
     }
 
     open fun getVerificationPoliciesFor(req: AuthorizationRequest): List<VerificationPolicy> {
+        log.info { "Getting verification policies for request: ${req.toURI()}" }
         return listOf(
             SignaturePolicy(),
             ChallengePolicy(req.getCustomParameter("nonce")!!.first(), applyToVC = false, applyToVP = true),
