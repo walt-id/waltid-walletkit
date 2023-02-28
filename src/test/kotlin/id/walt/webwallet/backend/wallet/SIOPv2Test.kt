@@ -221,4 +221,81 @@ class SIOPv2Test : BaseApiTest() {
             fd.path.contains("$.type") && fd.filter != null && fd.filter!!.containsKey("const") && fd.filter!!["const"] == "VerifiableId"
         } shouldNotBe null
     }
+
+    @Test
+    fun test__legacy_OIDC4VP_vp_token_flow() = runBlocking {
+        // VERIFIER PORTAL
+        // verifier portal triggers presentation
+        val redirectToWalletResponse = clientNoFollow.get("${VerifierTenant.config.verifierApiUrl}/presentLegacy/?walletId=walt.id&vcType=VerifiableId") {}
+        redirectToWalletResponse.status shouldBe HttpStatusCode.Found
+        val redirectToWalletLocation = redirectToWalletResponse.headers.get("Location")!!
+        val verificationReq = OIDC4VPService.parseOIDC4VPRequestUri(URI.create(redirectToWalletLocation))
+
+        // WALLET
+        // redirect to wallet api
+        val redirectToWalletUiResponse = clientNoFollow.get(redirectToWalletLocation) {}
+        redirectToWalletUiResponse.status shouldBe HttpStatusCode.Found
+        val redirectToWalletUiLocation = redirectToWalletUiResponse.headers.get("Location")!!
+        // parse redirection to wallet UI
+        val sessionId = URLUtils.parseParameters(URI.create(redirectToWalletUiLocation).query).get("sessionId")!!.first()
+        // simulate user auth
+        val userInfo = authenticate()
+        val did = ContextManager.runWith(WalletContextManager.getUserContext(userInfo)) {
+            DidService.listDids().first()
+        }
+        val vc = ContextManager.runWith(WalletContextManager.getUserContext(userInfo)) {
+            Signatory.getService().issue("VerifiableId", ProofConfig(did, did)).toVerifiableCredential().also {
+                Custodian.getService().storeCredential(it.id!!, it)
+            }
+        }
+        // wallet ui gets presentation session details
+        val presentationSessionInfo = client.get("$url/api/wallet/presentation/continue?sessionId=$sessionId&did=$did") {
+            header("Authorization", "Bearer ${userInfo.token}")
+        }.bodyAsText().let {
+            KlaxonWithConverters().parse<CredentialPresentationSessionInfo>(it)
+        }
+        presentationSessionInfo!!.id shouldBe sessionId
+        presentationSessionInfo.did shouldBe did
+        presentationSessionInfo.presentableCredentials shouldNotBe null
+        val presentableCredentials = presentationSessionInfo.presentableCredentials!!.filter { c -> c.credentialId == vc.id }
+        presentableCredentials.size shouldBe 1
+        presentableCredentials.first().credentialId shouldBe vc.id
+        presentationSessionInfo.redirectUri shouldBe verificationReq.redirectionURI.toString()
+
+        // wallet ui confirms presentation request
+        val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
+            header("Authorization", "Bearer ${userInfo.token}")
+            contentType(ContentType.Application.Json)
+            setBody(KlaxonWithConverters().parseArray<Map<String, Any>?>(KlaxonWithConverters().toJsonString(presentableCredentials)))
+        }.bodyAsText().let { KlaxonWithConverters().parse<PresentationResponse>(it) }
+
+        presentationResponse!!.id_token shouldNotBe null
+        presentationResponse.vp_token shouldNotBe null
+        presentationResponse.presentation_submission shouldNotBe null
+        presentationResponse.state shouldBe verificationReq.state.value
+
+        // VERIFIER
+        // receive presentation response
+        val redirectToVerifierUIResponse = clientNoFollow.submitForm(presentationSessionInfo.redirectUri,
+            Parameters.build {
+                append("vp_token", presentationResponse.vp_token)
+                append("id_token", presentationResponse.id_token!!)
+                presentationResponse.state?.let { append("state", it) }
+            }
+        )
+
+        redirectToVerifierUIResponse.status shouldBe HttpStatusCode.Found
+        val redirectToVerifierUILocation = redirectToVerifierUIResponse.headers["Location"]
+        val accessToken = URLUtils.parseParameters(URI.create(redirectToVerifierUILocation!!).query).get("access_token")!!.first()
+
+        val verificationResult = client.get("${VerifierTenant.config.verifierApiUrl}/auth?access_token=$accessToken") {}.bodyAsText().let { KlaxonWithConverters().parse<SIOPResponseVerificationResult>(it) }
+        verificationResult!!.isValid shouldBe true
+        verificationResult.subject shouldBe did
+        verificationResult.vps shouldHaveSize 1
+        verificationResult.vps shouldHaveSize 1
+        verificationResult.vps[0].vp.holder shouldBe did
+        verificationResult.vps[0].vp.verifiableCredential shouldNotBe null
+        verificationResult.vps[0].vp.verifiableCredential!! shouldHaveSize 1
+        verificationResult.vps[0].vp.verifiableCredential!![0].id shouldBe vc.id
+    }
 }
