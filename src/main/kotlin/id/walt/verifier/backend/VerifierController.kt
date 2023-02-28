@@ -20,6 +20,7 @@ import id.walt.model.oidc.SIOPv2Response
 import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
 import id.walt.rest.auditor.AuditorRestController
+import id.walt.services.oidc.OIDC4VPService
 import id.walt.services.oidc.OidcSchemeFixer
 import id.walt.services.oidc.OidcSchemeFixer.unescapeOpenIdScheme
 import id.walt.verifier.backend.VerifierManager.Companion.convertUUIDToBytes
@@ -360,14 +361,14 @@ object VerifierController {
         val req2 = AuthorizationRequest(
             walletUrl,
             ResponseType("id_token"),
-            ResponseMode("post"),
+            ResponseMode("form_post"),
             ClientID(redirectUri.toString()),
             redirectUri, Scope(OIDCScopeValue.OPENID),
             State(nonce),
             null, null, null, false, null, null, null,
             customParams
         )
-        VerifierTenant.state.reqCache.put(nonce, req2)
+        VerifierTenant.state.reqCache.put(nonce, OIDC4VPService.parseOIDC4VPRequestUri(req2.toURI()))
 
         ctx.status(HttpCode.FOUND).header("Location", req2.toURI().toString())
     }
@@ -443,7 +444,7 @@ object VerifierController {
             customParams
         )
 
-        VerifierTenant.state.reqCache.put(nonce, req2)
+        VerifierTenant.state.reqCache.put(nonce, OIDC4VPService.parseOIDC4VPRequestUri(req2.toURI()))
 
         ctx.json(PresentationRequestInfo(req2.state.value, req2.toURI().unescapeOpenIdScheme().toString()))
     }
