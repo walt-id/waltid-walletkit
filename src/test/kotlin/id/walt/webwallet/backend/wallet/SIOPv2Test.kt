@@ -145,8 +145,11 @@ class SIOPv2Test : BaseApiTest() {
         val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
-            setBody(KlaxonWithConverters().parseArray<Map<String, Any>?>(KlaxonWithConverters().toJsonString(presentableCredentials)))
-        }.bodyAsText().let { KlaxonWithConverters().parse<PresentationResponse>(it) }
+            setBody(KlaxonWithConverters().toJsonString(presentableCredentials))
+        }.bodyAsText().let {
+            KlaxonWithConverters().parse<PresentationResponse>(it)
+        }
+
 
         presentationResponse!!.id_token shouldBe null
         presentationResponse.vp_token shouldNotBe null
@@ -268,7 +271,7 @@ class SIOPv2Test : BaseApiTest() {
         val presentationResponse = client.post("$url/api/wallet/presentation/fulfill?sessionId=$sessionId") {
             header("Authorization", "Bearer ${userInfo.token}")
             contentType(ContentType.Application.Json)
-            setBody(KlaxonWithConverters().parseArray<Map<String, Any>?>(KlaxonWithConverters().toJsonString(presentableCredentials)))
+            setBody(KlaxonWithConverters().toJsonString(presentableCredentials))
         }.bodyAsText().let { KlaxonWithConverters().parse<PresentationResponse>(it) }
 
         presentationResponse!!.id_token shouldNotBe null
