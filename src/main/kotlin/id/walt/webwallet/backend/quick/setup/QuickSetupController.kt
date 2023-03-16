@@ -8,7 +8,7 @@ import io.javalin.plugin.openapi.dsl.documented
 
 object QuickSetupController {
     val routes
-        get() = ApiBuilder.path("quick-setup") {
+        get() = ApiBuilder.path("quicksetup") {
             ApiBuilder.post(
                 "run", documented(
                     document().operation {
