@@ -11,6 +11,8 @@ import id.walt.webwallet.backend.cli.ConfigCmd
 import id.walt.webwallet.backend.cli.RunCmd
 import id.walt.webwallet.backend.cli.WalletCmd
 import id.walt.webwallet.backend.context.WalletContextManager
+import id.walt.webwallet.backend.quick.setup.QuickSetupCmd
+import id.walt.webwallet.backend.quick.setup.QuickSetupRunCmd
 import kotlinx.coroutines.runBlocking
 
 
@@ -69,7 +71,10 @@ fun main(args: Array<String>): Unit = runBlocking {
             TenantCmd().subcommands(
                 ConfigureTenantCmd()
             ),
-            ServeCommand()
-        )
+            ServeCommand(),
+        ),
+        QuickSetupCmd().subcommands(
+            QuickSetupRunCmd()
+        ),
     ).main(args)
 }
