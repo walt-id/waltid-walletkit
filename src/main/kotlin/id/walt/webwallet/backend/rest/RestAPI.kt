@@ -51,7 +51,9 @@ object RestAPI {
         path("onboarding-api") {
             OnboardingController.routes
         }
-        QuickSetupController.routes
+        path("quick-setup") {
+            QuickSetupController.routes
+        }
     }
 
     var apiTitle = "walt.id walletkit API"

@@ -286,6 +286,13 @@ spec:
                 name: walletkit
                 port:
                   number: 80
+          - path: /quick-setup/
+            pathType: Prefix
+            backend:
+              service:
+                name: walletkit
+                port:
+                  number: 80
           - path: /webjars
             pathType: Prefix
             backend:
