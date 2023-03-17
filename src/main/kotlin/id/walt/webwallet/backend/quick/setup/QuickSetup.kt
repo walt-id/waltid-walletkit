@@ -30,7 +30,7 @@ object QuickSetup {
             TenantType.ISSUER -> Pair(IssuerManager.getIssuerContext(tenantId), "/issuer-api")
             TenantType.VERIFIER -> Pair(VerifierManager.getService().getVerifierContext(tenantId), "/verifier-api")
         }
-        val url = InetAddress.getByName(WALTID_WALLET_BACKEND_BIND_ADDRESS).canonicalHostName + path
+        val url = "https://wallet.walt-test.cloud"//InetAddress.getByName(WALTID_WALLET_BACKEND_BIND_ADDRESS).canonicalHostName + path
         // set context
         WalletContextManager.setCurrentContext(context)
         // create key-pair
