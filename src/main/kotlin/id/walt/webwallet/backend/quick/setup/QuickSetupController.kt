@@ -10,17 +10,23 @@ object QuickSetupController {
     val routes
         get() = ApiBuilder.path("") {
             ApiBuilder.post("run", documented(
-                    document().operation {
-                        it.summary("Run the quick-setup. Will create the issuer and verifier tenants and create a did for each")
-                            .operationId("run").addTagsItem("Quick-Setup")
-                    }.json<QuickConfig>("201"),
-                    QuickSetupController::run
-                )
+                document().operation {
+                    it.summary("Run the quick-setup. Will create the issuer and verifier tenants and create a did for each")
+                        .operationId("run").addTagsItem("Quick-Setup")
+                }.body<QuickSetupRequest> {
+                    it.description(
+                        "{<br/>" +
+                                "\"hosts\":[]<br/>" +
+                                "}"
+                    )
+                }.json<QuickConfig>("201"),
+                QuickSetupController::run
+            )
             )
         }
 
     private fun run(ctx: Context) = runCatching {
-        QuickSetup.run()
+        QuickSetup.run(ctx.bodyAsClass<QuickSetupRequest>().hosts)
     }.onSuccess {
         ctx.status(HttpCode.CREATED)
         ctx.json(it)
