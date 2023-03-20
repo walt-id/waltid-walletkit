@@ -18,14 +18,14 @@ import java.util.*
 
 
 object QuickSetup {
-    fun run() = generateToken(9).let {
+    fun run(hosts: List<String>) = generateToken(9).let {
         QuickConfig(
             issuer = createConfig("iss-tenant-$it", TenantType.ISSUER),
-            verifier = createConfig("vfr-tenant-$it", TenantType.VERIFIER),
+            verifier = createConfig("vfr-tenant-$it", TenantType.VERIFIER, hosts),
         )
     }
 
-    private fun createConfig(tenantId: String, type: TenantType) = let {
+    private fun createConfig(tenantId: String, type: TenantType, hosts: List<String>? = null) = let {
         val (context, path) = when (type) {
             TenantType.ISSUER -> Pair(IssuerManager.getIssuerContext(tenantId), "/issuer-api")
             TenantType.VERIFIER -> Pair(VerifierManager.getService().getVerifierContext(tenantId), "/verifier-api")
@@ -39,7 +39,7 @@ object QuickSetup {
         // create did
         val did = DidService.create(DidMethod.key, key.id)
         // create config
-        createTenantConfig(type, "${url.removePrefix("https://wallet")}/$tenantId", did)
+        createTenantConfig(type, "${url.removePrefix("https://wallet")}/$tenantId", did, hosts)
         // build quick config object
         QuickConfig.TenantQuickConfig(
             tenantId = tenantId,
@@ -48,15 +48,22 @@ object QuickSetup {
         )
     }
 
-    private fun createTenantConfig(type: TenantType, apiUrl: String, did: String? = null) = when (type) {
-        TenantType.ISSUER -> IssuerTenant.setConfig(IssuerConfig(
-            issuerApiUrl = "https://issuer$apiUrl",
-            issuerDid = did
-        ))
-        TenantType.VERIFIER -> VerifierTenant.setConfig(VerifierConfig(
-            verifierApiUrl = "https://verifier$apiUrl",
-        ))
-    }
+    private fun createTenantConfig(type: TenantType, apiUrl: String, did: String? = null, hosts: List<String>?) =
+        when (type) {
+            TenantType.ISSUER -> IssuerTenant.setConfig(
+                IssuerConfig(
+                    issuerApiUrl = "https://issuer$apiUrl",
+                    issuerDid = did
+                )
+            )
+
+            TenantType.VERIFIER -> VerifierTenant.setConfig(
+                VerifierConfig(
+                    verifierApiUrl = "https://verifier$apiUrl",
+                    allowedWebhookHosts = hosts,
+                )
+            )
+        }
 
     fun generateToken(size: Int): String {
         val random = SecureRandom()
