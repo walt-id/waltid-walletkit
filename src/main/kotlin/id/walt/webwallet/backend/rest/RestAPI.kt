@@ -9,6 +9,7 @@ import id.walt.multitenancy.MultitenancyController
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.verifier.backend.VerifierController
 import id.walt.webwallet.backend.auth.AuthController
+import id.walt.webwallet.backend.quick.setup.QuickSetupController
 import id.walt.webwallet.backend.wallet.DidWebRegistryController
 import id.walt.webwallet.backend.wallet.WalletController
 import io.javalin.Javalin
@@ -49,6 +50,9 @@ object RestAPI {
         }
         path("onboarding-api") {
             OnboardingController.routes
+        }
+        path("quick-setup") {
+            QuickSetupController.routes
         }
     }
 
