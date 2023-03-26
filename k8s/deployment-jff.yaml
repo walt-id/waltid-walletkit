@@ -8,7 +8,7 @@ data:
       "issuerUiUrl": "https://jff.walt.id",
       "issuerApiUrl": "https://jff.walt.id/issuer-api/default",
       "issuerClientName": "walt.id JFF Issuer Portal",
-      "issuerDid": "did:jwk:eyJrdHkiOiJFQyIsInVzZSI6InNpZyIsImNydiI6IlAtMjU2Iiwia2lkIjoiOWUzZTI3MjliZWMzNDU3YTgzMGQ3MGFkNDNmZmMzYzkiLCJ4IjoiMTlFWXV4aWJ2bGpWUTdORXo3SFNwRjlTcnZPTTJmMkJPaE9UWGlsa0I3OCIsInkiOiJUdGI4WTdQVmhReGZ4UURWQkFIYklvbUNhWWo0VGt3ZEZ3OHMwVWxJOVFZIiwiYWxnIjoiRVMyNTYifQ",
+      "issuerDid": "did:jwk:eyJrdHkiOiJPS1AiLCJ1c2UiOiJzaWciLCJjcnYiOiJFZDI1NTE5Iiwia2lkIjoiN2Q2Y2JmMjQ4OWIzNDI3NmIxNzIxOTA1NDlkMjM5MTgiLCJ4IjoiRm5FVVVhdWRtOTlOMzBiODBqczhWdDRBbk94dlJ3WHRnUmNLcTNnQkl1OCIsImFsZyI6IkVkRFNBIn0",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
