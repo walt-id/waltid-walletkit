@@ -422,6 +422,8 @@ object VerifierController {
             }.toList()
         )
 
+        //VerifierTenant.state.presentationDefinitionCache.put(nonce, presentation_definition)
+
         customParams["claims"] = listOf(
             KlaxonWithConverters().toJsonString(
                 mapOf(
@@ -467,9 +469,7 @@ object VerifierController {
         val siopResponse =
             SIOPv2Response.fromFormParams(ctx.formParamMap().map { kv -> Pair(kv.key, kv.value.first()) }.toMap())
 
-        val result = verifierManager.verifyResponse(siopResponse)
-        val siopVerificationResult = result.first
-        val callbackRequestedRedirectUrl = result.second
+        val (siopVerificationResult, callbackRequestedRedirectUrl) = verifierManager.verifyResponse(siopResponse)
 
         val accessToken = siopResponse.state!!
 
