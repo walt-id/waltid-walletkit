@@ -11,10 +11,10 @@ data:
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.neom.walt-test.cloud",
+          "url": "https://expo-wallet.neom.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
-          "description": "walt.id web wallet"
+          "description": "walt.id web expo-wallet"
         }
       }
     }
@@ -25,18 +25,18 @@ data:
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.neom.walt-test.cloud",
+          "url": "https://expo-wallet.neom.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
-          "description": "walt.id web wallet"
+          "description": "walt.id web expo-wallet"
         }
       },
       "allowedWebhookHosts": [ "https://integrations.neom.walt-test.cloud/callback/" ]
     }
   wallet-config.json: |
     {
-      "walletUiUrl": "https://wallet.neom.walt-test.cloud",
-      "walletApiUrl": "https://wallet.neom.walt-test.cloud/api",
+      "walletUiUrl": "https://expo-wallet.neom.walt-test.cloud",
+      "walletApiUrl": "https://expo-wallet.neom.walt-test.cloud/api",
       "issuers": {
         "waltid": {
           "id": "waltid",
@@ -65,28 +65,28 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: neom1-walletkit
+  name: neom1-expo-walletkit
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: neom1-walletkit
+      app: neom1-expo-walletkit
   template:
     metadata:
       labels:
-        app: neom1-walletkit
+        app: neom1-expo-walletkit
       annotations:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
-        - name: neom1-walletkit
+        - name: neom1-expo-walletkit
           image: waltid/walletkit:latest
           volumeMounts:
-            - name: neom1-wallet-config
+            - name: neom1-expo-wallet-config
               mountPath: "/waltid/wallet/config/"
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
-              name: neom1-wallet-data
+              name: neom1-expo-wallet-data
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
@@ -100,20 +100,20 @@ spec:
             - containerPort: 8080
               name: http-api
       volumes:
-        - name: neom1-wallet-config
+        - name: neom1-expo-wallet-config
           configMap:
-            name: neom1-wallet-config
+            name: neom1-expo-wallet-config
         - name: unis-secret
           secret:
             secretName: unis-secret
-        - name: neom1-wallet-data
+        - name: neom1-expo-wallet-data
           persistentVolumeClaim:
-            claimName: neom1-wallet-data-volume-claim
+            claimName: neom1-expo-wallet-data-volume-claim
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: neom1-walletkit
+  name: neom1-expo-walletkit
 spec:
   ports:
     - name: http
@@ -121,7 +121,7 @@ spec:
       targetPort: http-api
       protocol: TCP
   selector:
-    app: neom1-walletkit
+    app: neom1-expo-walletkit
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -245,47 +245,47 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet1.neom.walt-test.cloud
+        - expo-wallet.neom.walt-test.cloud
         - employer.neom.walt-test.cloud
         - uni.neom.walt-test.cloud
-      secretName: neom1-wallet-tls-secret
+      secretName: neom1-expo-wallet-tls-secret
   rules:
-    - host: wallet1.neom.walt-test.cloud
+    - host: expo-wallet.neom.walt-test.cloud
       http:
         paths:
           - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /verifier-api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /issuer-api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /onboarding-api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /webjars
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /v2/nftkit/nft/
@@ -309,14 +309,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /
@@ -333,21 +333,21 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /onboarding-api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: neom1-walletkit
+                name: neom1-expo-walletkit
                 port:
                   number: 80
           - path: /
