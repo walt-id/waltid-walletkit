@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: wallet-config
+  name: neom2-wallet-config
 data:
   issuer-config.json: |
     {
-      "issuerUiUrl": "https://issuer.neom.walt-test.cloud",
-      "issuerApiUrl": "https://issuer.neom.walt-test.cloud/issuer-api/default",
-      "issuerClientName": "walt.id Issuer Portal",
+      "issuerUiUrl": "https://howest.neom.walt-test.cloud",
+      "issuerApiUrl": "https://howest.neom.walt-test.cloud/issuer-api/default",
+      "issuerClientName": "walt.id howest Portal",
       "wallets": {
         "waltid": {
           "id": "waltid",
@@ -40,17 +40,12 @@ data:
       "issuers": {
         "waltid": {
           "id": "waltid",
-          "url": "https://issuer.neom.walt-test.cloud/issuer-api/default/oidc",
-          "description": "walt.id Issuer Portal"
-        },
-        "yes.com": {
-          "id": "yes.com",
-          "url": "https://demo.sandbox.yes.com/essif/issuer/c2id",
-          "description": "yes.com Bank ID issuer"
+          "url": "https://howest.neom.walt-test.cloud/issuer-api/default/oidc",
+          "description": "walt.id howest Portal"
         },
         "onboarding@walt.id": {
           "id": "onboarding@walt.id",
-          "url": "https://issuer.neom.walt-test.cloud/onboarding-api/oidc",
+          "url": "https://howest.neom.walt-test.cloud/onboarding-api/oidc",
           "description": "walt.id On-Boarding service"
         }
       }
@@ -59,7 +54,7 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: wallet-data-volume-claim
+  name: neom2-wallet-data-volume-claim
 spec:
   accessModes:
     - ReadWriteMany
@@ -70,28 +65,28 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: walletkit
+  name: neom2-walletkit
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: walletkit
+      app: neom2-walletkit
   template:
     metadata:
       labels:
-        app: walletkit
+        app: neom2-walletkit
       annotations:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
-        - name: walletkit
+        - name: neom2-walletkit
           image: waltid/walletkit:latest
           volumeMounts:
-            - name: wallet-config
+            - name: neom2-wallet-config
               mountPath: "/waltid/wallet/config/"
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
-              name: wallet-data
+              name: neom2-wallet-data
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
@@ -105,20 +100,20 @@ spec:
             - containerPort: 8080
               name: http-api
       volumes:
-        - name: wallet-config
+        - name: neom2-wallet-config
           configMap:
-            name: wallet-config
+            name: neom2-wallet-config
         - name: issuers-secret
           secret:
             secretName: issuers-secret
-        - name: wallet-data
+        - name: neom2-wallet-data
           persistentVolumeClaim:
-            claimName: wallet-data-volume-claim
+            claimName: neom2-wallet-data-volume-claim
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: walletkit
+  name: neom2-walletkit
 spec:
   ports:
     - name: http
@@ -126,27 +121,27 @@ spec:
       targetPort: http-api
       protocol: TCP
   selector:
-    app: walletkit
+    app: neom2-walletkit
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: web-wallet-expo
+  name: web-wallet-eudi
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web-wallet-expo
+      app: web-wallet-eudi
   template:
     metadata:
       labels:
-        app: web-wallet-expo
+        app: web-wallet-eudi
       annotations:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
         - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:neom-expo
+          image: waltid/ssikit-web-wallet:1.2303282248.neom-eudi  # neom-eudi
           ports:
             - containerPort: 80
               name: http-api
@@ -154,7 +149,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: web-wallet-expo
+  name: web-wallet-eudi
 spec:
   ports:
     - name: http
@@ -162,27 +157,27 @@ spec:
       targetPort: http-api
       protocol: TCP
   selector:
-    app: web-wallet-expo
+    app: web-wallet-eudi
 ---
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: verifier-portal
+  name: howest-portal
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: verifier-portal
+      app: howest-portal
   template:
     metadata:
       labels:
-        app: verifier-portal
+        app: howest-portal
       annotations:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
-        - name: ssikit-verifier-portal
-          image: waltid/ssikit-verifier-portal:latest
+        - name: howest-portal
+          image: waltid/ssikit-issuer-portal:howest
           ports:
             - containerPort: 80
               name: http-api
@@ -190,7 +185,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: verifier-portal
+  name: howest-portal
 spec:
   ports:
     - name: http
@@ -198,48 +193,12 @@ spec:
       targetPort: http-api
       protocol: TCP
   selector:
-    app: verifier-portal
----
-kind: Deployment
-apiVersion: apps/v1
-metadata:
-  name: issuer-portal
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: issuer-portal
-  template:
-    metadata:
-      labels:
-        app: issuer-portal
-      annotations:
-        deployment/id: "_DEFAULT_DEPLOYMENT_"
-    spec:
-      containers:
-        - name: ssikit-issuer-portal
-          image: waltid/ssikit-issuer-portal:latest
-          ports:
-            - containerPort: 80
-              name: http-api
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: issuer-portal
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: http-api
-      protocol: TCP
-  selector:
-    app: issuer-portal
+    app: howest-portal
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: walletkit
+  name: neom2-walletkit
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -250,47 +209,46 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet.neom.walt-test.cloud
-        - verifier.neom.walt-test.cloud
-        - issuer.neom.walt-test.cloud
+        - wallet2.neom.walt-test.cloud
+        - howest.neom.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
-    - host: wallet.neom.walt-test.cloud
+    - host: wallet2.neom.walt-test.cloud
       http:
         paths:
           - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /verifier-api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /issuer-api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /onboarding-api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /webjars
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /v2/nftkit/nft/
@@ -304,61 +262,37 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: web-wallet-expo
+                name: web-wallet-eudi
                 port:
                   number: 80
-    - host: verifier.neom.walt-test.cloud
-      http:
-        paths:
-          - path: /verifier-api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: verifier-portal
-                port:
-                  number: 80
-    - host: issuer.neom.walt-test.cloud
+    - host: howest.neom.walt-test.cloud
       http:
         paths:
           - path: /issuer-api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /onboarding-api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /api/
             pathType: Prefix
             backend:
               service:
-                name: walletkit
+                name: neom2-walletkit
                 port:
                   number: 80
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: issuer-portal
+                name: howest-portal
                 port:
                   number: 80
