@@ -177,7 +177,7 @@ spec:
     spec:
       containers:
         - name: ssikit-employer-portal
-          image: waltid/ssikit-verifier-portal:latest
+          image: waltid/ssikit-verifier-portal:1.2303282328.neom-employer # neom-employer
           ports:
             - containerPort: 80
               name: http-api
