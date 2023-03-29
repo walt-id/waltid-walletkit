@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: neom1-wallet-config
+  name: neom1-expo-wallet-config
 data:
   issuer-config.json: |
     {
@@ -54,7 +54,7 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: neom1-wallet-data-volume-claim
+  name: neom1-expo-wallet-data-volume-claim
 spec:
   accessModes:
     - ReadWriteMany
@@ -141,7 +141,7 @@ spec:
     spec:
       containers:
         - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:1.2303282302.neom-expo # neom-expo
+          image: waltid/ssikit-web-wallet:1.2303290914.neom-expo # neom-expo
           ports:
             - containerPort: 80
               name: http-api
@@ -177,7 +177,7 @@ spec:
     spec:
       containers:
         - name: ssikit-employer-portal
-          image: waltid/ssikit-verifier-portal:1.2303282328.neom-employer # neom-employer
+          image: waltid/ssikit-verifier-portal:1.2303290915.neom-employer          # neom-employer
           ports:
             - containerPort: 80
               name: http-api
