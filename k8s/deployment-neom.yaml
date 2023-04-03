@@ -38,15 +38,10 @@ data:
       "walletUiUrl": "https://expo-wallet.neom.walt-test.cloud",
       "walletApiUrl": "https://expo-wallet.neom.walt-test.cloud/api",
       "issuers": {
-        "waltid": {
-          "id": "waltid",
+        "uni": {
+          "id": "uni",
           "url": "https://uni.neom.walt-test.cloud/issuer-api/default/oidc",
           "description": "walt.id uni Portal"
-        },
-        "onboarding@walt.id": {
-          "id": "onboarding@walt.id",
-          "url": "https://issuer.neom.walt-test.cloud/onboarding-api/oidc",
-          "description": "walt.id On-Boarding service"
         }
       }
     }
