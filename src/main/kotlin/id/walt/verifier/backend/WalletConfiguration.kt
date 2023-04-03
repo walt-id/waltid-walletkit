@@ -11,13 +11,13 @@ data class WalletConfiguration(
 ) {
 
     companion object {
-        fun getDefaultWalletConfigurations(defaultWalletUrl: String = "http://localhost:3000"): Map<String, WalletConfiguration> {
+        fun getDefaultWalletConfigurations(): Map<String, WalletConfiguration> {
             return mapOf(
                 Pair(
                     "walt.id",
                     WalletConfiguration(
                         "walt.id",
-                        defaultWalletUrl,
+                        "http://localhost:3000",
                         "api/siop/initiatePresentation",
                         "api/siop/initiateIssuance",
                         "walt.id web wallet"
