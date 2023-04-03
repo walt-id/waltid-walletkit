@@ -11,7 +11,7 @@ data:
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.neom.walt-test.cloud",
+          "url": "https://eudi-wallet.neom.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
@@ -25,7 +25,7 @@ data:
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.neom.walt-test.cloud",
+          "url": "https://eudi-wallet.neom.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
@@ -35,8 +35,8 @@ data:
     }
   wallet-config.json: |
     {
-      "walletUiUrl": "https://wallet.neom.walt-test.cloud",
-      "walletApiUrl": "https://wallet.neom.walt-test.cloud/api",
+      "walletUiUrl": "https://eudi-wallet.neom.walt-test.cloud",
+      "walletApiUrl": "https://eudi-wallet.neom.walt-test.cloud/api",
       "issuers": {
         "waltid": {
           "id": "waltid",
@@ -209,11 +209,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet2.neom.walt-test.cloud
+        - eudi-wallet.neom.walt-test.cloud
         - howest.neom.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
-    - host: wallet2.neom.walt-test.cloud
+    - host: eudi-wallet.neom.walt-test.cloud
       http:
         paths:
           - path: /api/
