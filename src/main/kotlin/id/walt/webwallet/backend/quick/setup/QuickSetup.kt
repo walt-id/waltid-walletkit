@@ -11,7 +11,6 @@ import id.walt.services.key.KeyService
 import id.walt.verifier.backend.VerifierConfig
 import id.walt.verifier.backend.VerifierManager
 import id.walt.verifier.backend.VerifierTenant
-import id.walt.verifier.backend.WalletConfiguration
 import id.walt.webwallet.backend.context.WalletContextManager
 import kotlinx.serialization.Serializable
 import java.security.SecureRandom
@@ -19,6 +18,9 @@ import java.util.*
 
 
 object QuickSetup {
+    private val verifierManager = VerifierManager.getService()
+    private val keyService = KeyService.getService()
+
     fun run(hosts: List<String>) = generateToken(9).let {
         QuickConfig(
             issuer = createConfig("iss-tenant-$it", TenantType.ISSUER),
@@ -26,50 +28,60 @@ object QuickSetup {
         )
     }
 
-    private fun createConfig(tenantId: String, type: TenantType, hosts: List<String>? = null) = let {
-        val (context, path) = when (type) {
-            TenantType.ISSUER -> Pair(IssuerManager.getIssuerContext(tenantId), "/issuer-api")
-            TenantType.VERIFIER -> Pair(VerifierManager.getService().getVerifierContext(tenantId), "/verifier-api")
+    private fun createConfig(tenantId: String, type: TenantType, hosts: List<String>? = null) = when (type) {
+        TenantType.ISSUER -> createIssuerConfig(
+            tenantId,
+            DidService.create(DidMethod.key, keyService.generate(KeyAlgorithm.EdDSA_Ed25519).id)
+        ).let {
+            QuickConfig.IssuerTenantQuickConfig(
+                tenantId = tenantId,
+                url = it.issuerApiUrl,
+                did = it.issuerDid ?: "",
+            )
         }
 
-        val url = "https://wallet.walt-test.cloud$path"
-        // set context
-        WalletContextManager.setCurrentContext(context)
-        // create key-pair
-        val key = KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519)
-        // create did
-        val did = DidService.create(DidMethod.key, key.id)
-        // create config
-        createTenantConfig(type, "${url.removePrefix("https://wallet")}/$tenantId", did, hosts)
-        // build quick config object
-        QuickConfig.TenantQuickConfig(
-            tenantId = tenantId,
-            did = did,
-            url = url
-        )
+        TenantType.VERIFIER -> createVerifierConfig(tenantId, hosts ?: emptyList()).let {
+            QuickConfig.VerifierTenantQuickConfig(
+                tenantId = tenantId,
+                url = it.verifierApiUrl,
+                allowedWebhookHosts = it.allowedWebhookHosts ?: emptyList(),
+            )
+        }
     }
 
-    private fun createTenantConfig(type: TenantType, apiUrl: String, did: String? = null, hosts: List<String>?) =
-        when (type) {
-            TenantType.ISSUER -> createIssuerConfig(apiUrl, did!!)
-            TenantType.VERIFIER -> createVerifierConfig(apiUrl, hosts!!)
-        }
-
-    private fun createIssuerConfig(apiUrl: String, did: String) = IssuerTenant.setConfig(
-        IssuerConfig(
-            issuerApiUrl = "https://issuer$apiUrl",
+    private fun createIssuerConfig(tenantId: String, did: String) = let {
+        // copy default config
+        WalletContextManager.setCurrentContext(IssuerManager.getIssuerContext("default"))
+        val defaultConfig = IssuerTenant.config
+        WalletContextManager.resetCurrentContext()
+        // create issuer config
+        WalletContextManager.setCurrentContext(IssuerManager.getIssuerContext(tenantId))
+        val tenantConfig = IssuerConfig(
+            issuerApiUrl = defaultConfig.issuerApiUrl.removeSuffix("/default").plus("/$tenantId"),
             issuerDid = did,
-            wallets = WalletConfiguration.getDefaultWalletConfigurations("https://wallet.walt-test.cloud"),
+            wallets = defaultConfig.wallets
         )
-    )
+        IssuerTenant.setConfig(tenantConfig)
+        WalletContextManager.resetCurrentContext()
+        tenantConfig
+    }
 
-    private fun createVerifierConfig(apiUrl: String, hosts: List<String>) = VerifierTenant.setConfig(
-        VerifierConfig(
-            verifierApiUrl = "https://verifier$apiUrl",
+    private fun createVerifierConfig(tenantId: String, hosts: List<String>) = let {
+        // copy default config
+        WalletContextManager.setCurrentContext(verifierManager.getVerifierContext("default"))
+        val defaultConfig = VerifierTenant.config
+        WalletContextManager.resetCurrentContext()
+        // create verifier config
+        WalletContextManager.setCurrentContext(verifierManager.getVerifierContext(tenantId))
+        val tenantConfig = VerifierConfig(
+            verifierApiUrl = defaultConfig.verifierApiUrl.removeSuffix("/default").plus("/$tenantId"),
             allowedWebhookHosts = hosts,
-            wallets = WalletConfiguration.getDefaultWalletConfigurations("https://wallet.walt-test.cloud")
+            wallets = defaultConfig.wallets
         )
-    )
+        VerifierTenant.setConfig(tenantConfig)
+        WalletContextManager.resetCurrentContext()
+        tenantConfig
+    }
 
     fun generateToken(size: Int): String {
         val random = SecureRandom()
@@ -85,9 +97,21 @@ data class QuickConfig(
     val verifier: TenantQuickConfig,
 ) {
     @Serializable
-    data class TenantQuickConfig(
-        val tenantId: String,
+    abstract class TenantQuickConfig {
+        abstract val tenantId: String
+        abstract val url: String
+    }
+
+    @Serializable
+    data class IssuerTenantQuickConfig(
+        override val tenantId: String,
+        override val url: String,
         val did: String,
-        val url: String,
-    )
+    ) : TenantQuickConfig()
+
+    data class VerifierTenantQuickConfig(
+        override val tenantId: String,
+        override val url: String,
+        val allowedWebhookHosts: List<String>,
+    ) : TenantQuickConfig()
 }
