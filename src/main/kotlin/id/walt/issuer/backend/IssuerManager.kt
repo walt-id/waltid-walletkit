@@ -51,17 +51,19 @@ object IssuerManager {
         return TenantContextManager.getTenantContext(TenantId(TenantType.ISSUER, tenantId)) { IssuerState() }
     }
 
+    fun getDefaultCredentialTypes() = listOf(
+        "VerifiableId",
+        "VerifiableDiploma",
+        "VerifiableVaccinationCertificate",
+        "ProofOfResidence",
+        "ParticipantCredential",
+        "Europass",
+        "OpenBadgeCredential"
+    )
+
     fun listIssuableCredentials(): Issuables {
         return Issuables(
-            credentials = listOf(
-                "VerifiableId",
-                "VerifiableDiploma",
-                "VerifiableVaccinationCertificate",
-                "ProofOfResidence",
-                "ParticipantCredential",
-                "Europass",
-                "OpenBadgeCredential"
-            )
+            credentials = (IssuerTenant.config.credentialTypes ?: getDefaultCredentialTypes())
                 .map { IssuableCredential.fromTemplateId(it) }
         )
     }
@@ -247,7 +249,7 @@ object IssuerManager {
         )
         setCustomParameter(
             "credentials_supported",
-            VcTemplateManager.listTemplates().map { VcTemplateManager.getTemplate(it.name, true) }
+            listIssuableCredentials().credentials.map { VcTemplateManager.getTemplate(it.type, true) }
                 .associateBy({ tmpl -> tmpl.template!!.type.last() }) { cred ->
                     CredentialMetadata(
                         formats = mapOf(
