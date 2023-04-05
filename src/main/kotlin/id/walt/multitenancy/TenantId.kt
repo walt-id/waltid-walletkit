@@ -11,5 +11,6 @@ data class TenantId(val type: TenantType, val id: String) {
 
     companion object {
         const val DEFAULT_TENANT = "default"
+        fun fromString(type: String, id: String) = TenantId(TenantType.valueOf(type.uppercase()), id)
     }
 }
