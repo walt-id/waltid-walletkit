@@ -177,7 +177,7 @@ spec:
     spec:
       containers:
         - name: howest-portal
-          image: waltid/ssikit-issuer-portal:howest
+          image: waltid/ssikit-issuer-portal:1.2304050916.neom-howest
           ports:
             - containerPort: 80
               name: http-api
