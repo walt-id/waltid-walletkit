@@ -208,7 +208,7 @@ spec:
     spec:
       containers:
         - name: ssikit-uni-portal
-          image: waltid/ssikit-issuer-portal:1.2303282307.neom-uni # neom uni
+          image: waltid/ssikit-issuer-portal:1.2304050920.neom-uni # neom uni
           ports:
             - containerPort: 80
               name: http-api
