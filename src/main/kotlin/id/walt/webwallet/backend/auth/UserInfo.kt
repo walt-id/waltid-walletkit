@@ -13,15 +13,15 @@ class UserInfo(
     var ethAccount: String? = null
     var did: String? = null
     var tezosAccount: String? = null
-    var polkadotAccount: String? = null
+    var polkadotAccount: String? = id
 
-    init {
-        when {
-            id.contains("@") -> email = id
-            id.lowercase().contains("0x") -> ethAccount = id
-            id.lowercase().startsWith("did:") -> did = id
-            id.lowercase().startsWith("tz") -> tezosAccount = id
-            isPolkadotAccount(id) -> polkadotAccount = id
-        }
-    }
+//     init {
+//        when {
+//            id.contains("@") -> email = id
+//            id.lowercase().contains("0x") -> ethAccount = id
+//            id.lowercase().startsWith("did:") -> did = id
+//            id.lowercase().startsWith("tz") -> tezosAccount = id
+//            isPolkadotAccount(id) -> polkadotAccount = id
+//        }
+//    }
 }
