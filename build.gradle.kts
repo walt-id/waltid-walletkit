@@ -70,6 +70,9 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:2.2.4")
     implementation("io.ktor:ktor-client-logging:2.2.4")
     implementation(kotlin("stdlib-jdk8"))
+
+    // Polkadot account verification
+    implementation("org.bitcoinj:bitcoinj-core:0.15.11")
 }
 
 tasks.withType<KotlinCompile> {
