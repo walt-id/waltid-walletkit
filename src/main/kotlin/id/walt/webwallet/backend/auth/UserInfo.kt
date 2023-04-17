@@ -18,17 +18,11 @@ class UserInfo(var id: String ) {
             id.startsWith("did") -> {
                 did = id
             }
-            id.split("##")[0].lowercase().startsWith("eth") -> {
-                ethAccount = id.split("##")[1]
-                }
-            id.split("##")[0].lowercase().startsWith("tezos") -> {
-                tezosAccount = id.split("##")[1]
-        }
-            id.split("##")[0].lowercase().startsWith("polevm") -> {
-                polkadotEvmAccount = id.split("##")[1]}
-
-            id.lowercase().startsWith("0x") -> {polkadotEvmAccount=id}
+            id.split("##")[0].lowercase().startsWith("eth") -> {ethAccount = id.split("##")[1] }
+            id.split("##")[0].lowercase().startsWith("polevm") -> {polkadotEvmAccount = id.split("##")[1]}
+            id.lowercase().startsWith("tz") -> tezosAccount = id
 
         }
+
     }
 }
