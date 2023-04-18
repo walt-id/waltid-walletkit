@@ -83,7 +83,7 @@ object DidWebRegistryController {
         ContextManager.runWith(didRegistryContext) {
             if (DidService.listDids().any { d -> d == did.id }) throw BadRequestResponse("DID already registered")
 
-            DidService.storeDid(did.id, did.encode())
+            DidService.storeDid(did)
             DidService.importKeys(did.id)
 
 

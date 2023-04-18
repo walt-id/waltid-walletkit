@@ -6,9 +6,9 @@ import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
 import id.walt.auditor.Auditor
-import id.walt.auditor.ChallengePolicy
-import id.walt.auditor.ChallengePolicyArg
-import id.walt.auditor.SignaturePolicy
+import id.walt.auditor.policies.ChallengePolicy
+import id.walt.auditor.policies.ChallengePolicyArg
+import id.walt.auditor.policies.SignaturePolicy
 import id.walt.issuer.backend.IssuableCredential
 import id.walt.issuer.backend.Issuables
 import id.walt.issuer.backend.IssuerManager

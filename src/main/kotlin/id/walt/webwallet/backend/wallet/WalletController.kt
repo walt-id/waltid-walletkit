@@ -17,7 +17,9 @@ import id.walt.model.oidc.IssuanceInitiationRequest
 import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
+import id.walt.services.did.DidEbsiCreateOptions
 import id.walt.services.did.DidService
+import id.walt.services.did.DidWebCreateOptions
 import id.walt.services.ecosystems.essif.EssifClient
 import id.walt.services.ecosystems.essif.didebsi.DidEbsiService
 import id.walt.services.key.KeyService
@@ -384,7 +386,7 @@ object WalletController {
                     DidService.create(
                         req.method,
                         keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256k1).id,
-                        DidService.DidEbsiOptions(version = req.didEbsiVersion)
+                        DidEbsiCreateOptions(version = req.didEbsiVersion)
                     )
                 if (req.didEbsiVersion == 1) {
                     EssifClient.onboard(did, req.didEbsiBearerToken)
@@ -403,7 +405,7 @@ object WalletController {
                 val didStr = DidService.create(
                     req.method,
                     didWebKeyId,
-                    DidService.DidWebOptions(
+                    DidWebCreateOptions(
                         domain = didDomain,
                         path = when (didDomain) {
                             didRegistryAuthority -> "api/did-registry/$didWebKeyId"
@@ -414,7 +416,7 @@ object WalletController {
                 val didDoc = DidService.load(didStr)
                 // !! Implicit USER CONTEXT is LOST after this statement !!
                 ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
-                    DidService.storeDid(didStr, didDoc.encodePretty())
+                    DidService.storeDid(didDoc)
                 }
 
                 ctx.result(didStr)
