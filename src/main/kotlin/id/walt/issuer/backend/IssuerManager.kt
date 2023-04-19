@@ -250,7 +250,7 @@ object IssuerManager {
         setCustomParameter(
             "credentials_supported",
             listIssuableCredentials().credentials.map { VcTemplateManager.getTemplate(it.type, true) }
-                .associateBy({ tmpl -> tmpl.template!!.type.last() }) { cred ->
+                .associateBy({ tmpl -> tmpl.name }) { cred ->
                     CredentialMetadata(
                         formats = mapOf(
                             "ldp_vc" to CredentialFormat(
@@ -272,7 +272,7 @@ object IssuerManager {
                         ),
                         display = listOf(
                             CredentialDisplay(
-                                name = cred.template!!.type.last()
+                                name = cred.name
                             )
                         )
                     )
