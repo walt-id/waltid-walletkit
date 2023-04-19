@@ -12,7 +12,7 @@ data class IssuableCredential(
         fun fromTemplateId(templateId: String): IssuableCredential {
             val tmpl = VcTemplateManager.getTemplate(templateId, true).template!!
             return IssuableCredential(
-                tmpl.type.last(),
+                templateId,
                 mapOf(
                     Pair(
                         "credentialSubject",
