@@ -4,13 +4,8 @@
   "issuers": {
     "waltid": {
       "id": "waltid",
-      "url": "http://localhost:8080/issuer-api/default/oidc",
+      "url": "http://localhost:7070/issuer-api/default/oidc",
       "description": "walt.id Issuer Portal"
-    },
-    "onboarding@walt.id": {
-      "id": "onboarding@walt.id",
-      "url": "http://localhost:8080/onboarding-api/oidc",
-      "description": "walt.id On-Boarding service"
     }
   }
 }
