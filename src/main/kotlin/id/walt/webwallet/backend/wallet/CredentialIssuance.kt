@@ -309,7 +309,8 @@ object CredentialIssuanceManager {
 
     private fun findMatchingVCTemplates(presentationDefinition: PresentationDefinition): List<VerifiableCredential> {
         return VcTemplateManager.listTemplates()
-            .map { VcTemplateManager.getTemplate(it.name, true).template!! }
+            .map { VcTemplateManager.getTemplate(it.name, true).template }
+            .filterNotNull()
             .filter { tmpl ->
                 presentationDefinition.input_descriptors.any { inputDescriptor ->
                     OIDCUtils.matchesInputDescriptor(tmpl, inputDescriptor)
