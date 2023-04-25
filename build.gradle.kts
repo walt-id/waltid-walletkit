@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "id.walt"
-version = "0.7.0-SNAPSHOT"
+version = "1.SNAPSHOT"
 
 repositories {
     mavenLocal()
