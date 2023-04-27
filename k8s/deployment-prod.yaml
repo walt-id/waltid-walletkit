@@ -80,7 +80,7 @@ spec:
     spec:
       containers:
         - name: walletkit
-          image: waltid/walletkit:latet
+          image: waltid/walletkit:latest
           volumeMounts:
             - name: wallet-config
               mountPath: "/waltid/wallet/config/"
@@ -142,7 +142,7 @@ spec:
     spec:
       containers:
         - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:latet
+          image: waltid/ssikit-web-wallet:latest
           ports:
             - containerPort: 80
               name: http-api
@@ -178,7 +178,7 @@ spec:
     spec:
       containers:
         - name: ssikit-verifier-portal
-          image: waltid/ssikit-verifier-portal:latet
+          image: waltid/ssikit-verifier-portal:latest
           ports:
             - containerPort: 80
               name: http-api
@@ -214,7 +214,7 @@ spec:
     spec:
       containers:
         - name: ssikit-issuer-portal
-          image: waltid/ssikit-issuer-portal:latet
+          image: waltid/ssikit-issuer-portal:latest
           ports:
             - containerPort: 80
               name: http-api
