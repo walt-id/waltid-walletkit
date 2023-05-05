@@ -38,15 +38,10 @@ data:
       "walletUiUrl": "https://expo-wallet.neom.walt-test.cloud",
       "walletApiUrl": "https://expo-wallet.neom.walt-test.cloud/api",
       "issuers": {
-        "waltid": {
-          "id": "waltid",
+        "uni": {
+          "id": "uni",
           "url": "https://uni.neom.walt-test.cloud/issuer-api/default/oidc",
           "description": "walt.id uni Portal"
-        },
-        "onboarding@walt.id": {
-          "id": "onboarding@walt.id",
-          "url": "https://issuer.neom.walt-test.cloud/onboarding-api/oidc",
-          "description": "walt.id On-Boarding service"
         }
       }
     }
@@ -194,6 +189,47 @@ spec:
       protocol: TCP
   selector:
     app: employer-portal
+
+
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: landingpage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: landingpage
+  template:
+    metadata:
+      labels:
+        app: landingpage
+      annotations:
+        deployment/id: "_DEFAULT_DEPLOYMENT_"
+    spec:
+      containers:
+        - name: landingpage
+          image: waltid/neom-landingpage:latest-snapshot
+          ports:
+            - containerPort: 80
+              name: http-api
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: landingpage
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http-api
+      protocol: TCP
+  selector:
+    app: landingpage
+
+
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -213,7 +249,7 @@ spec:
     spec:
       containers:
         - name: ssikit-uni-portal
-          image: waltid/ssikit-issuer-portal:1.2303282307.neom-uni # neom uni
+          image: waltid/ssikit-issuer-portal:1.2304050920.neom-uni # neom uni
           ports:
             - containerPort: 80
               name: http-api
@@ -248,6 +284,7 @@ spec:
         - expo-wallet.neom.walt-test.cloud
         - employer.neom.walt-test.cloud
         - uni.neom.walt-test.cloud
+        - neom.walt-test.cloud
       secretName: neom1-expo-wallet-tls-secret
   rules:
     - host: expo-wallet.neom.walt-test.cloud
@@ -355,5 +392,15 @@ spec:
             backend:
               service:
                 name: uni-portal
+                port:
+                  number: 80
+    - host: neom.walt-test.cloud
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: landingpage
                 port:
                   number: 80

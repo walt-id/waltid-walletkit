@@ -11,7 +11,7 @@ data:
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.neom.walt-test.cloud",
+          "url": "https://eudi-wallet.neom.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
@@ -25,7 +25,7 @@ data:
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.neom.walt-test.cloud",
+          "url": "https://eudi-wallet.neom.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
@@ -35,8 +35,8 @@ data:
     }
   wallet-config.json: |
     {
-      "walletUiUrl": "https://wallet.neom.walt-test.cloud",
-      "walletApiUrl": "https://wallet.neom.walt-test.cloud/api",
+      "walletUiUrl": "https://eudi-wallet.neom.walt-test.cloud",
+      "walletApiUrl": "https://eudi-wallet.neom.walt-test.cloud/api",
       "issuers": {
         "waltid": {
           "id": "waltid",
@@ -141,7 +141,7 @@ spec:
     spec:
       containers:
         - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:1.2303282248.neom-eudi  # neom-eudi
+          image: waltid/ssikit-web-wallet:1.2304050933.neom-eudi  # neom-eudi
           ports:
             - containerPort: 80
               name: http-api
@@ -177,7 +177,7 @@ spec:
     spec:
       containers:
         - name: howest-portal
-          image: waltid/ssikit-issuer-portal:howest
+          image: waltid/ssikit-issuer-portal:1.2304190916.neom-howest
           ports:
             - containerPort: 80
               name: http-api
@@ -209,11 +209,11 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet2.neom.walt-test.cloud
+        - eudi-wallet.neom.walt-test.cloud
         - howest.neom.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
-    - host: wallet2.neom.walt-test.cloud
+    - host: eudi-wallet.neom.walt-test.cloud
       http:
         paths:
           - path: /api/

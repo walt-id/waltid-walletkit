@@ -55,6 +55,18 @@ object VerifierController {
                     //log.info { "Resetting verifier API context" }
                     WalletContextManager.resetCurrentContext()
                 }
+                path("auditor") {
+                    get("policies", documented(AuditorRestController.listPoliciesDocs(), AuditorRestController::listPolicies))
+                    post("verify", documented(AuditorRestController.verifyVPDocs(), AuditorRestController::verifyVP))
+                    post(
+                        "create/{name}",
+                        documented(AuditorRestController.createDynamicPolicyDocs(), AuditorRestController::createDynamicPolicy)
+                    )
+                    delete(
+                        "delete/{name}",
+                        documented(AuditorRestController.deleteDynamicPolicyDocs(), AuditorRestController::deleteDynamicPolicy)
+                    )
+                }
                 path("wallets") {
                     get("list", documented(
                         document().operation {

@@ -1,6 +1,7 @@
 {
   "issuerUiUrl": "http://localhost:8000",
   "issuerApiUrl": "http://localhost:8080/issuer-api/default",
+  "credentialTypes": [ "VerifiableId", "EUDiploma" ],
   "wallets": {
     "waltid": {
       "id": "waltid",

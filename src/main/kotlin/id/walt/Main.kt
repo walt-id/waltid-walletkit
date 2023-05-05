@@ -2,6 +2,7 @@ package id.walt
 
 import com.github.ajalt.clikt.core.subcommands
 import id.walt.cli.*
+import id.walt.cli.did.*
 import id.walt.multitenancy.ConfigureTenantCmd
 import id.walt.multitenancy.TenantCmd
 import id.walt.servicematrix.ServiceMatrix

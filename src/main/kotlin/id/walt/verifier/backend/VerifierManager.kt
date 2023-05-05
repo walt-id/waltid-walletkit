@@ -8,6 +8,9 @@ import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.id.State
 import com.nimbusds.openid.connect.sdk.Nonce
 import id.walt.auditor.*
+import id.walt.auditor.policies.ChallengePolicy
+import id.walt.auditor.policies.PresentationDefinitionPolicy
+import id.walt.auditor.policies.SignaturePolicy
 import id.walt.model.dif.*
 import id.walt.model.oidc.SIOPv2Response
 import id.walt.multitenancy.TenantContext

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "id.walt"
-version = "0.7.0-SNAPSHOT"
+version = "1.SNAPSHOT"
 
 repositories {
     mavenLocal()
@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2303071526.0")
+    implementation("id.walt:waltid-ssikit:1.2304190952.0")
     //implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
     // Metaco

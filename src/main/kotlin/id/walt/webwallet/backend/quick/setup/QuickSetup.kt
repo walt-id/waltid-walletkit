@@ -59,6 +59,7 @@ object QuickSetup {
         val tenantConfig = IssuerConfig(
             issuerApiUrl = defaultConfig.issuerApiUrl.removeSuffix("/default").plus("/$tenantId"),
             issuerDid = did,
+            wallets = defaultConfig.wallets
         )
         IssuerTenant.setConfig(tenantConfig)
         WalletContextManager.resetCurrentContext()
@@ -75,6 +76,7 @@ object QuickSetup {
         val tenantConfig = VerifierConfig(
             verifierApiUrl = defaultConfig.verifierApiUrl.removeSuffix("/default").plus("/$tenantId"),
             allowedWebhookHosts = hosts,
+            wallets = defaultConfig.wallets
         )
         VerifierTenant.setConfig(tenantConfig)
         WalletContextManager.resetCurrentContext()
