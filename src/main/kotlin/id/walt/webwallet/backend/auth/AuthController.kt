@@ -43,6 +43,7 @@ object AuthController {
             }
         }
         ctx.json(UserInfo(userInfo.id).apply {
+            if (id.contains("##")){ id = userInfo.id.split("##")[1]}
             token = JWTService.toJWT(userInfo)
         })
     }
