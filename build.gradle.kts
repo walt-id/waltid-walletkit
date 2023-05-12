@@ -21,19 +21,15 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2304190952.0")
-    //implementation("id.walt:waltid-ssikit-vclib:1.24.2")
+    implementation("id.walt:waltid-ssikit:1.2305121240.0")
 
-    // Metaco
-    // implementation("com.metaco:sdk:2.1.0")
-
-    implementation("io.javalin:javalin-bundle:4.6.4")
+    implementation("io.javalin:javalin-bundle:4.6.8")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
     implementation("com.beust:klaxon:5.6")
-    implementation("com.nimbusds:oauth2-oidc-sdk:9.43.1")
+    implementation("com.nimbusds:oauth2-oidc-sdk:10.7")
 
     // CLI
-    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.1")
+    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.2")
     implementation("com.github.ajalt.clikt:clikt:3.5.1")
 
     // Service-Matrix
@@ -42,7 +38,7 @@ dependencies {
     // Logging
     //implementation("org.slf4j:slf4j-api:2.0.5")
     implementation("org.slf4j:slf4j-simple:2.0.5")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
     // Ktor
     implementation("io.ktor:ktor-client-jackson:2.2.4")
@@ -58,11 +54,11 @@ dependencies {
 
     // Testing
     //testImplementation(kotlin("test-junit"))
-    testImplementation("io.mockk:mockk:1.13.2")
+    testImplementation("io.mockk:mockk:1.13.4")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
-    testImplementation("io.kotest:kotest-assertions-core:5.5.4")
-    testImplementation("io.kotest:kotest-assertions-json:5.5.4")
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
+    testImplementation("io.kotest:kotest-assertions-core:5.5.5")
+    testImplementation("io.kotest:kotest-assertions-json:5.5.5")
 
     // HTTP
     implementation("io.ktor:ktor-client-core:2.2.4")
