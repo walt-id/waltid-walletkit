@@ -244,22 +244,22 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: howest-portal
+  name: howest-issuer-portal
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: howest-portal
+      app: howest-issuer-portal
   template:
     metadata:
       labels:
-        app: howest-portal
+        app: howest-issuer-portal
       annotations:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
         - name: howest-portal
-          image: waltid/ssikit-issuer-portal:1.2305101601.howest
+          image: waltid/ssikit-issuer-portal:1.2305121407.howest
           ports:
             - containerPort: 80
               name: http-api
@@ -267,7 +267,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: howest-portal
+  name: howest-issuer-portal
 spec:
   ports:
     - name: http
@@ -275,7 +275,43 @@ spec:
       targetPort: http-api
       protocol: TCP
   selector:
-    app: howest-portal
+    app: howest-issuer-portal
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: howest-verifier-portal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: howest-verifier-portal
+  template:
+    metadata:
+      labels:
+        app: howest-verifier-portal
+      annotations:
+        deployment/id: "_DEFAULT_DEPLOYMENT_"
+    spec:
+      containers:
+        - name: ssikit-verifier-portal
+          image: waltid/ssikit-verifier-portal:1.2305121634.howest
+          ports:
+            - containerPort: 80
+              name: http-api
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: howest-verifier-portal
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: http-api
+      protocol: TCP
+  selector:
+    app: howest-verifier-portal
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -295,6 +331,7 @@ spec:
         - verifier.walt-test.cloud
         - issuer.walt-test.cloud
         - howest.walt-test.cloud
+        - verifier.howest.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
     - host: wallet.walt-test.cloud
@@ -439,6 +476,30 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: howest-portal
+                name: howest-issuer-portal
+                port:
+                  number: 80
+    - host: verifier.howest.walt-test.cloud
+      http:
+        paths:
+          - path: /verifier-api/
+            pathType: Prefix
+            backend:
+              service:
+                name: walletkit
+                port:
+                  number: 80
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: walletkit
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: howest-verifier-portal
                 port:
                   number: 80
