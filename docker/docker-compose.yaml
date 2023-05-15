@@ -9,7 +9,7 @@ services:
       WALTID_WALLET_BACKEND_BIND_ADDRESS: 0.0.0.0
       EXTERNAL_HOSTNAME: $HOSTNAME$COMPUTERNAME
     volumes:
-      - .:/waltid-walletkit/data-root # data store volume incl. config files.
+      - .:/app/data-root # data store volume incl. config files.
     extra_hosts:
       - "$HOSTNAME$COMPUTERNAME:host-gateway"
   wallet-ui:
