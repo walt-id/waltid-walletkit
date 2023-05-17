@@ -422,8 +422,7 @@ object WalletController {
                 ctx.result(didStr)
             }
 
-            DidMethod.key -> {
-
+            else -> {
                 ctx.result(
                     DidService.create(
                         req.method,
@@ -431,17 +430,6 @@ object WalletController {
                     )
                 )
             }
-
-            DidMethod.iota -> {
-                ctx.result(
-                    DidService.create(
-                        req.method,
-                        keyId ?: KeyService.getService().generate(KeyAlgorithm.EdDSA_Ed25519).id
-                    )
-                )
-            }
-
-            else -> throw BadRequestResponse("DID method ${req.method} not yet supported")
         }
     }
 
