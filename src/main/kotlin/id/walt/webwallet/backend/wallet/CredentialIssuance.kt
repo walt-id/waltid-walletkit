@@ -1,5 +1,6 @@
 package id.walt.webwallet.backend.wallet
 
+import com.beust.klaxon.Klaxon
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.google.common.cache.CacheBuilder
@@ -109,12 +110,14 @@ object CredentialIssuanceManager {
     val issuerCache: LoadingCache<String, OIDCProviderWithMetadata> = CacheBuilder.newBuilder().maximumSize(256)
         .build(
             CacheLoader.from { issuerId -> // find issuer from config
-                log.debug { "Loading issuer: $issuerId, got: ${WalletConfig.config.issuers[issuerId!!]}" }
+                log.debug { "Loading issuer: $issuerId, got: ${Klaxon().toJsonString(WalletConfig.config.issuers[issuerId!!])}" }
                 (WalletConfig.config.issuers[issuerId!!]
                     ?: OIDCProvider(issuerId, issuerId) // else, assume issuerId is a valid issuer url
                         ).let {
 
                         log.debug { "Retrieving metadata endpoint for issuer: ${OIDC4CIService.getMetadataEndpoint(it)}" }
+
+                        log.debug { "Sending GET to: ${OIDC4CIService.getMetadataEndpoint(it)}" }
 
                         OIDC4CIService.getWithProviderMetadata(it)
                     }
