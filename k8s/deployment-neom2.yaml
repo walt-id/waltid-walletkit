@@ -141,7 +141,7 @@ spec:
     spec:
       containers:
         - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:1.2304050933.neom-eudi  # neom-eudi
+          image: waltid/ssikit-web-wallet:1.2304271229.neom-eudi  # neom-eudi
           ports:
             - containerPort: 80
               name: http-api
