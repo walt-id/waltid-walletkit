@@ -16,8 +16,8 @@ spec:
         deployment/id: "_DEFAULT_DEPLOYMENT_"
     spec:
       containers:
-        - name: howest-portal
-          image: waltid/ssikit-issuer-portal:1.2305101601.howest
+        - name: howest-issuer-portal
+          image: waltid/ssikit-issuer-portal:1.2305121407.howest
           ports:
             - containerPort: 80
               name: http-api
@@ -74,7 +74,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: walletkit
+  name: howest
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -87,7 +87,7 @@ spec:
     - hosts:
         - howest.walt-test.cloud
         - verifier.howest.walt-test.cloud
-      secretName: wallet-tls-secret
+      secretName: howest-tls-secret
   rules:
     - host: howest.walt-test.cloud
       http:
@@ -117,7 +117,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: howest-portal
+                name: howest-issuer-portal
                 port:
                   number: 80
     - host: verifier.howest.walt-test.cloud
