@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2304190952.0")
+    implementation("id.walt:waltid-ssikit:1.2305302027.0")
     //implementation("id.walt:waltid-ssikit-vclib:1.24.2")
 
     // Metaco
@@ -33,8 +33,8 @@ dependencies {
     implementation("com.nimbusds:oauth2-oidc-sdk:9.43.1")
 
     // CLI
-    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.1")
-    implementation("com.github.ajalt.clikt:clikt:3.5.1")
+    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.2")
+    implementation("com.github.ajalt.clikt:clikt:3.5.2")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.3")
@@ -42,7 +42,7 @@ dependencies {
     // Logging
     //implementation("org.slf4j:slf4j-api:2.0.5")
     implementation("org.slf4j:slf4j-simple:2.0.5")
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.4")
+    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
     // Ktor
     implementation("io.ktor:ktor-client-jackson:2.2.4")
@@ -58,7 +58,7 @@ dependencies {
 
     // Testing
     //testImplementation(kotlin("test-junit"))
-    testImplementation("io.mockk:mockk:1.13.2")
+    testImplementation("io.mockk:mockk:1.13.4")
 
     testImplementation("io.kotest:kotest-runner-junit5:5.5.4")
     testImplementation("io.kotest:kotest-assertions-core:5.5.4")
