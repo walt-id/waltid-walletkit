@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2305302027.0")
+    implementation("id.walt:waltid-ssikit:1.2306011534.0")
 
     implementation("io.javalin:javalin-bundle:4.6.8")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
@@ -51,6 +51,9 @@ dependencies {
 
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
+
+    implementation("com.sksamuel.hoplite:hoplite-core:2.7.4")
+    implementation("com.sksamuel.hoplite:hoplite-hocon:2.7.4")
 
     // Testing
     //testImplementation(kotlin("test-junit"))

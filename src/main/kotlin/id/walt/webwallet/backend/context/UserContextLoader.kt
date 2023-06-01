@@ -2,6 +2,7 @@ package id.walt.webwallet.backend.context
 
 import com.google.common.cache.CacheLoader
 import id.walt.WALTID_DATA_ROOT
+import id.walt.multitenancy.FileSystemStoreConfigCreator.makeFileSystemStoreConfig
 import id.walt.services.context.Context
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
@@ -24,7 +25,7 @@ object UserContextLoader : CacheLoader<String, Context>() {
             key,
             HKVKeyStoreService(),
             HKVVcStoreService(),
-            FileSystemHKVStore(FilesystemStoreConfig("${WALTID_DATA_ROOT}/data/${key}"))
+            FileSystemHKVStore(makeFileSystemStoreConfig("${WALTID_DATA_ROOT}/data/${key}"))
         )
     }
 }
