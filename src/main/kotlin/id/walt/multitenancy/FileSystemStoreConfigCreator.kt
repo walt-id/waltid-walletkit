@@ -4,10 +4,13 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.addResourceSource
 import id.walt.WALTID_DATA_ROOT
 import id.walt.services.hkvstore.FilesystemStoreConfig
+import mu.KotlinLogging
 
 object FileSystemStoreConfigCreator {
 
-    fun makeFileSystemStoreConfig(key: String): FilesystemStoreConfig {
+    private val log = KotlinLogging.logger {  }
+
+    private val maxKeySize by lazy {
         val config = ConfigLoaderBuilder.default()
             .addResourceSource("config/fsStore.conf")
             .build()
@@ -17,7 +20,17 @@ object FileSystemStoreConfigCreator {
             config.getUnsafe().maxKeySize
         } else 111
 
-        return FilesystemStoreConfig("$WALTID_DATA_ROOT/data/${key}", maxKeySize)
+        log.debug { "Max key size before hashing has been set to: $maxKeySize" }
+
+        maxKeySize
+    }
+
+    fun makeFileSystemStoreConfig(key: String): FilesystemStoreConfig {
+        val dataRoot = "$WALTID_DATA_ROOT/data/${key}"
+
+        log.debug { "Making file system store config: $dataRoot" }
+
+        return FilesystemStoreConfig(dataRoot, maxKeySize)
     }
 
 }
