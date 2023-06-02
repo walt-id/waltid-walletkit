@@ -58,7 +58,7 @@ object TenantContextManager {
         // TODO: create tenant context according to context configuration
         return contexts[tenantId.toString()] as? TenantContext<C, S> ?: TenantContext(
             tenantId = tenantId,
-            hkvStore = FileSystemHKVStore(makeFileSystemStoreConfig("$WALTID_DATA_ROOT/data/tenants/${tenantId.type}/${tenantId.id}")),
+            hkvStore = FileSystemHKVStore(makeFileSystemStoreConfig("tenants/${tenantId.type}/${tenantId.id}")),
             keyStore = HKVKeyStoreService(),
             vcStore = HKVVcStoreService(),
             state = createState()
