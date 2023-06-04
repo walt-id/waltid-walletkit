@@ -5,13 +5,13 @@ metadata:
 data:
   issuer-config.json: |
     {
-      "issuerUiUrl": "https://issuer.cheqd2.walt-test.cloud",
-      "issuerApiUrl": "https://issuer.cheqd2.walt-test.cloud/issuer-api/default",
+      "issuerUiUrl": "https://issuer.cheqd-prod.walt-test.cloud",
+      "issuerApiUrl": "https://issuer.cheqd-prod.walt-test.cloud/issuer-api/default",
       "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.cheqd2.walt-test.cloud",
+          "url": "https://wallet.cheqd-prod.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
@@ -20,12 +20,12 @@ data:
     }
   verifier-config.json: |
     {
-      "verifierUiUrl": "https://verifier.cheqd2.walt-test.cloud",
-      "verifierApiUrl": "https://verifier.cheqd2.walt-test.cloud/verifier-api/default",
+      "verifierUiUrl": "https://verifier.cheqd-prod.walt-test.cloud",
+      "verifierApiUrl": "https://verifier.cheqd-prod.walt-test.cloud/verifier-api/default",
       "wallets": {
         "waltid": {
           "id": "waltid",
-          "url": "https://wallet.cheqd2.walt-test.cloud",
+          "url": "https://wallet.cheqd-prod.walt-test.cloud",
           "presentPath": "api/siop/initiatePresentation/",
           "receivePath" : "api/siop/initiateIssuance/",
           "description": "walt.id web wallet"
@@ -35,12 +35,12 @@ data:
     }
   wallet-config.json: |
     {
-      "walletUiUrl": "https://wallet.cheqd2.walt-test.cloud",
-      "walletApiUrl": "https://wallet.cheqd2.walt-test.cloud/api",
+      "walletUiUrl": "https://wallet.cheqd-prod.walt-test.cloud",
+      "walletApiUrl": "https://wallet.cheqd-prod.walt-test.cloud/api",
       "issuers": {
         "waltid": {
           "id": "waltid",
-          "url": "https://issuer.cheqd2.walt-test.cloud/issuer-api/default/oidc",
+          "url": "https://issuer.cheqd-prod.walt-test.cloud/issuer-api/default/oidc",
           "description": "walt.id Issuer Portal"
         },
         "yes.com": {
@@ -50,7 +50,7 @@ data:
         },
         "onboarding@walt.id": {
           "id": "onboarding@walt.id",
-          "url": "https://issuer.cheqd2.walt-test.cloud/onboarding-api/oidc",
+          "url": "https://issuer.cheqd-prod.walt-test.cloud/onboarding-api/oidc",
           "description": "walt.id On-Boarding service"
         }
       }
@@ -142,16 +142,16 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     ingress.kubernetes.io/configuration-snippet: |
       if ($host ~ ^(.+)\.waltid\.org$) {
-        return 301 https://$1.cheqd2.walt-test.cloud$request_uri;
+        return 301 https://$1.cheqd-prod.walt-test.cloud$request_uri;
       }
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   tls:
     - hosts:
-        - wallet.cheqd2.walt-test.cloud
-      secretName: wallet-tls-secret
+        - wallet.cheqd-prod.walt-test.cloud
+      secretName: cheqd-prod-wallet-tls-secret
   rules:
-    - host: wallet.cheqd2.walt-test.cloud
+    - host: wallet.cheqd-prod.walt-test.cloud
       http:
         paths:
           - path: /issuer-api/.*/oidc/\.well-known/
@@ -186,7 +186,7 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     ingress.kubernetes.io/configuration-snippet: |
       if ($host ~ ^(.+)\.waltid\.org$) {
-        return 301 https://$1.cheqd2.walt-test.cloud$request_uri;
+        return 301 https://$1.cheqd-prod.walt-test.cloud$request_uri;
       }
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/auth-secret: cheqd-prod-basic-auth
@@ -194,10 +194,10 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet.cheqd2.walt-test.cloud
+        - wallet.cheqd-prod.walt-test.cloud
       secretName: wallet-tls-secret
   rules:
-    - host: wallet.cheqd2.walt-test.cloud
+    - host: wallet.cheqd-prod.walt-test.cloud
       http:
         paths:
           - path: /api/
@@ -246,15 +246,15 @@ spec:
 #    cert-manager.io/cluster-issuer: letsencrypt-prod
 #    ingress.kubernetes.io/configuration-snippet: |
 #      if ($host ~ ^(.+)\.waltid\.org$) {
-#        return 301 https://$1.cheqd2.walt-test.cloud$request_uri;
+#        return 301 https://$1.cheqd-prod.walt-test.cloud$request_uri;
 #      }
 #spec:
 #  tls:
 #    - hosts:
-#        - wallet.cheqd2.walt-test.cloud
+#        - wallet.cheqd-prod.walt-test.cloud
 #      secretName: wallet-tls-secret
 #  rules:
-#    - host: wallet.cheqd2.walt-test.cloud
+#    - host: wallet.cheqd-prod.walt-test.cloud
 #      http:
 #        paths:
 #          - path: /
