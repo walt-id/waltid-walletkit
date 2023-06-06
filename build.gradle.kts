@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2305121558.0")
+    implementation("id.walt:waltid-ssikit:1.2306061032.0")
 
     implementation("io.javalin:javalin-bundle:4.6.8")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")
@@ -30,7 +30,7 @@ dependencies {
 
     // CLI
     implementation("com.github.ajalt.clikt:clikt-jvm:3.5.2")
-    implementation("com.github.ajalt.clikt:clikt:3.5.1")
+    implementation("com.github.ajalt.clikt:clikt:3.5.2")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.3")
@@ -51,6 +51,9 @@ dependencies {
 
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
+
+    implementation("com.sksamuel.hoplite:hoplite-core:2.7.4")
+    implementation("com.sksamuel.hoplite:hoplite-hocon:2.7.4")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
