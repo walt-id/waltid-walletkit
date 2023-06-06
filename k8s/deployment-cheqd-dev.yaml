@@ -55,6 +55,10 @@ data:
         }
       }
     }
+  fsStore.conf: |
+    dataRoot: "./data"
+    maxKeySize = 100
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

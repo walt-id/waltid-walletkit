@@ -10,4 +10,5 @@ data class DidCreationRequest(
     @Json(serializeNull = false) val didWebDomain: String? = null,
     @Json(serializeNull = false) val didWebPath: String? = null,
     @Json(serializeNull = false) val didEbsiVersion: Int = 1,
+    @Json(serializeNull = false) val network: String? = "testnet",
 )

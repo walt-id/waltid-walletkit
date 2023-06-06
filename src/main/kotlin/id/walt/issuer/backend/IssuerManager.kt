@@ -160,6 +160,7 @@ object IssuerManager {
      */
     private val sessionAccessCounterCache = shortTimeBasedCache<String, HashMap<String, Int>>()
     fun fulfillIssuanceSession(session: IssuanceSession, credentialRequest: CredentialRequest): String? {
+        log.debug { "fulfillIssuanceSession for request: $credentialRequest" }
         val proof = credentialRequest.proof ?: throw BadRequestResponse("No proof given")
         val parsedJwt = SignedJWT.parse(proof.jwt)
         if (parsedJwt.header.keyID?.let { DidUrl.isDidUrl(it) } == false) throw BadRequestResponse("Proof is not DID signed")

@@ -1,11 +1,11 @@
 {
   "issuerUiUrl": "http://localhost:8000",
   "issuerApiUrl": "http://localhost:8080/issuer-api/default",
-  "credentialTypes": [ "VerifiableId", "EUDiploma" ],
+  "credentialTypes": [ "VerifiableId" ],
   "wallets": {
     "waltid": {
       "id": "waltid",
-      "url": "http://localhost:3000",
+      "url": "http://localhost:8000",
       "presentPath": "api/siop/initiatePresentation/",
       "receivePath" : "api/siop/initiateIssuance/",
       "description": "walt.id web wallet"

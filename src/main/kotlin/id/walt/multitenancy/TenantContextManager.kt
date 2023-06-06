@@ -1,6 +1,7 @@
 package id.walt.multitenancy
 
 import id.walt.WALTID_DATA_ROOT
+import id.walt.multitenancy.FileSystemStoreConfigCreator.makeFileSystemStoreConfig
 import id.walt.services.hkvstore.FileSystemHKVStore
 import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
@@ -57,7 +58,7 @@ object TenantContextManager {
         // TODO: create tenant context according to context configuration
         return contexts[tenantId.toString()] as? TenantContext<C, S> ?: TenantContext(
             tenantId = tenantId,
-            hkvStore = FileSystemHKVStore(FilesystemStoreConfig("$WALTID_DATA_ROOT/data/tenants/${tenantId.type}/${tenantId.id}")),
+            hkvStore = FileSystemHKVStore(makeFileSystemStoreConfig("tenants/${tenantId.type}/${tenantId.id}")),
             keyStore = HKVKeyStoreService(),
             vcStore = HKVVcStoreService(),
             state = createState()
