@@ -8,7 +8,7 @@ on:
       - synchronize
 
 jobs:
-  master:
+  main:
     name: Validate PR
     runs-on: ubuntu-latest
     steps:
