@@ -538,7 +538,7 @@ object WalletController {
         } catch (exc: Exception) {
             println("Error: ${exc.message}")
             exc.printStackTrace()
-            ctx.result("/IssuanceError/?reason=${URLEncoder.encode(exc.message, StandardCharsets.UTF_8)}")
+            ctx.result("/IssuanceError/?reason=${URLEncoder.encode(exc.message ?: "Error", StandardCharsets.UTF_8)}")
             exc.printStackTrace()
         }
     }
