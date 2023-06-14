@@ -118,8 +118,9 @@ object CredentialPresentationManager {
         val myCredentials = Custodian.getService().listCredentials()
         val selectedCredentialIds = selectedCredentials.map { cred -> cred.credentialId }.toSet()
         val selectedCredentials =
-            myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map { cred -> cred.encode() }
-                .toList()
+            myCredentials.filter { cred -> selectedCredentialIds.contains(cred.id) }.map {
+                    cred -> id.walt.credentials.w3c.PresentableCredential(cred)
+            }.toList()
         val vp = Custodian.getService().createPresentation(
             selectedCredentials,
             did,
