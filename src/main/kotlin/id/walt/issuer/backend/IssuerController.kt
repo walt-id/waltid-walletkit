@@ -375,7 +375,7 @@ object IssuerController {
         ctx.contentType(ContentType.JSON).result(
             KlaxonWithConverters().toJsonString(
                 CredentialResponse(
-                    if (credObj.jwt != null) "jwt_vc" else "ldp_vc",
+                    if (credObj.sdJwt != null) "jwt_vc" else "ldp_vc",
                     credential.toVerifiableCredential()
                 )
             )
