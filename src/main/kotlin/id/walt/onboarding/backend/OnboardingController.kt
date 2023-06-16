@@ -30,6 +30,7 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
 import java.net.URI
+import kotlin.js.ExperimentalJsExport
 
 data class GenerateDomainVerificationCodeRequest(val domain: String)
 data class CheckDomainVerificationCodeRequest(val domain: String)
@@ -224,10 +225,11 @@ object OnboardingController {
         }
     }
 
+    @OptIn(ExperimentalJsExport::class)
     fun userToken(ctx: Context) {
         val accessToken = ctx.header("Authorization")?.let { it.substringAfterLast("Bearer ") }
             ?: throw UnauthorizedResponse("No valid access token set on request")
-        val sessionId = if (JwtService.getService().verify(accessToken)) {
+        val sessionId = if (JwtService.getService().verify(accessToken).verified) {
             JwtService.getService().parseClaims(accessToken)!!["sub"].toString()
         } else {
             null
