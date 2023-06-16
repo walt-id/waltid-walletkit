@@ -18,6 +18,7 @@ import id.walt.rest.core.DidController
 import id.walt.rest.custodian.CustodianController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidEbsiCreateOptions
+import id.walt.services.did.DidKeyCreateOptions
 import id.walt.services.did.DidService
 import id.walt.services.did.DidWebCreateOptions
 import id.walt.services.ecosystems.essif.EssifClient
@@ -418,6 +419,16 @@ object WalletController {
                 ContextManager.runWith(DidWebRegistryController.didRegistryContext) {
                     DidService.storeDid(didDoc)
                 }
+
+                ctx.result(didStr)
+            }
+            DidMethod.key -> {
+                val didKeyId = keyId ?: KeyService.getService().generate(KeyAlgorithm.ECDSA_Secp256r1).id
+                val didStr = DidService.create(
+                    req.method,
+                    didKeyId,
+                    DidKeyCreateOptions(isJwk = req.isJwk ?: false)
+                )
 
                 ctx.result(didStr)
             }
