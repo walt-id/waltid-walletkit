@@ -21,8 +21,8 @@ repositories {
 
 dependencies {
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2306141011.0")
-    implementation("id.walt:waltid-sd-jwt-jvm:1.2306071206.0")
+    implementation("id.walt:waltid-ssikit:1.2306160944.0")
+    implementation("id.walt:waltid-sd-jwt-jvm:1.2306160840.0")
 
     implementation("io.javalin:javalin-bundle:4.6.8")
     implementation("com.github.kmehrunes:javalin-jwt:0.3")

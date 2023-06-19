@@ -30,6 +30,7 @@ import mu.KotlinLogging
 import java.net.URI
 import java.time.Instant
 import java.util.*
+import kotlin.js.ExperimentalJsExport
 
 const val URL_PATTERN = "^https?:\\/\\/(?!-.)[^\\s\\/\$.?#].[^\\s]*\$"
 fun isSchema(typeOrSchema: String): Boolean {
@@ -159,13 +160,14 @@ object IssuerManager {
      * For multipleCredentialsOfSameType in session.issuables
      */
     private val sessionAccessCounterCache = shortTimeBasedCache<String, HashMap<String, Int>>()
+    @OptIn(ExperimentalJsExport::class)
     fun fulfillIssuanceSession(session: IssuanceSession, credentialRequest: CredentialRequest): String? {
         log.debug { "fulfillIssuanceSession for request: $credentialRequest" }
         val proof = credentialRequest.proof ?: throw BadRequestResponse("No proof given")
         val parsedJwt = SignedJWT.parse(proof.jwt)
         if (parsedJwt.header.keyID?.let { DidUrl.isDidUrl(it) } == false) throw BadRequestResponse("Proof is not DID signed")
 
-        if (!JwtService.getService().verify(proof.jwt)) throw BadRequestResponse("Proof invalid")
+        if (!JwtService.getService().verify(proof.jwt).verified) throw BadRequestResponse("Proof invalid")
 
         val did = DidUrl.from(parsedJwt.header.keyID).did
         val now = Instant.now()
