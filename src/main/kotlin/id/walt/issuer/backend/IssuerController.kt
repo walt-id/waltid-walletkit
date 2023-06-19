@@ -222,7 +222,7 @@ object IssuerController {
                             .header<String>("Authorization")
                             .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .body<CredentialRequest>()
-                            .json<CredentialResponse>("200"),
+                            .json<String>("200"),
                         IssuerController::credential
                     ))
                 }
