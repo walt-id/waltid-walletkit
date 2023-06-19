@@ -214,7 +214,7 @@ object WalletController {
                                 .operationId("issuanceSessionInfo")
                         }
                             .queryParam<String>("sessionId")
-                            .json<CredentialIssuanceSession>("200"),
+                            .json<String>("200"),
                         WalletController::getIssuanceSessionInfo
                     ), UserRole.AUTHORIZED)
                     post("startIssuerInitiatedIssuance", documented(
