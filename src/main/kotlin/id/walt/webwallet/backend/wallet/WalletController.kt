@@ -427,9 +427,8 @@ object WalletController {
                 val didStr = DidService.create(
                     req.method,
                     didKeyId,
-                    DidKeyCreateOptions(isJwk = req.isJwk ?: false)
+                    DidKeyCreateOptions(useJwkJcsPub = req.useJwkJcsPub ?: false)
                 )
-
                 ctx.result(didStr)
             }
 
