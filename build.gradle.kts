@@ -55,6 +55,7 @@ dependencies {
 
     implementation("com.sksamuel.hoplite:hoplite-core:2.7.4")
     implementation("com.sksamuel.hoplite:hoplite-hocon:2.7.4")
+    implementation("io.ktor:ktor-client-logging-jvm:2.2.4")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
