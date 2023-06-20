@@ -1,18 +1,18 @@
 package id.walt.multitenancy
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
-import com.sksamuel.hoplite.addResourceSource
+import com.sksamuel.hoplite.addFileSource
 import id.walt.WALTID_DATA_ROOT
 import id.walt.services.hkvstore.FilesystemStoreConfig
 import mu.KotlinLogging
 
 object FileSystemStoreConfigCreator {
 
-    private val log = KotlinLogging.logger {  }
+    private val log = KotlinLogging.logger { }
 
     private val maxKeySize by lazy {
         val config = ConfigLoaderBuilder.default()
-            .addResourceSource("config/fsStore.conf")
+            .addFileSource("config/fsStore.conf")
             .build()
             .loadConfig<FilesystemStoreConfig>()
 
