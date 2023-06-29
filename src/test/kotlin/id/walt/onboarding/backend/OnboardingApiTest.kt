@@ -24,7 +24,7 @@ class OnboardingApiTests : BaseApiTest() {
 
     @Test()
     fun testGenerateDomainVerificationCode() = runBlocking {
-        val userInfo = authenticateDid()
+        val userInfo = authenticate(didBody)
         val code = client.post("$url/onboarding-api/domain/generateDomainVerificationCode"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
@@ -38,7 +38,7 @@ class OnboardingApiTests : BaseApiTest() {
 
     @Test()
     fun testCheckDomainVerificationCodeSuccess() = runBlocking {
-        val userInfo = authenticateDid()
+        val userInfo = authenticate(didBody)
         val result = client.post("$url/onboarding-api/domain/checkDomainVerificationCode"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
@@ -50,7 +50,7 @@ class OnboardingApiTests : BaseApiTest() {
 
     @Test()
     fun testCheckDomainVerificationCodeFail() = runBlocking {
-        val userInfo = authenticateDid()
+        val userInfo = authenticate(didBody)
         val result = client.post("$url/onboarding-api/domain/checkDomainVerificationCode"){
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))

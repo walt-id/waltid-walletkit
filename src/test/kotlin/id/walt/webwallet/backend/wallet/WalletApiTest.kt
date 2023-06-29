@@ -7,6 +7,7 @@ import id.walt.services.key.KeyFormat
 import id.walt.services.key.KeyService
 import id.walt.services.keystore.KeyType
 import id.walt.webwallet.backend.auth.AuthController
+import id.walt.webwallet.backend.auth.UserInfo
 import io.javalin.apibuilder.ApiBuilder.path
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.data.blocking.forAll
@@ -14,6 +15,7 @@ import io.kotest.data.row
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldHaveMinLength
 import io.kotest.matchers.string.shouldStartWith
+import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -51,7 +53,7 @@ class WalletApiTest : BaseApiTest() {
 
     // TODO: analyze potential walt-context issue @Test()
     fun testDidWebCreate() = runBlocking {
-        val userInfo = authenticateDid()
+        val userInfo = authenticate(didBody)
         val did = client.post("$url/api/wallet/did/create") {
             header("Authorization", "Bearer ${userInfo.token}")
             accept(ContentType("plain", "text"))
@@ -117,6 +119,24 @@ class WalletApiTest : BaseApiTest() {
             }
             println(response)
             response shouldBe keyStr
+        }
+    }
+
+    @Test
+    fun testPropertySelectionOnAuthenticate(){
+        forAll(
+            row(emailBody, UserInfo(id = emailBody["id"]!!).also { it.email = emailBody["email"] }),
+            row(didBody, UserInfo(id = didBody["id"]!!).also { it.did = didBody["did"] }),
+            row(mapOf("id" to "eth##123"), UserInfo(id = "123").also { it.ethAccount = "123" }),
+            row(mapOf("id" to "tz123"), UserInfo(id = "tz123").also { it.tezosAccount = "tz123" }),
+            row(mapOf("id" to "pol##123"), UserInfo(id = "123").also { it.polkadotAccount = "123" }),
+            row(mapOf("id" to "polevm##123"), UserInfo(id = "123").also { it.polkadotEvmAccount = "123" }),
+            row(mapOf("id" to "flow##123"), UserInfo(id = "123").also { it.flowAccount = "123" }),
+            row(mapOf("id" to "near##did.near"), UserInfo(id = "did.near").also { it.nearAccount = "did.near" }),
+//            row(mapOf("id" to "did.near"), UserInfo(id = "did.near").also { it.nearAccount = "did.near" }),
+        ){ body, expected ->
+            val userInfo = authenticate(body)
+            userInfo shouldBe expected
         }
     }
 }
