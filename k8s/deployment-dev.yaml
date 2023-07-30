@@ -136,42 +136,6 @@ spec:
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: web-wallet
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: web-wallet
-  template:
-    metadata:
-      labels:
-        app: web-wallet
-      annotations:
-        deployment/id: "_DEFAULT_DEPLOYMENT_"
-    spec:
-      containers:
-        - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:latest
-          ports:
-            - containerPort: 80
-              name: http-api
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: web-wallet
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: http-api
-      protocol: TCP
-  selector:
-    app: web-wallet
----
-kind: Deployment
-apiVersion: apps/v1
-metadata:
   name: verifier-portal
 spec:
   replicas: 1
@@ -244,7 +208,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: walletkit
+  name: walletkit-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: letsencrypt-prod
@@ -255,69 +219,20 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet.walt-test.cloud
+        - walletkit.walt-test.cloud
         - verifier.walt-test.cloud
         - issuer.walt-test.cloud
         - verifier.howest.walt-test.cloud
-      secretName: wallet-tls-secret
+      secretName: walletkit-tls-secret
   rules:
-    - host: wallet.walt-test.cloud
+    - host: walletkit.walt-test.cloud
       http:
         paths:
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /verifier-api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /issuer-api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /onboarding-api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /quick-setup/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /webjars
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /v2/nftkit/nft/
-            pathType: Prefix
-            backend:
-              service:
-                name: nftkit
-                port:
-                  number: 80
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: web-wallet
+                name: walletkit
                 port:
                   number: 80
     - host: verifier.walt-test.cloud
