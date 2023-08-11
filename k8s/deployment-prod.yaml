@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: wallet-config
+  name: walletkit-config
 data:
   issuer-config.json: |
     {
@@ -53,7 +53,7 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: wallet-data-volume-claim
+  name: walletkit-data-volume-claim
   namespace: default
 spec:
   accessModes:
@@ -82,14 +82,14 @@ spec:
         - name: walletkit
           image: waltid/walletkit:latest
           volumeMounts:
-            - name: wallet-config
+            - name: walletkit-config
               mountPath: "/waltid/wallet/config/"
               readOnly: true
             - name: issuers-secret
               mountPath: "/waltid/wallet/secrets"
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
-              name: wallet-data
+              name: walletkit-data
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
@@ -101,15 +101,15 @@ spec:
             - containerPort: 8080
               name: http-api
       volumes:
-        - name: wallet-config
+        - name: walletkit-config
           configMap:
-            name: wallet-config
+            name: walletkit-config
         - name: issuers-secret
           secret:
             secretName: issuers-secret
-        - name: wallet-data
+        - name: walletkit-data
           persistentVolumeClaim:
-            claimName: wallet-data-volume-claim
+            claimName: walletkit-data-volume-claim
 ---
 kind: Service
 apiVersion: v1
