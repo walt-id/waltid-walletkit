@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.7.10"
-    kotlin("plugin.serialization") version "1.6.10"
+    kotlin("jvm") version "1.9.10"
+    kotlin("plugin.serialization") version "1.9.10"
     application
     `maven-publish`
 }
@@ -22,27 +22,29 @@ repositories {
 dependencies {
     implementation("io.javalin:javalin-bundle:4.6.8")
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2308021811.0")
+    implementation("id.walt:waltid-ssikit:1.2308302143.0")
     implementation("id.walt:waltid-sd-jwt-jvm:1.2306160840.0")
 
     implementation("io.javalin:javalin-bundle:4.6.8")
-    implementation("com.github.kmehrunes:javalin-jwt:0.3")
+    implementation("com.github.kmehrunes:javalin-jwt:0.6")
     implementation("com.beust:klaxon:5.6")
-    implementation("com.nimbusds:oauth2-oidc-sdk:10.7")
+    implementation("com.nimbusds:oauth2-oidc-sdk:10.11")
 
     // CLI
-    implementation("com.github.ajalt.clikt:clikt-jvm:3.5.2")
-    implementation("com.github.ajalt.clikt:clikt:3.5.2")
+    implementation("com.github.ajalt.clikt:clikt-jvm:4.2.0")
+    implementation("com.github.ajalt.clikt:clikt:4.2.0")
 
     // Service-Matrix
     implementation("id.walt.servicematrix:WaltID-ServiceMatrix:1.1.3")
 
     // Logging
     //implementation("org.slf4j:slf4j-api:2.0.5")
-    implementation("org.slf4j:slf4j-simple:2.0.5")
+    implementation("org.slf4j:slf4j-simple:2.0.7")
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
     // Ktor
+
+    // HTTP
     implementation("io.ktor:ktor-client-jackson:2.3.3")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.3")
@@ -54,27 +56,30 @@ dependencies {
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
 
-    implementation("com.sksamuel.hoplite:hoplite-core:2.7.4")
-    implementation("com.sksamuel.hoplite:hoplite-hocon:2.7.4")
+    implementation("com.sksamuel.hoplite:hoplite-core:2.7.5")
+    implementation("com.sksamuel.hoplite:hoplite-hocon:2.7.5")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
-    testImplementation("io.mockk:mockk:1.13.4")
+    testImplementation("io.mockk:mockk:1.13.7")
 
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
-    testImplementation("io.kotest:kotest-assertions-core:5.5.5")
-    testImplementation("io.kotest:kotest-assertions-json:5.5.5")
+    testImplementation("io.kotest:kotest-runner-junit5:5.6.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.6.2")
+    testImplementation("io.kotest:kotest-assertions-json:5.6.2")
 
-    // HTTP
-    implementation("io.ktor:ktor-client-core-jvm:2.3.3")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
-    implementation("io.ktor:ktor-client-cio-jvm:2.3.3")
-    implementation("io.ktor:ktor-client-logging-jvm:2.3.3")
     implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "16"
+    kotlinOptions.jvmTarget = "17"
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "17"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "17"
 }
 
 java {
@@ -118,11 +123,4 @@ publishing {
         }
     }
 }
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "16"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "16"
-}
+
