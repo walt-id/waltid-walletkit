@@ -10,7 +10,7 @@ COPY gradlew .
 RUN dos2unix ./gradlew
 
 # --- build-env
-FROM docker.io/gradle:7.6-jdk as build-env
+FROM docker.io/gradle:8-jdk as build-env
 
 ARG SKIP_TESTS
 
