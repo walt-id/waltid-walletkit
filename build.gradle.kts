@@ -20,8 +20,9 @@ repositories {
 }
 
 dependencies {
+    implementation("io.javalin:javalin-bundle:4.6.8")
     // SSIKIT
-    implementation("id.walt:waltid-ssikit:1.2306201406.0")
+    implementation("id.walt:waltid-ssikit:1.2308021811.0")
     implementation("id.walt:waltid-sd-jwt-jvm:1.2306160840.0")
 
     implementation("io.javalin:javalin-bundle:4.6.8")

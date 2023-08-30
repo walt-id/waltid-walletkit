@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: wallet-config
+  name: walletkit-config
 data:
   issuer-config.json: |
     {
@@ -53,7 +53,7 @@ data:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: wallet-data-volume-claim
+  name: walletkit-data-volume-claim
   namespace: default
 spec:
   accessModes:
@@ -82,14 +82,14 @@ spec:
         - name: walletkit
           image: waltid/walletkit:latest
           volumeMounts:
-            - name: wallet-config
+            - name: walletkit-config
               mountPath: "/waltid/wallet/config/"
               readOnly: true
             - name: issuers-secret
               mountPath: "/waltid/wallet/secrets"
               readOnly: true
             - mountPath: "/waltid/wallet/data/"
-              name: wallet-data
+              name: walletkit-data
           env:
             - name: WALTID_DATA_ROOT
               value: "/waltid/wallet"
@@ -101,15 +101,15 @@ spec:
             - containerPort: 8080
               name: http-api
       volumes:
-        - name: wallet-config
+        - name: walletkit-config
           configMap:
-            name: wallet-config
+            name: walletkit-config
         - name: issuers-secret
           secret:
             secretName: issuers-secret
-        - name: wallet-data
+        - name: walletkit-data
           persistentVolumeClaim:
-            claimName: wallet-data-volume-claim
+            claimName: walletkit-data-volume-claim
 ---
 kind: Service
 apiVersion: v1
@@ -123,42 +123,6 @@ spec:
       protocol: TCP
   selector:
     app: walletkit
----
-kind: Deployment
-apiVersion: apps/v1
-metadata:
-  name: web-wallet
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: web-wallet
-  template:
-    metadata:
-      labels:
-        app: web-wallet
-      annotations:
-        deployment/id: "_DEFAULT_DEPLOYMENT_"
-    spec:
-      containers:
-        - name: ssikit-web-wallet
-          image: waltid/ssikit-web-wallet:latest
-          ports:
-            - containerPort: 80
-              name: http-api
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: web-wallet
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: http-api
-      protocol: TCP
-  selector:
-    app: web-wallet
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -242,61 +206,19 @@ metadata:
 spec:
   tls:
     - hosts:
-        - wallet.walt.id
+        - walletkit.walt.id
         - verifier.walt.id
         - issuer.walt.id
-      secretName: wallet-tls-secret
+      secretName: walletkit-tls-secret
   rules:
-    - host: wallet.walt.id
+    - host: walletkit.walt.id
       http:
         paths:
-          - path: /api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /verifier-api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /issuer-api/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /quick-setup/
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /webjars
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-          - path: /v2/nftkit/nft/
-            pathType: Prefix
-            backend:
-              service:
-                name: nftkit
-                port:
-                  number: 80
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: web-wallet
+                name: walletkit
                 port:
                   number: 80
     - host: verifier.walt.id
