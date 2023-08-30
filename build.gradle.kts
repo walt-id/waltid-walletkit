@@ -129,3 +129,9 @@ tasks.withType<Jar> {
 tasks.withType<Copy> {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+tasks.withType<Tar>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+tasks.withType<Zip>().configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
