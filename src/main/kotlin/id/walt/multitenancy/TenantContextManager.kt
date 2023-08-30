@@ -3,10 +3,12 @@ package id.walt.multitenancy
 import id.walt.WALTID_DATA_ROOT
 import id.walt.multitenancy.FileSystemStoreConfigCreator.makeFileSystemStoreConfig
 import id.walt.services.hkvstore.FileSystemHKVStore
-import id.walt.services.hkvstore.FilesystemStoreConfig
 import id.walt.services.keystore.HKVKeyStoreService
 import id.walt.services.vcstore.HKVVcStoreService
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.notExists
 
 object TenantContextManager {
     private val contexts: MutableMap<String, TenantContext<*, *>> = mutableMapOf()

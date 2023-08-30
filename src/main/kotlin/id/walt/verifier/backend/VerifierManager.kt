@@ -7,7 +7,9 @@ import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
 import com.nimbusds.oauth2.sdk.id.State
 import com.nimbusds.openid.connect.sdk.Nonce
-import id.walt.auditor.*
+import id.walt.auditor.Auditor
+import id.walt.auditor.PolicyRegistry
+import id.walt.auditor.VerificationPolicy
 import id.walt.auditor.policies.ChallengePolicy
 import id.walt.auditor.policies.PresentationDefinitionPolicy
 import id.walt.auditor.policies.SignaturePolicy

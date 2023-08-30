@@ -43,20 +43,19 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
     // Ktor
-    implementation("io.ktor:ktor-client-jackson:2.2.4")
-    implementation("io.ktor:ktor-client-content-negotiation:2.2.4")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.2.4")
-    implementation("io.ktor:ktor-client-core:2.2.4")
-    implementation("io.ktor:ktor-client-cio:2.2.4")
-    implementation("io.ktor:ktor-client-logging:2.2.4")
-    implementation("io.ktor:ktor-client-auth:2.2.4")
+    implementation("io.ktor:ktor-client-jackson:2.3.3")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.3")
+    implementation("io.ktor:ktor-client-core:2.3.3")
+    implementation("io.ktor:ktor-client-cio:2.3.3")
+    implementation("io.ktor:ktor-client-logging-jvm:2.3.3")
+    implementation("io.ktor:ktor-client-auth:2.3.3")
 
     // Cache
     implementation("io.github.pavleprica:kotlin-cache:1.2.0")
 
     implementation("com.sksamuel.hoplite:hoplite-core:2.7.4")
     implementation("com.sksamuel.hoplite:hoplite-hocon:2.7.4")
-    implementation("io.ktor:ktor-client-logging-jvm:2.2.4")
 
     // Testing
     //testImplementation(kotlin("test-junit"))
@@ -67,10 +66,10 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-json:5.5.5")
 
     // HTTP
-    implementation("io.ktor:ktor-client-core:2.2.4")
-    implementation("io.ktor:ktor-client-content-negotiation:2.2.4")
-    implementation("io.ktor:ktor-client-cio:2.2.4")
-    implementation("io.ktor:ktor-client-logging:2.2.4")
+    implementation("io.ktor:ktor-client-core-jvm:2.3.3")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
+    implementation("io.ktor:ktor-client-cio-jvm:2.3.3")
+    implementation("io.ktor:ktor-client-logging-jvm:2.3.3")
     implementation(kotlin("stdlib-jdk8"))
 }
 
