@@ -26,7 +26,7 @@ dependencies {
     implementation("id.walt:waltid-sd-jwt-jvm:1.2306160840.0")
 
     implementation("io.javalin:javalin-bundle:4.6.8")
-    implementation("com.github.kmehrunes:javalin-jwt:0.6")
+    implementation("com.github.kmehrunes:javalin-jwt:0.5")
     implementation("com.beust:klaxon:5.6")
     implementation("com.nimbusds:oauth2-oidc-sdk:10.11")
 
