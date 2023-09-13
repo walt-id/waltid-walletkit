@@ -250,7 +250,7 @@ object IssuerController {
         if (sessionId == null)
             ctx.json(IssuerManager.listIssuableCredentials())
         else
-            ctx.json(IssuerManager.getIssuanceSession(sessionId)?.issuables ?: Issuables(credentials = listOf()))
+            ctx.json(IssuerManager.getSession(sessionId)?.credentialOffer?.credentials ?: Issuables(credentials = listOf()))
     }
 
     fun requestIssuance(ctx: Context) {

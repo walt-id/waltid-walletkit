@@ -30,6 +30,8 @@ dependencies {
     implementation("com.beust:klaxon:5.6")
     implementation("com.nimbusds:oauth2-oidc-sdk:10.11")
 
+    implementation("id.walt:waltid-openid4vc:1.2309111544.0")
+
     // CLI
     implementation("com.github.ajalt.clikt:clikt-jvm:4.2.0")
     implementation("com.github.ajalt.clikt:clikt:4.2.0")

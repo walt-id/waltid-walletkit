@@ -3,7 +3,7 @@ package id.walt.issuer.backend
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import id.walt.model.oidc.CredentialAuthorizationDetails
 
-data class IssuanceSession(
+data class IssuanceSession_(
     val id: String,
     val credentialDetails: List<CredentialAuthorizationDetails>,
     val nonce: String,

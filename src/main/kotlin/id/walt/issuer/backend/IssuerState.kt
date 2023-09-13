@@ -4,6 +4,7 @@ import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.google.common.cache.CacheBuilder
 import id.walt.multitenancy.TenantState
+import id.walt.oid4vc.providers.IssuanceSession
 import javalinjwt.JWTProvider
 import java.time.Duration
 import java.util.*
@@ -21,7 +22,7 @@ class IssuerState : TenantState<IssuerConfig> {
     val authCodeProvider = JWTProvider(
         algorithm,
         { session: IssuanceSession, alg: Algorithm? ->
-            JWT.create().withSubject(session.id).withClaim("pre-authorized", session.isPreAuthorized).sign(alg)
+            JWT.create().withSubject(session.id).withClaim("pre-authorized", session.preAuthUserPin != null).sign(alg)
         },
         JWT.require(algorithm).build()
     )
