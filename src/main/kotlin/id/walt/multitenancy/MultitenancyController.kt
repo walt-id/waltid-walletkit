@@ -21,7 +21,7 @@ object MultitenancyController {
                         it.summary("List multitenancy *LOADED* tenants. If no tenants are loaded (e.g. right after a restart) this method will indeed return an empty list.")
                             .addTagsItem("Multitenancy")
                             .operationId("listLoadedTenants")
-                    }.json<List<TenantId>>("200"),
+                    }.jsonArray<TenantId>("200"),
                     MultitenancyController::listLoadedTenants
                 )
             )
@@ -36,7 +36,7 @@ object MultitenancyController {
                         )
                             .addTagsItem("Multitenancy")
                             .operationId("listAllTenantIdsByType")
-                    }.json<List<String>>("200"),
+                    }.jsonArray<String>("200"),
                     MultitenancyController::listAllTenantIdsByType
                 )
             )
