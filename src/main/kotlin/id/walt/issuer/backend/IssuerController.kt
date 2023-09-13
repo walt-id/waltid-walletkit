@@ -15,6 +15,7 @@ import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
 import id.walt.rest.core.DidController
 import id.walt.rest.core.KeyController
+import id.walt.rest.core.VcController
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.signatory.rest.SignatoryController
 import id.walt.verifier.backend.WalletConfiguration
@@ -60,8 +61,11 @@ object IssuerController {
                     fun OpenApiDocumentation.describeTenantId() =
                         this.run { pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) } }
 
-                    path("did") {
-                        post("create", documented(DidController.createDocs().describeTenantId(), DidController::create))
+                    path("did") {                                                
+                        get("", documented(DidController.listDocs(), DidController::list))
+                        get("{id}", documented(DidController.loadDocs(), DidController::load))
+                        delete("{id}", documented(DidController.deleteDocs(), DidController::delete))
+                        post("create", documented(DidController.createDocs(), DidController::create))
                         post("createAdvanced",
                             documented(document().operation {
                                 it.summary("Create new DID")
@@ -74,18 +78,27 @@ object IssuerController {
                                 WalletController::createDid
                             )
                         )
-                        post("import", documented(DidController.importDocs().describeTenantId(), DidController::import))
-                        get("list", documented(DidController.listDocs().describeTenantId(), DidController::list))
-                        post("delete", documented(DidController.deleteDocs().describeTenantId(), DidController::delete))
+                        post("resolve", documented(DidController.resolveDocs(), DidController::resolve))
+                        post("import", documented(DidController.importDocs(), DidController::import))         
                     }
 
                     path("key") {
-                        post("gen", documented(KeyController.genDocs().describeTenantId(), KeyController::gen))
-                        post("import", documented(KeyController.importDocs().describeTenantId(), KeyController::import))
-                        post("export", documented(KeyController.exportDocs().describeTenantId(), KeyController::export))
-                        delete("delete", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
-                        get("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
-                        post("load", documented(KeyController.loadDocs().describeTenantId(), KeyController::load))
+                        get("", documented(KeyController.listDocs(), KeyController::list))
+                        get("{id}", documented(KeyController.loadDocs(), KeyController::load))
+                        delete("{id}", documented(KeyController.deleteDocs(), KeyController::delete))
+                        post("gen", documented(KeyController.genDocs(), KeyController::gen))
+                        post("import", documented(KeyController.importDocs(), KeyController::import))
+                        post("export", documented(KeyController.exportDocs(), KeyController::export))
+                    }
+
+                    path("vc") {
+                        get("", documented(VcController.listDocs(), VcController::list))
+                        get("{id}", documented(VcController.loadDocs(), VcController::load))
+                        delete("{id}", documented(VcController.deleteDocs(), VcController::delete))
+                        post("create", documented(VcController.createDocs(), VcController::create))
+                        post("present", documented(VcController.presentDocs(), VcController::present))
+                        post("verify", documented(VcController.verifyDocs(), VcController::verify))
+                        post("import", documented(VcController.importDocs(), VcController::import))
                     }
 
                     post("setConfiguration", documented(document().operation {
