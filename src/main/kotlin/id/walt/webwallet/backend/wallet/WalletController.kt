@@ -162,6 +162,7 @@ object WalletController {
                                 .addTagsItem("Wallet / Presentation")
                         }
                             .queryParam<String>("sessionId")
+                            // TODO will generate a list without any type
                             .body<List<PresentableCredential>>()
                             .json<PresentationResponse>("200"),
                         WalletController::fulfillPresentation
