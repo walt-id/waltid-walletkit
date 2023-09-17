@@ -1,5 +1,6 @@
 package id.walt.verifier.backend
 
+import com.beust.klaxon.JsonObject
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.ResponseMode
@@ -235,7 +236,7 @@ object VerifierController {
                         }
                             .pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) }
                             .queryParam<String>("access_token")
-                            .json<Map<String, Any>>("200"),
+                            .json<JsonObject>("200"),
                         VerifierController::completeAuthentication
                     ))
                 }
