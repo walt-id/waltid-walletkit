@@ -62,10 +62,10 @@ object IssuerController {
                         this.run { pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) } }
 
                     path("did") {                                                
-                        get("", documented(DidController.listDocs(), DidController::list))
-                        get("{id}", documented(DidController.loadDocs(), DidController::load))
-                        delete("{id}", documented(DidController.deleteDocs(), DidController::delete))
-                        post("create", documented(DidController.createDocs(), DidController::create))
+                        get("list", documented(DidController.listDocs().describeTenantId(), DidController::list))
+                        get("{id}", documented(DidController.loadDocs().describeTenantId(), DidController::load))
+                        delete("{id}", documented(DidController.deleteDocs().describeTenantId(), DidController::delete))
+                        post("create", documented(DidController.createDocs().describeTenantId(), DidController::create))
                         post("createAdvanced",
                             documented(document().operation {
                                 it.summary("Create new DID")
@@ -78,27 +78,17 @@ object IssuerController {
                                 WalletController::createDid
                             )
                         )
-                        post("resolve", documented(DidController.resolveDocs(), DidController::resolve))
-                        post("import", documented(DidController.importDocs(), DidController::import))         
+                        post("resolve", documented(DidController.resolveDocs().describeTenantId(), DidController::resolve))
+                        post("import", documented(DidController.importDocs().describeTenantId(), DidController::import))
                     }
 
                     path("key") {
-                        get("", documented(KeyController.listDocs(), KeyController::list))
-                        get("{id}", documented(KeyController.loadDocs(), KeyController::load))
-                        delete("{id}", documented(KeyController.deleteDocs(), KeyController::delete))
-                        post("gen", documented(KeyController.genDocs(), KeyController::gen))
-                        post("import", documented(KeyController.importDocs(), KeyController::import))
-                        post("export", documented(KeyController.exportDocs(), KeyController::export))
-                    }
-
-                    path("vc") {
-                        get("", documented(VcController.listDocs(), VcController::list))
-                        get("{id}", documented(VcController.loadDocs(), VcController::load))
-                        delete("{id}", documented(VcController.deleteDocs(), VcController::delete))
-                        post("create", documented(VcController.createDocs(), VcController::create))
-                        post("present", documented(VcController.presentDocs(), VcController::present))
-                        post("verify", documented(VcController.verifyDocs(), VcController::verify))
-                        post("import", documented(VcController.importDocs(), VcController::import))
+                        get("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
+                        get("{id}", documented(KeyController.loadDocs().describeTenantId(), KeyController::load))
+                        delete("{id}", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
+                        post("gen", documented(KeyController.genDocs().describeTenantId(), KeyController::gen))
+                        post("import", documented(KeyController.importDocs().describeTenantId(), KeyController::import))
+                        post("export", documented(KeyController.exportDocs().describeTenantId(), KeyController::export))
                     }
 
                     post("setConfiguration", documented(document().operation {
