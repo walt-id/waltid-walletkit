@@ -2,6 +2,7 @@ package id.walt.onboarding.backend
 
 import com.beust.klaxon.Klaxon
 import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.oauth2.sdk.AuthorizationRequest
 import com.nimbusds.oauth2.sdk.id.Issuer
 import com.nimbusds.openid.connect.sdk.SubjectType
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
@@ -19,6 +20,7 @@ import id.walt.model.dif.CredentialManifest
 import id.walt.model.dif.OutputDescriptor
 import id.walt.model.dif.PresentationDefinition
 import id.walt.multitenancy.TenantId
+import id.walt.oid4vc.data.ResponseMode
 import id.walt.services.jwt.JwtService
 import id.walt.services.oidc.OIDCUtils
 import id.walt.webwallet.backend.auth.JWTService
@@ -29,6 +31,8 @@ import io.javalin.apibuilder.ApiBuilder.*
 import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.net.URI
 import kotlin.js.ExperimentalJsExport
 
@@ -179,11 +183,11 @@ object OnboardingController {
         try {
             val parURI = ctx.queryParam("request_uri") ?: throw BadRequestResponse("no request_uri specified")
             val sessionID = parURI.substringAfterLast("urn:ietf:params:oauth:request_uri:")
-            val session = IssuerManager.getIssuanceSession(sessionID)
+            val session = IssuerManager.getSession(sessionID)
                 ?: throw BadRequestResponse("No session found for given sessionId, or session expired")
-            val authRequest = session.authRequest ?: throw BadRequestResponse("No authorization request found for this session")
+            val authRequest = session.authorizationRequest ?: throw BadRequestResponse("No authorization request found for this session")
             // TODO: verify VP from auth request claims
-            val vcclaims = OIDCUtils.getVCClaims(authRequest)
+            val vcclaims = OIDCUtils.getVCClaims(AuthorizationRequest.parse(authRequest.toHttpQueryString()))
             val credClaim =
                 vcclaims.credentials?.filter { cred -> cred.type == PARICIPANT_CREDENTIAL_SCHEMA_ID }?.firstOrNull()
                     ?: throw BadRequestResponse("No participant credential claim found in authorization request")
@@ -205,8 +209,9 @@ object OnboardingController {
 
             if (subject?.let { DidUrl.from(it).method } != DidMethod.web.name) throw BadRequestResponse("did:web is required for onboarding!")
 
-            session.did = subject
-            IssuerManager.updateIssuanceSession(session, session.issuables)
+            val params = session.customParameters?.toMutableMap() ?: mutableMapOf()
+            params["did"] = subject
+            IssuerManager.putSession(sessionID, session.copy(sessionID, customParameters = params.toMap()))
 
             val access_token = JwtService.getService()
                 .sign(IssuerManager.defaultDid, JWTClaimsSet.Builder().subject(session.id).build().toString())
@@ -234,9 +239,9 @@ object OnboardingController {
         } else {
             null
         }
-        val session = sessionId?.let { IssuerManager.getIssuanceSession(it) }
+        val session = sessionId?.let { IssuerManager.getSession(it) }
             ?: throw UnauthorizedResponse("Invalid access token or session expired")
-        val did = session.did ?: throw ForbiddenResponse("No DID specified on current session")
+        val did = session.customParameters?.get("did")?.toString() ?: throw ForbiddenResponse("No DID specified on current session")
 
         val userInfo = UserInfo(did)
         ctx.json(userInfo.apply { token = JWTService.toJWT(userInfo) })
@@ -247,10 +252,10 @@ object OnboardingController {
         if (userInfo.did?.let { DidUrl.from(it).method } != DidMethod.web.name) {
             throw BadRequestResponse("User is not did:web-authorized")
         }
-        val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
+        val session = ctx.queryParam("sessionId")?.let { IssuerManager.getSession(it) }
             ?: throw BadRequestResponse("Session expired or not found")
-        val authRequest = session.authRequest ?: throw BadRequestResponse("No authorization request found for this session")
-        if (userInfo.did != session.did) {
+        val authRequest = session.authorizationRequest ?: throw BadRequestResponse("No authorization request found for this session")
+        if (userInfo.did != session.customParameters?.get("did")) {
             throw BadRequestResponse("Session DID not matching authorized DID")
         }
         // Use the following if we should rely on the domain used in the did:web
@@ -260,21 +265,14 @@ object OnboardingController {
             credentials = listOf(
                 IssuableCredential(
                     type = "ParticipantCredential",
-                    credentialData = mapOf(
-                        "credentialSubject" to mapOf(
-                            "domain" to domain
-                        )
-                    )
+                    credentialData = buildJsonObject {
+                        put("credentialSubject", buildJsonObject {
+                            put("domain", domain)
+                        })
+                    }
                 )
             )
         )
-        ctx.result(
-            "${authRequest.redirectionURI}?code=${
-                IssuerManager.updateIssuanceSession(
-                    session,
-                    selectedIssuables
-                )
-            }&state=${authRequest.state.value}"
-        )
+        ctx.result(IssuerManager.processCodeFlowAuthorization(authRequest).toRedirectUri(authRequest.redirectUri ?: "", ResponseMode.query))
     }
 }

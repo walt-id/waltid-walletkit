@@ -1,25 +1,23 @@
 package id.walt.issuer.backend
 
-import com.nimbusds.oauth2.sdk.*
-import com.nimbusds.oauth2.sdk.http.ServletUtils
-import com.nimbusds.oauth2.sdk.token.BearerAccessToken
-import com.nimbusds.oauth2.sdk.token.RefreshToken
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata
-import com.nimbusds.openid.connect.sdk.token.OIDCTokens
-import id.walt.common.KlaxonWithConverters
-import id.walt.credentials.w3c.toVerifiableCredential
-import id.walt.model.oidc.CredentialRequest
-import id.walt.model.oidc.CredentialResponse
 import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
+import id.walt.oid4vc.data.CredentialOffer
+import id.walt.oid4vc.data.OfferedCredential
+import id.walt.oid4vc.data.ResponseMode
+import id.walt.oid4vc.errors.CredentialError
+import id.walt.oid4vc.errors.TokenError
+import id.walt.oid4vc.requests.AuthorizationRequest
+import id.walt.oid4vc.requests.CredentialOfferRequest
+import id.walt.oid4vc.requests.CredentialRequest
+import id.walt.oid4vc.requests.TokenRequest
+import id.walt.oid4vc.responses.PushedAuthorizationResponse
 import id.walt.rest.core.DidController
 import id.walt.rest.core.KeyController
-import id.walt.services.oidc.OIDC4CIService
 import id.walt.signatory.rest.SignatoryController
 import id.walt.verifier.backend.WalletConfiguration
-import id.walt.webwallet.backend.auth.JWTService
-import id.walt.webwallet.backend.auth.UserInfo
 import id.walt.webwallet.backend.context.WalletContextManager
 import id.walt.webwallet.backend.wallet.DidCreationRequest
 import id.walt.webwallet.backend.wallet.WalletController
@@ -28,8 +26,8 @@ import io.javalin.http.*
 import io.javalin.plugin.openapi.dsl.OpenApiDocumentation
 import io.javalin.plugin.openapi.dsl.document
 import io.javalin.plugin.openapi.dsl.documented
+import kotlinx.serialization.json.JsonObject
 import mu.KotlinLogging
-import java.net.URI
 
 object IssuerController {
     private val logger = KotlinLogging.logger { }
@@ -190,7 +188,7 @@ object IssuerController {
                             .formParam<String>("claims")
                             .formParam<String>("state")
                             .formParam<String>("op_state")
-                            .json<PushedAuthorizationSuccessResponse>("201"),
+                            .json<PushedAuthorizationResponse>("201"),
                         IssuerController::par
                     ))
                     get("fulfillPAR", documented(
@@ -256,7 +254,7 @@ object IssuerController {
     fun requestIssuance(ctx: Context) {
         val wallet = ctx.queryParam("walletId")?.let { IssuerTenant.config.wallets.getOrDefault(it, null) }
             ?: IssuerManager.getXDeviceWallet()
-        val session = ctx.queryParam("sessionId")?.let { IssuerManager.getIssuanceSession(it) }
+        val session = ctx.queryParam("sessionId")?.let { IssuerManager.getSession(it) }
         val issuerDid = ctx.queryParam("issuerDid") // OPTIONAL
 
         val selectedIssuables = ctx.bodyAsClass<Issuables>()
@@ -266,58 +264,45 @@ object IssuerController {
         }
 
         if (session != null) {
-            val authRequest = session.authRequest ?: throw BadRequestResponse("No authorization request found for this session")
-            IssuerManager.updateIssuanceSession(session, selectedIssuables, issuerDid)
-            ctx.result("${authRequest.redirectionURI}?code=${IssuerManager.generateAuthorizationCodeFor(session)}&state=${authRequest.state.value}")
+            val authRequest = session.authorizationRequest ?: throw BadRequestResponse("No authorization request found for this session")
+            val codeResponse = IssuerManager.processCodeFlowAuthorization(authRequest)
+            ctx.result(codeResponse.toRedirectUri(authRequest.redirectUri ?: "", authRequest.responseMode ?: ResponseMode.query))
         } else {
             val userPin = ctx.queryParam("userPin")?.ifBlank { null }
             val isPreAuthorized = ctx.queryParam("isPreAuthorized")?.toBoolean() ?: false
-            val initiationRequest =
-                IssuerManager.newIssuanceInitiationRequest(selectedIssuables, isPreAuthorized, userPin, issuerDid)
-            ctx.result("${wallet.url}${if (!wallet.url.endsWith("/")) "/" else ""}${wallet.receivePath}?${initiationRequest.toQueryString()}")
+            val session =
+                IssuerManager.initializeCredentialOffer(CredentialOffer.Builder(issuerDid ?: IssuerManager.defaultDid).apply {
+                    selectedIssuables.credentials.forEach {
+                        addOfferedCredential(OfferedCredential.fromJSON(it.credentialData ?: JsonObject(mapOf())))
+                    }
+                }, 0, isPreAuthorized, userPin)
+            val credOfferReq = CredentialOfferRequest(session.credentialOffer)
+            ctx.result("${wallet.url}${if (!wallet.url.endsWith("/")) "/" else ""}${wallet.receivePath}?${credOfferReq.toHttpQueryString()}")
         }
     }
 
     fun oidcProviderMeta(ctx: Context) {
-        ctx.json(IssuerManager.getOidcProviderMetadata().toJSONObject())
+        ctx.json(IssuerManager.metadata.toJSON())
     }
 
     fun par(ctx: Context) {
-        val req = AuthorizationRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
+        val req = AuthorizationRequest.fromHttpParameters(ctx.req.parameterMap.mapValues { it.value.toList() })
         val session = if (req.customParameters.containsKey("op_state")) {
-            IssuerManager.getIssuanceSession(req.customParameters["op_state"]!!.first())?.apply {
-                authRequest = req
-                IssuerManager.updateIssuanceSession(this, issuables)
+            IssuerManager.getSession(req.customParameters["op_state"]!!.first())?.apply {
+                IssuerManager.putSession(this.id, this.copy(authorizationRequest = req))
             }
         } else {
-            val authDetails = OIDC4CIService.getCredentialAuthorizationDetails(req)
-            if (authDetails.isEmpty()) {
-                ctx.status(HttpCode.BAD_REQUEST)
-                    .json(
-                        PushedAuthorizationErrorResponse(
-                            ErrorObject(
-                                "400",
-                                "No credential authorization details given",
-                                400
-                            )
-                        )
-                    )
-                return
-            }
-            IssuerManager.initializeIssuanceSession(authDetails, preAuthorized = false, req)
+            IssuerManager.initializeAuthorization(req, 600)
         } ?: throw BadRequestResponse("Session given by op_state not found")
         ctx.status(HttpCode.CREATED).json(
-            PushedAuthorizationSuccessResponse(
-                URI("urn:ietf:params:oauth:request_uri:${session.id}"),
-                IssuerState.EXPIRATION_TIME.seconds
-            ).toJSONObject()
+            IssuerManager.getPushedAuthorizationSuccessResponse(session).toJSON()
         )
     }
 
     fun fulfillPAR(ctx: Context) {
         val parURI = ctx.queryParam("request_uri")!!
         val sessionID = parURI.substringAfterLast("urn:ietf:params:oauth:request_uri:")
-        val session = IssuerManager.getIssuanceSession(sessionID)
+        val session = IssuerManager.getSession(sessionID)
         if (session != null) {
             ctx.status(HttpCode.FOUND).header("Location", "${IssuerTenant.config.issuerUiUrl}/?sessionId=${session.id}")
         } else {
@@ -327,58 +312,25 @@ object IssuerController {
     }
 
     fun token(ctx: Context) {
-        val tokenReq = TokenRequest.parse(ServletUtils.createHTTPRequest(ctx.req))
-        val code = when (tokenReq.authorizationGrant.type) {
-            GrantType.AUTHORIZATION_CODE -> (tokenReq.authorizationGrant as AuthorizationCodeGrant).authorizationCode
-            PreAuthorizedCodeGrant.GRANT_TYPE -> (tokenReq.authorizationGrant as PreAuthorizedCodeGrant).code
-            else -> throw BadRequestResponse("Unsupported grant type")
+        val tokenReq = TokenRequest.fromHttpParameters(ctx.req.parameterMap.mapValues { it.value.toList() })
+        try {
+            val tokenResponse = IssuerManager.processTokenRequest(tokenReq)
+            ctx.json(tokenResponse.toJSON())
+        } catch (exc: TokenError) {
+            ctx.status(HttpCode.BAD_REQUEST).json(exc.toAuthorizationErrorResponse().toJSON())
         }
-        val sessionId = IssuerManager.validateAuthorizationCode(code.value)
-        val session = IssuerManager.getIssuanceSession(sessionId)
-        if (session == null) {
-            ctx.status(HttpCode.NOT_FOUND).json(TokenErrorResponse(OAuth2Error.INVALID_REQUEST).toJSONObject())
-            return
-        }
-        if (tokenReq.authorizationGrant.type == PreAuthorizedCodeGrant.GRANT_TYPE) {
-            val pinMatches =
-                session.userPin?.let { it == (tokenReq.authorizationGrant as PreAuthorizedCodeGrant).userPin } ?: true
-            if (!pinMatches) {
-                throw ForbiddenResponse("User PIN required")
-            }
-        }
-
-        ctx.json(
-            OIDCTokenResponse(
-                OIDCTokens(JWTService.toJWT(UserInfo(session.id)), BearerAccessToken(session.id), RefreshToken()), mapOf(
-                    "expires_in" to IssuerState.EXPIRATION_TIME.seconds,
-                    "c_nonce" to session.nonce
-                )
-            ).toJSONObject()
-        )
     }
 
     fun credential(ctx: Context) {
-        val session = ctx.header("Authorization")?.substringAfterLast("Bearer ")
-            ?.let { IssuerManager.getIssuanceSession(it) }
-            ?: throw ForbiddenResponse("Invalid or unknown access token")
+        val accessToken = ctx.header("Authorization")?.substringAfterLast("Bearer ")
+            ?: throw UnauthorizedResponse("No access token found")
 
-        val credentialRequest =
-            KlaxonWithConverters().parse<CredentialRequest>(ctx.body())
-                ?: throw BadRequestResponse("Could not parse credential request body")
+        val credentialRequest = CredentialRequest.fromJSONString(ctx.body())
 
-        val credential = IssuerManager.fulfillIssuanceSession(session, credentialRequest)
-        if (credential.isNullOrEmpty()) {
-            ctx.status(HttpCode.NOT_FOUND).result("No issuable credential with the given type found")
-            return
+        try {
+            ctx.json(IssuerManager.generateCredentialResponse(credentialRequest, accessToken).toJSON())
+        } catch (exc: CredentialError) {
+            throw BadRequestResponse(exc.toCredentialErrorResponse().error ?: "Bad request")
         }
-        val credObj = credential.toVerifiableCredential()
-        ctx.contentType(ContentType.JSON).result(
-            KlaxonWithConverters().toJsonString(
-                CredentialResponse(
-                    if (credObj.sdJwt != null) "jwt_vc" else "ldp_vc",
-                    credential.toVerifiableCredential()
-                )
-            )
-        )
     }
 }

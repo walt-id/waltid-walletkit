@@ -3,20 +3,21 @@ package id.walt.issuer.backend
 import id.walt.credentials.w3c.JsonConverter
 import id.walt.credentials.w3c.templates.VcTemplateManager
 import id.walt.model.oidc.CredentialAuthorizationDetails
+import kotlinx.serialization.json.JsonObject
 
 data class IssuableCredential(
     val type: String,
-    val credentialData: Map<String, Any>? = null
+    val credentialData: JsonObject? = null
 ) {
     companion object {
         fun fromTemplateId(templateId: String): IssuableCredential {
             val tmpl = VcTemplateManager.getTemplate(templateId, true).template!!
             return IssuableCredential(
                 templateId,
-                mapOf(
-                    Pair(
-                        "credentialSubject",
-                        JsonConverter.fromJsonElement(tmpl.credentialSubject!!.toJsonObject()) as Map<*, *>
+                JsonObject(
+                    mapOf(
+                        "credentialSubject" to
+                        tmpl.credentialSubject!!.toJsonObject()
                     )
                 )
             )

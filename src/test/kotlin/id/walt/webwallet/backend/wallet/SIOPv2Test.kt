@@ -8,7 +8,11 @@ import id.walt.credentials.w3c.toVerifiableCredential
 import id.walt.custodian.Custodian
 import id.walt.issuer.backend.*
 import id.walt.model.DidMethod
+import id.walt.model.oidc.IssuanceInitiationRequest
 import id.walt.multitenancy.TenantId
+import id.walt.oid4vc.data.CredentialFormat
+import id.walt.oid4vc.data.CredentialOffer
+import id.walt.oid4vc.data.OfferedCredential
 import id.walt.onboarding.backend.OnboardingController
 import id.walt.services.context.ContextManager
 import id.walt.services.did.DidService
@@ -182,9 +186,10 @@ class SIOPv2Test : BaseApiTest() {
     @Test
     fun testPreAuthzIssuanceFlow() {
         val preAuthReq = ContextManager.runWith(IssuerManager.getIssuerContext(TenantId.DEFAULT_TENANT)) {
-            IssuerManager.newIssuanceInitiationRequest(Issuables(
-                credentials = listOf(IssuableCredential("VerifiableId", null))
-            ), preAuthorized = true)
+            IssuerManager.initializeCredentialOffer(CredentialOffer.Builder(IssuerManager.defaultDid).addOfferedCredential("VerifiableId"),
+                600, allowPreAuthorized = true).let {
+                IssuanceInitiationRequest(IssuerManager.baseUrl, it.credentialOffer?.credentials?.map { it.toString() } ?: listOf())
+            }
         }
         val userInfo = UserInfo("testuser")
         val session = ContextManager.runWith(UserContextLoader.load(userInfo.id)) {
