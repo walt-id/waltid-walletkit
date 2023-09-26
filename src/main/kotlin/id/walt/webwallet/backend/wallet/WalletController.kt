@@ -91,6 +91,12 @@ object WalletController {
                             ), UserRole.AUTHORIZED
                         )
                     }
+                    path("delete") {
+                        delete("{id}", documented(document().operation {
+                            it.summary("Delete DID").operationId("delete").addTagsItem("Wallet / DIDs")
+                        }
+                            .json<String>("200"), DidController::delete), UserRole.AUTHORIZED)
+                    }
                 }
                 path("credentials") {
                     get(
@@ -368,6 +374,11 @@ object WalletController {
     fun loadDid(ctx: Context) {
         val id = ctx.pathParam("id")
         ctx.json(DidService.load(id))
+    }
+
+    fun deleteDid(ctx: Context) {
+        val id = ctx.pathParam("id")
+        ctx.json(DidService.deleteDid(id))
     }
 
     fun createDid(ctx: Context) {
