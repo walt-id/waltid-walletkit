@@ -126,6 +126,10 @@ object WalletController {
                         documented(CustodianController.importKeysDocs(), CustodianController::importKey),
                         UserRole.AUTHORIZED
                     )
+                    get(
+                        "{alias}", documented(CustodianController.getKeysDocs(), CustodianController::getKey),
+                        UserRole.AUTHORIZED
+                    )
                     delete(
                         "delete/{id}",
                         documented(CustodianController.deleteKeysDocs(), CustodianController::deleteKey),
