@@ -114,6 +114,11 @@ object WalletController {
                         documented(CustodianController.storeCredentialsDocs(), CustodianController::storeCredential),
                         UserRole.AUTHORIZED
                     )
+                    get(
+                        "{id}",
+                        documented(CustodianController.getCredentialDocs(), CustodianController::getCredential),
+                        UserRole.AUTHORIZED
+                    )
                 }
                 path("keys") {
                     get(

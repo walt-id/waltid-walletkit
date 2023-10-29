@@ -15,6 +15,7 @@ import id.walt.multitenancy.Tenant
 import id.walt.multitenancy.TenantId
 import id.walt.rest.core.DidController
 import id.walt.rest.core.KeyController
+import id.walt.rest.core.VcController
 import id.walt.services.oidc.OIDC4CIService
 import id.walt.signatory.rest.SignatoryController
 import id.walt.verifier.backend.WalletConfiguration
@@ -60,7 +61,10 @@ object IssuerController {
                     fun OpenApiDocumentation.describeTenantId() =
                         this.run { pathParam<String>("tenantId") { it.example(TenantId.DEFAULT_TENANT) } }
 
-                    path("did") {
+                    path("did") {                                                
+                        get("list", documented(DidController.listDocs().describeTenantId(), DidController::list))
+                        get("{id}", documented(DidController.loadDocs().describeTenantId(), DidController::load))
+                        delete("{id}", documented(DidController.deleteDocs().describeTenantId(), DidController::delete))
                         post("create", documented(DidController.createDocs().describeTenantId(), DidController::create))
                         post("createAdvanced",
                             documented(document().operation {
@@ -74,18 +78,17 @@ object IssuerController {
                                 WalletController::createDid
                             )
                         )
+                        post("resolve", documented(DidController.resolveDocs().describeTenantId(), DidController::resolve))
                         post("import", documented(DidController.importDocs().describeTenantId(), DidController::import))
-                        get("list", documented(DidController.listDocs().describeTenantId(), DidController::list))
-                        post("delete", documented(DidController.deleteDocs().describeTenantId(), DidController::delete))
                     }
 
                     path("key") {
+                        get("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
+                        get("{id}", documented(KeyController.loadDocs().describeTenantId(), KeyController::load))
+                        delete("{id}", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
                         post("gen", documented(KeyController.genDocs().describeTenantId(), KeyController::gen))
                         post("import", documented(KeyController.importDocs().describeTenantId(), KeyController::import))
                         post("export", documented(KeyController.exportDocs().describeTenantId(), KeyController::export))
-                        delete("delete", documented(KeyController.deleteDocs().describeTenantId(), KeyController::delete))
-                        get("list", documented(KeyController.listDocs().describeTenantId(), KeyController::list))
-                        post("load", documented(KeyController.loadDocs().describeTenantId(), KeyController::load))
                     }
 
                     post("setConfiguration", documented(document().operation {
