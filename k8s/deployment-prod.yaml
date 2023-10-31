@@ -5,8 +5,8 @@ metadata:
 data:
   issuer-config.json: |
     {
-      "issuerUiUrl": "https://issuer.walt.id",
-      "issuerApiUrl": "https://issuer.walt.id/issuer-api/default",
+      "issuerUiUrl": "https://issuer.walletkit.walt.id",
+      "issuerApiUrl": "https://issuer.walletkit.walt.id/issuer-api/default",
       "issuerClientName": "walt.id Issuer Portal",
       "wallets": {
         "walt.id": {
@@ -20,8 +20,8 @@ data:
     }
   verifier-config.json: |
     {
-      "verifierUiUrl": "https://verifier.walt.id",
-      "verifierApiUrl": "https://verifier.walt.id/verifier-api/default",
+      "verifierUiUrl": "https://verifier.walletkit.walt.id",
+      "verifierApiUrl": "https://verifier.walletkit.walt.id/verifier-api/default",
       "wallets": {
         "walt.id": {
           "id": "walt.id",
@@ -206,22 +206,12 @@ metadata:
 spec:
   tls:
     - hosts:
+        - verifier.walletkit.walt.id
+        - issuer.walletkit.walt.id
         - walletkit.walt.id
-        - verifier.walt.id
-        - issuer.walt.id
       secretName: walletkit-tls-secret
   rules:
-    - host: walletkit.walt.id
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: walletkit
-                port:
-                  number: 80
-    - host: verifier.walt.id
+    - host: verifier.walletkit.walt.id
       http:
         paths:
           - path: /verifier-api/
@@ -238,7 +228,7 @@ spec:
                 name: verifier-portal
                 port:
                   number: 80
-    - host: issuer.walt.id
+    - host: issuer.walletkit.walt.id
       http:
         paths:
           - path: /issuer-api/
@@ -260,5 +250,15 @@ spec:
             backend:
               service:
                 name: issuer-portal
+                port:
+                  number: 80
+    - host: walletkit.walt.id
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: walletkit
                 port:
                   number: 80
