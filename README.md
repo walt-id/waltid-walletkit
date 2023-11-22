@@ -14,6 +14,18 @@
 
 </div>
 
+## Discontinuation Notice
+
+**Important:** Please be informed that, beginning from December 2023, the Wallet Kit will no longer receive new features. Furthermore, the Wallet Kit is planned for discontinuation by the end of Q3 2024.
+<br />
+<br />
+However, all functionalities currently offered by the Wallet Kit will be integrated into our new libraries, APIs, and apps under [The Community Stack](https://walt.id/blog/p/community-stack). This is aimed at providing a more modular, flexible, and efficient solution for your needs.
+<br />
+<br />
+For any clarification or queries, feel free to [contact us](https://walt.id/discord) as we aim to make this transition as smooth as possible.
+
+<hr />
+
 ## Getting Started
 
 - [REST Api](https://docs.walt.id/v/web-wallet/getting-started/rest-apis) - Use the functionality of the Wallet Kit via an REST api.
