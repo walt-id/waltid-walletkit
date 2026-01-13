@@ -1,4 +1,11 @@
-## MOVED to the new repo here => https://github.com/walt-id/waltid-identity
+## 🚨 Repository Moved
+
+> [!IMPORTANT]
+> This repository is no longer maintained.
+> 
+> All walt.id development continues in the monorepo:
+> 
+### 👉 Code **https://github.com/walt-id/waltid-identity** & Docs **https://docs.walt.id**
 
 <div align="center">
  <h1>Wallet Kit</h1>
